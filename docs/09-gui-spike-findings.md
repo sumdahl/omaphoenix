@@ -59,3 +59,23 @@ Same minimal window in each native candidate (`spikes/gui-floor`), with accessib
 **Updated recommendation for Q9:** Slint is the only candidate that meets both hard requirements.
 
 Before deciding, a **full Slint spike** must prove DESIGN.md §6: interruptible springs with velocity, driven from Rust; frame pacing; live theme; the Omarchy font. It uses the same two screens and the same bench as the Tauri spike. Slint's built-in `animate` keeps position on interruption but not velocity, so the spring engine runs in Rust and writes properties per frame.
+
+## Full Slint spike (issue #19, 2026-10-09)
+
+The same two screens (Pulse, Migrate preview sheet), the same bench and the same AT-SPI checks, built in Slint 1.18 (`spikes/slint-desktop`). Springs run in Rust (`src/spring.rs`, fixed 1/240 s sub-steps) and write properties each frame. The frame timer stops once every spring settles, so an idle window uses no CPU.
+
+| DESIGN.md requirement | Measured (3 bench runs) | Verdict |
+|---|---|---|
+| Smooth frames (§6.5) | dropped 0 / 0 / 1, p99 17 ms at 60 Hz | ✅ matches Tauri |
+| Interruptible springs, velocity kept (§6.1) | largest single-frame step: ring ≤ 16 %, sheet ≤ 12 %, timeline ≤ 8 % | ✅ no jumps |
+| Live theme + Omarchy font (§5) | theme switch picked up and applied; font from `omarchy-font-current` | ✅ |
+| Screen reader (§9) | named buttons, no shortcut hints in names, heading text, score as a progress bar with value 0–100 and the grade as its description | ✅ all checks |
+| **Memory** | **46 MB** idle PSS, one process | ✅ well under the 150 MB target |
+
+**Bugs the bench caught, all fixed:**
+- the FLIP offset was set a frame late, so the timeline jumped 33 %
+- the closed sheet's spring tail kept the frame timer running
+- building preview rows on every open cost a frame; they are now built once
+- the score's `accessible-value` was a sentence, so AT-SPI exposed no number; it is now the plain number, with the grade in `accessible-description`
+
+**Recommendation for Q9:** Slint meets every DESIGN.md requirement tested here, at about one-fifth of Tauri's memory, and needs no GTK3 bindings. The decision is still the owners'.

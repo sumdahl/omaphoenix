@@ -5,3 +5,4 @@
 /ui/desktop/dist/
 /crates/omaphoenix-desktop/gen/
 /spikes/*/*/target/
+/spikes/*/target/
