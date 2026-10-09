@@ -1,0 +1,42 @@
+{
+  "format": 1,
+  "omarchy_version": "4.0.4-1",
+  "host": "latitude",
+  "hardware": "Dell Inc. Latitude 7430",
+  "user": "u",
+  "shell": "/usr/bin/zsh",
+  "items": {
+    "config": [
+      {
+        "id": ".config/hypr/bindings.lua"
+      },
+      {
+        "id": ".zshrc"
+      },
+      {
+        "id": "a\u003cb\u003e\u0026c \"q\" ünï"
+      }
+    ],
+    "etc": [],
+    "pkg-repo": [
+      {
+        "id": "btop"
+      },
+      {
+        "id": "zsh"
+      }
+    ],
+    "plugin": [
+      {
+        "id": "media",
+        "note": "https://github.com/sumdahl/media@3f2a1c9"
+      }
+    ],
+    "secret": [
+      {
+        "id": ".ssh/id_ed25519",
+        "note": "encrypted"
+      }
+    ]
+  }
+}

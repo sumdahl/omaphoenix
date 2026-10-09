@@ -1,0 +1,5 @@
+{"schema":1,"id":"secrets.env_readable","sev":"fail","section":"Secrets & credentials in home","msg":"~/.config/app/.env is world-readable","detail":"","fix":"chmod 600 ~/.config/app/.env","hint":"","targets":[{"kind":"file","path":"/home/u/.config/app/.env"}]}
+{"schema":1,"id":"services.unknown_user_unit","sev":"warn","section":"Services & persistence","msg":"unknown user unit sync.service","detail":"","fix":"","hint":"","targets":[{"kind":"unit","name":"user/sync.service"},{"kind":"file","path":"/home/u/.config/systemd/user/sync.service"}]}
+{"schema":1,"id":"packages.known_cve","sev":"warn","section":"Packages & updates","msg":"openssl has a known CVE","detail":"","fix":"omarchy-update","hint":"","targets":[{"kind":"package","name":"openssl"}]}
+{"schema":1,"id":"network.firewall_off","sev":"fail","section":"Network","msg":"no firewall is active","detail":"","fix":"sudo ufw enable","hint":"","targets":[{"kind":"none"}]}
+{"schema":1,"id":"ssh.agent_running","sev":"pass","section":"SSH","msg":"ssh-agent is running","detail":"","fix":"","hint":"","targets":[]}

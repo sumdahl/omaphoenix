@@ -1,0 +1,20 @@
+[package]
+name = "phx-contract"
+description = "OmaPhoenix on-disk contracts: snapshot manifest and selection rules"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+
+[lints]
+workspace = true

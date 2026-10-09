@@ -1,0 +1,95 @@
+[
+  {
+    "Choices": [],
+    "Output": "# omaphoenix selection rules — one per line, last match wins.\n#   category:pattern     include (glob over the item id)\n#   !category:pattern    exclude\n# Written by the omaphoenix TUI; hand edits are kept only until the next save.\n"
+  },
+  {
+    "Choices": [
+      {
+        "Category": "plugin",
+        "IDs": [
+          "media",
+          "weather"
+        ],
+        "Selected": [
+          true,
+          false
+        ]
+      }
+    ],
+    "Output": "# omaphoenix selection rules — one per line, last match wins.\n#   category:pattern     include (glob over the item id)\n#   !category:pattern    exclude\n# Written by the omaphoenix TUI; hand edits are kept only until the next save.\nplugin:*\n!plugin:weather\n"
+  },
+  {
+    "Choices": [
+      {
+        "Category": "config",
+        "IDs": [
+          "a*b",
+          "[x",
+          "a\\",
+          "q?"
+        ],
+        "Selected": [
+          false,
+          false,
+          true,
+          false
+        ]
+      }
+    ],
+    "Output": "# omaphoenix selection rules — one per line, last match wins.\n#   category:pattern     include (glob over the item id)\n#   !category:pattern    exclude\n# Written by the omaphoenix TUI; hand edits are kept only until the next save.\nconfig:*\n!config:a\\*b\n!config:\\[x\n!config:q\\?\n"
+  },
+  {
+    "Choices": [
+      {
+        "Category": "theme",
+        "IDs": [
+          "a",
+          "b"
+        ],
+        "Selected": [
+          false,
+          false
+        ]
+      },
+      {
+        "Category": "bin",
+        "IDs": null,
+        "Selected": null
+      }
+    ],
+    "Output": "# omaphoenix selection rules — one per line, last match wins.\n#   category:pattern     include (glob over the item id)\n#   !category:pattern    exclude\n# Written by the omaphoenix TUI; hand edits are kept only until the next save.\n!theme:*\nbin:*\n"
+  },
+  {
+    "Choices": [
+      {
+        "Category": "secret",
+        "IDs": [
+          ".ssh/id_ed25519",
+          ".ssh/id_rsa",
+          "tok*"
+        ],
+        "Selected": [
+          true,
+          false,
+          true
+        ]
+      }
+    ],
+    "Output": "# omaphoenix selection rules — one per line, last match wins.\n#   category:pattern     include (glob over the item id)\n#   !category:pattern    exclude\n# Written by the omaphoenix TUI; hand edits are kept only until the next save.\nsecret:.ssh/id_ed25519\nsecret:tok\\*\n"
+  },
+  {
+    "Choices": [
+      {
+        "Category": "secret",
+        "IDs": [
+          "k"
+        ],
+        "Selected": [
+          false
+        ]
+      }
+    ],
+    "Output": "# omaphoenix selection rules — one per line, last match wins.\n#   category:pattern     include (glob over the item id)\n#   !category:pattern    exclude\n# Written by the omaphoenix TUI; hand edits are kept only until the next save.\n"
+  }
+]

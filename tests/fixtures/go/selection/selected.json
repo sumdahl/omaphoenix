@@ -1,0 +1,1169 @@
+[
+  {
+    "Name": "excludes",
+    "Text": "config:*\n!config:.config/chromium\n!config:.config/hypr/*\nconfig:.config/hypr/bindings.lua\n",
+    "Machine": {},
+    "Cases": [
+      {
+        "Rules": "excludes",
+        "Category": "theme",
+        "ID": "a",
+        "Selected": false
+      },
+      {
+        "Rules": "excludes",
+        "Category": "theme",
+        "ID": "b",
+        "Selected": false
+      },
+      {
+        "Rules": "excludes",
+        "Category": "config",
+        "ID": ".config/chromium",
+        "Selected": false
+      },
+      {
+        "Rules": "excludes",
+        "Category": "config",
+        "ID": ".config/hypr/bindings.lua",
+        "Selected": true
+      },
+      {
+        "Rules": "excludes",
+        "Category": "config",
+        "ID": ".config/hypr/monitors.lua",
+        "Selected": false
+      },
+      {
+        "Rules": "excludes",
+        "Category": "config",
+        "ID": ".config/hypr",
+        "Selected": true
+      },
+      {
+        "Rules": "excludes",
+        "Category": "config",
+        "ID": ".zshrc",
+        "Selected": true
+      },
+      {
+        "Rules": "excludes",
+        "Category": "config",
+        "ID": "a*b",
+        "Selected": true
+      },
+      {
+        "Rules": "excludes",
+        "Category": "config",
+        "ID": "aXb",
+        "Selected": true
+      },
+      {
+        "Rules": "excludes",
+        "Category": "config",
+        "ID": "[x",
+        "Selected": true
+      },
+      {
+        "Rules": "excludes",
+        "Category": "config",
+        "ID": "x",
+        "Selected": true
+      },
+      {
+        "Rules": "excludes",
+        "Category": "config",
+        "ID": "a\\",
+        "Selected": true
+      },
+      {
+        "Rules": "excludes",
+        "Category": "config",
+        "ID": "#emacs#",
+        "Selected": true
+      },
+      {
+        "Rules": "excludes",
+        "Category": "config",
+        "ID": "",
+        "Selected": true
+      },
+      {
+        "Rules": "excludes",
+        "Category": "bin",
+        "ID": "x",
+        "Selected": false
+      },
+      {
+        "Rules": "excludes",
+        "Category": "bin",
+        "ID": "y",
+        "Selected": false
+      },
+      {
+        "Rules": "excludes",
+        "Category": "bin",
+        "ID": "z",
+        "Selected": false
+      },
+      {
+        "Rules": "excludes",
+        "Category": "secret",
+        "ID": ".ssh/id_ed25519",
+        "Selected": false
+      },
+      {
+        "Rules": "excludes",
+        "Category": "machine",
+        "ID": "config",
+        "Selected": false
+      },
+      {
+        "Rules": "excludes",
+        "Category": "pkg-repo",
+        "ID": "zsh",
+        "Selected": false
+      },
+      {
+        "Rules": "excludes",
+        "Category": "pkg-repo",
+        "ID": "btop",
+        "Selected": false
+      },
+      {
+        "Rules": "excludes",
+        "Category": "plugin",
+        "ID": "weather",
+        "Selected": false
+      },
+      {
+        "Rules": "excludes",
+        "Category": "plugin",
+        "ID": "media",
+        "Selected": false
+      }
+    ]
+  },
+  {
+    "Name": "comments",
+    "Text": "  # header\nplugin:*   # all plugins\n\n!plugin:weather\r\nbroken line without colon\n!theme:*\ntheme:a\n",
+    "Machine": {},
+    "Cases": [
+      {
+        "Rules": "comments",
+        "Category": "config",
+        "ID": ".config/chromium",
+        "Selected": false
+      },
+      {
+        "Rules": "comments",
+        "Category": "config",
+        "ID": ".config/hypr/bindings.lua",
+        "Selected": false
+      },
+      {
+        "Rules": "comments",
+        "Category": "config",
+        "ID": ".config/hypr/monitors.lua",
+        "Selected": false
+      },
+      {
+        "Rules": "comments",
+        "Category": "config",
+        "ID": ".config/hypr",
+        "Selected": false
+      },
+      {
+        "Rules": "comments",
+        "Category": "config",
+        "ID": ".zshrc",
+        "Selected": false
+      },
+      {
+        "Rules": "comments",
+        "Category": "config",
+        "ID": "a*b",
+        "Selected": false
+      },
+      {
+        "Rules": "comments",
+        "Category": "config",
+        "ID": "aXb",
+        "Selected": false
+      },
+      {
+        "Rules": "comments",
+        "Category": "config",
+        "ID": "[x",
+        "Selected": false
+      },
+      {
+        "Rules": "comments",
+        "Category": "config",
+        "ID": "x",
+        "Selected": false
+      },
+      {
+        "Rules": "comments",
+        "Category": "config",
+        "ID": "a\\",
+        "Selected": false
+      },
+      {
+        "Rules": "comments",
+        "Category": "config",
+        "ID": "#emacs#",
+        "Selected": false
+      },
+      {
+        "Rules": "comments",
+        "Category": "config",
+        "ID": "",
+        "Selected": false
+      },
+      {
+        "Rules": "comments",
+        "Category": "bin",
+        "ID": "x",
+        "Selected": false
+      },
+      {
+        "Rules": "comments",
+        "Category": "bin",
+        "ID": "y",
+        "Selected": false
+      },
+      {
+        "Rules": "comments",
+        "Category": "bin",
+        "ID": "z",
+        "Selected": false
+      },
+      {
+        "Rules": "comments",
+        "Category": "secret",
+        "ID": ".ssh/id_ed25519",
+        "Selected": false
+      },
+      {
+        "Rules": "comments",
+        "Category": "machine",
+        "ID": "config",
+        "Selected": false
+      },
+      {
+        "Rules": "comments",
+        "Category": "pkg-repo",
+        "ID": "zsh",
+        "Selected": false
+      },
+      {
+        "Rules": "comments",
+        "Category": "pkg-repo",
+        "ID": "btop",
+        "Selected": false
+      },
+      {
+        "Rules": "comments",
+        "Category": "plugin",
+        "ID": "weather",
+        "Selected": false
+      },
+      {
+        "Rules": "comments",
+        "Category": "plugin",
+        "ID": "media",
+        "Selected": true
+      },
+      {
+        "Rules": "comments",
+        "Category": "theme",
+        "ID": "a",
+        "Selected": true
+      },
+      {
+        "Rules": "comments",
+        "Category": "theme",
+        "ID": "b",
+        "Selected": false
+      }
+    ]
+  },
+  {
+    "Name": "order",
+    "Text": "bin:x\n!bin:*\nbin:y\n",
+    "Machine": {},
+    "Cases": [
+      {
+        "Rules": "order",
+        "Category": "pkg-repo",
+        "ID": "zsh",
+        "Selected": false
+      },
+      {
+        "Rules": "order",
+        "Category": "pkg-repo",
+        "ID": "btop",
+        "Selected": false
+      },
+      {
+        "Rules": "order",
+        "Category": "plugin",
+        "ID": "weather",
+        "Selected": false
+      },
+      {
+        "Rules": "order",
+        "Category": "plugin",
+        "ID": "media",
+        "Selected": false
+      },
+      {
+        "Rules": "order",
+        "Category": "theme",
+        "ID": "a",
+        "Selected": false
+      },
+      {
+        "Rules": "order",
+        "Category": "theme",
+        "ID": "b",
+        "Selected": false
+      },
+      {
+        "Rules": "order",
+        "Category": "config",
+        "ID": ".config/chromium",
+        "Selected": false
+      },
+      {
+        "Rules": "order",
+        "Category": "config",
+        "ID": ".config/hypr/bindings.lua",
+        "Selected": false
+      },
+      {
+        "Rules": "order",
+        "Category": "config",
+        "ID": ".config/hypr/monitors.lua",
+        "Selected": false
+      },
+      {
+        "Rules": "order",
+        "Category": "config",
+        "ID": ".config/hypr",
+        "Selected": false
+      },
+      {
+        "Rules": "order",
+        "Category": "config",
+        "ID": ".zshrc",
+        "Selected": false
+      },
+      {
+        "Rules": "order",
+        "Category": "config",
+        "ID": "a*b",
+        "Selected": false
+      },
+      {
+        "Rules": "order",
+        "Category": "config",
+        "ID": "aXb",
+        "Selected": false
+      },
+      {
+        "Rules": "order",
+        "Category": "config",
+        "ID": "[x",
+        "Selected": false
+      },
+      {
+        "Rules": "order",
+        "Category": "config",
+        "ID": "x",
+        "Selected": false
+      },
+      {
+        "Rules": "order",
+        "Category": "config",
+        "ID": "a\\",
+        "Selected": false
+      },
+      {
+        "Rules": "order",
+        "Category": "config",
+        "ID": "#emacs#",
+        "Selected": false
+      },
+      {
+        "Rules": "order",
+        "Category": "config",
+        "ID": "",
+        "Selected": false
+      },
+      {
+        "Rules": "order",
+        "Category": "bin",
+        "ID": "x",
+        "Selected": false
+      },
+      {
+        "Rules": "order",
+        "Category": "bin",
+        "ID": "y",
+        "Selected": true
+      },
+      {
+        "Rules": "order",
+        "Category": "bin",
+        "ID": "z",
+        "Selected": false
+      },
+      {
+        "Rules": "order",
+        "Category": "secret",
+        "ID": ".ssh/id_ed25519",
+        "Selected": false
+      },
+      {
+        "Rules": "order",
+        "Category": "machine",
+        "ID": "config",
+        "Selected": false
+      }
+    ]
+  },
+  {
+    "Name": "machine",
+    "Text": "config:*\nmachine:config:.config/hypr/monitors.lua\nmachine:etc:/etc/tlp.conf\n!machine:config:x\nmachine:bad\n",
+    "Machine": {
+      "config": [
+        ".config/hypr/monitors.lua"
+      ],
+      "etc": [
+        "/etc/tlp.conf"
+      ]
+    },
+    "Cases": [
+      {
+        "Rules": "machine",
+        "Category": "pkg-repo",
+        "ID": "zsh",
+        "Selected": false
+      },
+      {
+        "Rules": "machine",
+        "Category": "pkg-repo",
+        "ID": "btop",
+        "Selected": false
+      },
+      {
+        "Rules": "machine",
+        "Category": "plugin",
+        "ID": "weather",
+        "Selected": false
+      },
+      {
+        "Rules": "machine",
+        "Category": "plugin",
+        "ID": "media",
+        "Selected": false
+      },
+      {
+        "Rules": "machine",
+        "Category": "theme",
+        "ID": "a",
+        "Selected": false
+      },
+      {
+        "Rules": "machine",
+        "Category": "theme",
+        "ID": "b",
+        "Selected": false
+      },
+      {
+        "Rules": "machine",
+        "Category": "config",
+        "ID": ".config/chromium",
+        "Selected": true
+      },
+      {
+        "Rules": "machine",
+        "Category": "config",
+        "ID": ".config/hypr/bindings.lua",
+        "Selected": true
+      },
+      {
+        "Rules": "machine",
+        "Category": "config",
+        "ID": ".config/hypr/monitors.lua",
+        "Selected": true
+      },
+      {
+        "Rules": "machine",
+        "Category": "config",
+        "ID": ".config/hypr",
+        "Selected": true
+      },
+      {
+        "Rules": "machine",
+        "Category": "config",
+        "ID": ".zshrc",
+        "Selected": true
+      },
+      {
+        "Rules": "machine",
+        "Category": "config",
+        "ID": "a*b",
+        "Selected": true
+      },
+      {
+        "Rules": "machine",
+        "Category": "config",
+        "ID": "aXb",
+        "Selected": true
+      },
+      {
+        "Rules": "machine",
+        "Category": "config",
+        "ID": "[x",
+        "Selected": true
+      },
+      {
+        "Rules": "machine",
+        "Category": "config",
+        "ID": "x",
+        "Selected": true
+      },
+      {
+        "Rules": "machine",
+        "Category": "config",
+        "ID": "a\\",
+        "Selected": true
+      },
+      {
+        "Rules": "machine",
+        "Category": "config",
+        "ID": "#emacs#",
+        "Selected": true
+      },
+      {
+        "Rules": "machine",
+        "Category": "config",
+        "ID": "",
+        "Selected": true
+      },
+      {
+        "Rules": "machine",
+        "Category": "bin",
+        "ID": "x",
+        "Selected": false
+      },
+      {
+        "Rules": "machine",
+        "Category": "bin",
+        "ID": "y",
+        "Selected": false
+      },
+      {
+        "Rules": "machine",
+        "Category": "bin",
+        "ID": "z",
+        "Selected": false
+      },
+      {
+        "Rules": "machine",
+        "Category": "secret",
+        "ID": ".ssh/id_ed25519",
+        "Selected": false
+      },
+      {
+        "Rules": "machine",
+        "Category": "machine",
+        "ID": "config",
+        "Selected": false
+      }
+    ]
+  },
+  {
+    "Name": "escaped",
+    "Text": "config:*\n!config:a\\*b\n!config:\\[x\n!config:a\\\\\n",
+    "Machine": {},
+    "Cases": [
+      {
+        "Rules": "escaped",
+        "Category": "pkg-repo",
+        "ID": "zsh",
+        "Selected": false
+      },
+      {
+        "Rules": "escaped",
+        "Category": "pkg-repo",
+        "ID": "btop",
+        "Selected": false
+      },
+      {
+        "Rules": "escaped",
+        "Category": "plugin",
+        "ID": "weather",
+        "Selected": false
+      },
+      {
+        "Rules": "escaped",
+        "Category": "plugin",
+        "ID": "media",
+        "Selected": false
+      },
+      {
+        "Rules": "escaped",
+        "Category": "theme",
+        "ID": "a",
+        "Selected": false
+      },
+      {
+        "Rules": "escaped",
+        "Category": "theme",
+        "ID": "b",
+        "Selected": false
+      },
+      {
+        "Rules": "escaped",
+        "Category": "config",
+        "ID": ".config/chromium",
+        "Selected": true
+      },
+      {
+        "Rules": "escaped",
+        "Category": "config",
+        "ID": ".config/hypr/bindings.lua",
+        "Selected": true
+      },
+      {
+        "Rules": "escaped",
+        "Category": "config",
+        "ID": ".config/hypr/monitors.lua",
+        "Selected": true
+      },
+      {
+        "Rules": "escaped",
+        "Category": "config",
+        "ID": ".config/hypr",
+        "Selected": true
+      },
+      {
+        "Rules": "escaped",
+        "Category": "config",
+        "ID": ".zshrc",
+        "Selected": true
+      },
+      {
+        "Rules": "escaped",
+        "Category": "config",
+        "ID": "a*b",
+        "Selected": false
+      },
+      {
+        "Rules": "escaped",
+        "Category": "config",
+        "ID": "aXb",
+        "Selected": true
+      },
+      {
+        "Rules": "escaped",
+        "Category": "config",
+        "ID": "[x",
+        "Selected": false
+      },
+      {
+        "Rules": "escaped",
+        "Category": "config",
+        "ID": "x",
+        "Selected": true
+      },
+      {
+        "Rules": "escaped",
+        "Category": "config",
+        "ID": "a\\",
+        "Selected": false
+      },
+      {
+        "Rules": "escaped",
+        "Category": "config",
+        "ID": "#emacs#",
+        "Selected": true
+      },
+      {
+        "Rules": "escaped",
+        "Category": "config",
+        "ID": "",
+        "Selected": true
+      },
+      {
+        "Rules": "escaped",
+        "Category": "bin",
+        "ID": "x",
+        "Selected": false
+      },
+      {
+        "Rules": "escaped",
+        "Category": "bin",
+        "ID": "y",
+        "Selected": false
+      },
+      {
+        "Rules": "escaped",
+        "Category": "bin",
+        "ID": "z",
+        "Selected": false
+      },
+      {
+        "Rules": "escaped",
+        "Category": "secret",
+        "ID": ".ssh/id_ed25519",
+        "Selected": false
+      },
+      {
+        "Rules": "escaped",
+        "Category": "machine",
+        "ID": "config",
+        "Selected": false
+      }
+    ]
+  },
+  {
+    "Name": "hash",
+    "Text": "config:*\n!config:#emacs#\n",
+    "Machine": {},
+    "Cases": [
+      {
+        "Rules": "hash",
+        "Category": "secret",
+        "ID": ".ssh/id_ed25519",
+        "Selected": false
+      },
+      {
+        "Rules": "hash",
+        "Category": "machine",
+        "ID": "config",
+        "Selected": false
+      },
+      {
+        "Rules": "hash",
+        "Category": "pkg-repo",
+        "ID": "zsh",
+        "Selected": false
+      },
+      {
+        "Rules": "hash",
+        "Category": "pkg-repo",
+        "ID": "btop",
+        "Selected": false
+      },
+      {
+        "Rules": "hash",
+        "Category": "plugin",
+        "ID": "weather",
+        "Selected": false
+      },
+      {
+        "Rules": "hash",
+        "Category": "plugin",
+        "ID": "media",
+        "Selected": false
+      },
+      {
+        "Rules": "hash",
+        "Category": "theme",
+        "ID": "a",
+        "Selected": false
+      },
+      {
+        "Rules": "hash",
+        "Category": "theme",
+        "ID": "b",
+        "Selected": false
+      },
+      {
+        "Rules": "hash",
+        "Category": "config",
+        "ID": ".config/chromium",
+        "Selected": true
+      },
+      {
+        "Rules": "hash",
+        "Category": "config",
+        "ID": ".config/hypr/bindings.lua",
+        "Selected": true
+      },
+      {
+        "Rules": "hash",
+        "Category": "config",
+        "ID": ".config/hypr/monitors.lua",
+        "Selected": true
+      },
+      {
+        "Rules": "hash",
+        "Category": "config",
+        "ID": ".config/hypr",
+        "Selected": true
+      },
+      {
+        "Rules": "hash",
+        "Category": "config",
+        "ID": ".zshrc",
+        "Selected": true
+      },
+      {
+        "Rules": "hash",
+        "Category": "config",
+        "ID": "a*b",
+        "Selected": true
+      },
+      {
+        "Rules": "hash",
+        "Category": "config",
+        "ID": "aXb",
+        "Selected": true
+      },
+      {
+        "Rules": "hash",
+        "Category": "config",
+        "ID": "[x",
+        "Selected": true
+      },
+      {
+        "Rules": "hash",
+        "Category": "config",
+        "ID": "x",
+        "Selected": true
+      },
+      {
+        "Rules": "hash",
+        "Category": "config",
+        "ID": "a\\",
+        "Selected": true
+      },
+      {
+        "Rules": "hash",
+        "Category": "config",
+        "ID": "#emacs#",
+        "Selected": true
+      },
+      {
+        "Rules": "hash",
+        "Category": "config",
+        "ID": "",
+        "Selected": false
+      },
+      {
+        "Rules": "hash",
+        "Category": "bin",
+        "ID": "x",
+        "Selected": false
+      },
+      {
+        "Rules": "hash",
+        "Category": "bin",
+        "ID": "y",
+        "Selected": false
+      },
+      {
+        "Rules": "hash",
+        "Category": "bin",
+        "ID": "z",
+        "Selected": false
+      }
+    ]
+  },
+  {
+    "Name": "empty",
+    "Text": "",
+    "Machine": {},
+    "Cases": [
+      {
+        "Rules": "empty",
+        "Category": "theme",
+        "ID": "a",
+        "Selected": false
+      },
+      {
+        "Rules": "empty",
+        "Category": "theme",
+        "ID": "b",
+        "Selected": false
+      },
+      {
+        "Rules": "empty",
+        "Category": "config",
+        "ID": ".config/chromium",
+        "Selected": false
+      },
+      {
+        "Rules": "empty",
+        "Category": "config",
+        "ID": ".config/hypr/bindings.lua",
+        "Selected": false
+      },
+      {
+        "Rules": "empty",
+        "Category": "config",
+        "ID": ".config/hypr/monitors.lua",
+        "Selected": false
+      },
+      {
+        "Rules": "empty",
+        "Category": "config",
+        "ID": ".config/hypr",
+        "Selected": false
+      },
+      {
+        "Rules": "empty",
+        "Category": "config",
+        "ID": ".zshrc",
+        "Selected": false
+      },
+      {
+        "Rules": "empty",
+        "Category": "config",
+        "ID": "a*b",
+        "Selected": false
+      },
+      {
+        "Rules": "empty",
+        "Category": "config",
+        "ID": "aXb",
+        "Selected": false
+      },
+      {
+        "Rules": "empty",
+        "Category": "config",
+        "ID": "[x",
+        "Selected": false
+      },
+      {
+        "Rules": "empty",
+        "Category": "config",
+        "ID": "x",
+        "Selected": false
+      },
+      {
+        "Rules": "empty",
+        "Category": "config",
+        "ID": "a\\",
+        "Selected": false
+      },
+      {
+        "Rules": "empty",
+        "Category": "config",
+        "ID": "#emacs#",
+        "Selected": false
+      },
+      {
+        "Rules": "empty",
+        "Category": "config",
+        "ID": "",
+        "Selected": false
+      },
+      {
+        "Rules": "empty",
+        "Category": "bin",
+        "ID": "x",
+        "Selected": false
+      },
+      {
+        "Rules": "empty",
+        "Category": "bin",
+        "ID": "y",
+        "Selected": false
+      },
+      {
+        "Rules": "empty",
+        "Category": "bin",
+        "ID": "z",
+        "Selected": false
+      },
+      {
+        "Rules": "empty",
+        "Category": "secret",
+        "ID": ".ssh/id_ed25519",
+        "Selected": false
+      },
+      {
+        "Rules": "empty",
+        "Category": "machine",
+        "ID": "config",
+        "Selected": false
+      },
+      {
+        "Rules": "empty",
+        "Category": "pkg-repo",
+        "ID": "zsh",
+        "Selected": false
+      },
+      {
+        "Rules": "empty",
+        "Category": "pkg-repo",
+        "ID": "btop",
+        "Selected": false
+      },
+      {
+        "Rules": "empty",
+        "Category": "plugin",
+        "ID": "weather",
+        "Selected": false
+      },
+      {
+        "Rules": "empty",
+        "Category": "plugin",
+        "ID": "media",
+        "Selected": false
+      }
+    ]
+  },
+  {
+    "Name": "default",
+    "Text": "# omaphoenix selection rules — one per line, last match wins.\n#   category:pattern     include (glob over the item id)\n#   !category:pattern    exclude\npkg-repo:*\npkg-aur:*\npkg-other:*\nplugin:*\ntheme:*\nconfig:*\nlocal:*\nbin:*\netc:*\nservice:*\n# secret:.ssh/*          added by 'omaphoenix secrets init' (encrypted)\n",
+    "Machine": {},
+    "Cases": [
+      {
+        "Rules": "default",
+        "Category": "machine",
+        "ID": "config",
+        "Selected": false
+      },
+      {
+        "Rules": "default",
+        "Category": "pkg-repo",
+        "ID": "zsh",
+        "Selected": true
+      },
+      {
+        "Rules": "default",
+        "Category": "pkg-repo",
+        "ID": "btop",
+        "Selected": true
+      },
+      {
+        "Rules": "default",
+        "Category": "plugin",
+        "ID": "weather",
+        "Selected": true
+      },
+      {
+        "Rules": "default",
+        "Category": "plugin",
+        "ID": "media",
+        "Selected": true
+      },
+      {
+        "Rules": "default",
+        "Category": "theme",
+        "ID": "a",
+        "Selected": true
+      },
+      {
+        "Rules": "default",
+        "Category": "theme",
+        "ID": "b",
+        "Selected": true
+      },
+      {
+        "Rules": "default",
+        "Category": "config",
+        "ID": ".config/chromium",
+        "Selected": true
+      },
+      {
+        "Rules": "default",
+        "Category": "config",
+        "ID": ".config/hypr/bindings.lua",
+        "Selected": true
+      },
+      {
+        "Rules": "default",
+        "Category": "config",
+        "ID": ".config/hypr/monitors.lua",
+        "Selected": true
+      },
+      {
+        "Rules": "default",
+        "Category": "config",
+        "ID": ".config/hypr",
+        "Selected": true
+      },
+      {
+        "Rules": "default",
+        "Category": "config",
+        "ID": ".zshrc",
+        "Selected": true
+      },
+      {
+        "Rules": "default",
+        "Category": "config",
+        "ID": "a*b",
+        "Selected": true
+      },
+      {
+        "Rules": "default",
+        "Category": "config",
+        "ID": "aXb",
+        "Selected": true
+      },
+      {
+        "Rules": "default",
+        "Category": "config",
+        "ID": "[x",
+        "Selected": true
+      },
+      {
+        "Rules": "default",
+        "Category": "config",
+        "ID": "x",
+        "Selected": true
+      },
+      {
+        "Rules": "default",
+        "Category": "config",
+        "ID": "a\\",
+        "Selected": true
+      },
+      {
+        "Rules": "default",
+        "Category": "config",
+        "ID": "#emacs#",
+        "Selected": true
+      },
+      {
+        "Rules": "default",
+        "Category": "config",
+        "ID": "",
+        "Selected": true
+      },
+      {
+        "Rules": "default",
+        "Category": "bin",
+        "ID": "x",
+        "Selected": true
+      },
+      {
+        "Rules": "default",
+        "Category": "bin",
+        "ID": "y",
+        "Selected": true
+      },
+      {
+        "Rules": "default",
+        "Category": "bin",
+        "ID": "z",
+        "Selected": true
+      },
+      {
+        "Rules": "default",
+        "Category": "secret",
+        "ID": ".ssh/id_ed25519",
+        "Selected": false
+      }
+    ]
+  }
+]

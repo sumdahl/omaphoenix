@@ -1,0 +1,6 @@
+{"sev":"warn","section":"Packages & updates","msg":"7 pending repo updates","detail":"brave-bin 1:1.96.61-1 -> 1:1.96.61-2","fix":"omarchy-update","hint":""}
+{"sev":"info","section":"Packages & updates","msg":"arch-audit not installed (no CVE matching of installed packages)","detail":"","fix":"sudo pacman -S --needed arch-audit","hint":""}
+{"sev":"pass","section":"Packages & updates","msg":"pacman signature checking is enforced","detail":"","fix":"","hint":""}
+{"sev":"fail","section":"Secrets & credentials in home","msg":"~/.config/app/.env is world-readable","detail":"","fix":"chmod 600 ~/.config/app/.env","hint":""}
+{"sev":"skip","section":"Users & authentication","msg":"sudoers drop-ins need root","detail":"","fix":"","hint":"run: sudo secaudit"}
+{"sev":"warn","section":"SSH","msg":"~/.ssh/id_ed25519 has no passphrase","detail":"line one\nline \"two\" ü","fix":"ssh-keygen -p -f ~/.ssh/id_ed25519","hint":""}

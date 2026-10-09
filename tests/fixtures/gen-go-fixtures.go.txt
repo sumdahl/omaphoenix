@@ -1,0 +1,117 @@
+package main
+
+import (
+	"encoding/json"
+	"os"
+	"path"
+	"path/filepath"
+
+	"github.com/sumdahl/omaphoenix/internal/category"
+	"github.com/sumdahl/omaphoenix/internal/core"
+	"github.com/sumdahl/omaphoenix/internal/selection"
+)
+
+func write(dir, name string, v any) {
+	b, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, name), append(b, '\n'), 0o644); err != nil {
+		panic(err)
+	}
+}
+
+func main() {
+	out := os.Args[1]
+	man := filepath.Join(out, "manifest")
+	sel := filepath.Join(out, "selection")
+	os.MkdirAll(man, 0o755)
+	os.MkdirAll(sel, 0o755)
+
+	write(man, "full.json", core.Manifest{
+		Format: core.Format, OmarchyVersion: "4.0.4-1", Host: "latitude", Hardware: "Dell Inc. Latitude 7430",
+		User: "u", Shell: "/usr/bin/zsh",
+		Items: map[string][]category.Item{
+			"pkg-repo": {{ID: "btop"}, {ID: "zsh"}},
+			"plugin":   {{ID: "media", Note: "https://github.com/sumdahl/media@3f2a1c9"}},
+			"config":   {{ID: ".config/hypr/bindings.lua"}, {ID: ".zshrc"}, {ID: "a<b>&c \"q\" ünï"}},
+			"secret":   {{ID: ".ssh/id_ed25519", Note: "encrypted"}},
+			"etc":      {},
+		},
+	})
+	write(man, "minimal.json", core.Manifest{Format: core.Format, Items: map[string][]category.Item{}})
+	write(man, "nil-items.json", core.Manifest{Format: core.Format, OmarchyVersion: "4.0.3-2", Host: "h", User: "u", Shell: "/bin/bash"})
+
+	patterns := []string{"*", "", "a", "a*", "*a", "a*b", "a?c", "?", "*/*", ".config/*", ".config/*/*", ".config/hypr/*.lua",
+		"[abc]", "[a-c]x", "[^a]", "[!a]", "[]a]", "[a-]", "[", "[a", "a[", "\\*", "\\", "a\\", "\\[x", "*\\*", "[\\]]", "[\\-]",
+		"ü?", "?ï", "[ü-ÿ]", "**", "a**b", "*.lua", "x*y*z", "*/", "/*", ".z*", "a/b", "a/*b", "*b*"}
+	names := []string{"", "a", "b", "abc", "ab", "aXb", "a/b", "a/xb", "acx", "bx", ".config", ".config/hypr", ".config/hypr/bindings.lua",
+		".config/hypr/x/y.lua", "*", "[x", "a*b", "a\\", "ü", "üb", "xyz", "xaybz", "x/y/z", "/a", "]", "-", "ï", ".zshrc", "a[", "\\"}
+	type matchCase struct {
+		Pattern, Name string
+		Match, BadPattern bool
+	}
+	var matches []matchCase
+	for _, p := range patterns {
+		for _, n := range names {
+			ok, err := path.Match(p, n)
+			matches = append(matches, matchCase{p, n, ok, err != nil})
+		}
+	}
+	write(sel, "path-match.json", matches)
+
+	ruleSets := map[string]string{
+		"default":  selection.Default,
+		"excludes": "config:*\n!config:.config/chromium\n!config:.config/hypr/*\nconfig:.config/hypr/bindings.lua\n",
+		"comments": "  # header\nplugin:*   # all plugins\n\n!plugin:weather\r\nbroken line without colon\n!theme:*\ntheme:a\n",
+		"order":    "bin:x\n!bin:*\nbin:y\n",
+		"machine":  "config:*\nmachine:config:.config/hypr/monitors.lua\nmachine:etc:/etc/tlp.conf\n!machine:config:x\nmachine:bad\n",
+		"escaped":  "config:*\n!config:a\\*b\n!config:\\[x\n!config:a\\\\\n",
+		"hash":     "config:*\n!config:#emacs#\n",
+		"empty":    "",
+	}
+	ids := map[string][]string{
+		"pkg-repo": {"zsh", "btop"}, "plugin": {"weather", "media"}, "theme": {"a", "b"},
+		"config":   {".config/chromium", ".config/hypr/bindings.lua", ".config/hypr/monitors.lua", ".config/hypr", ".zshrc", "a*b", "aXb", "[x", "x", "a\\", "#emacs#", ""},
+		"bin":      {"x", "y", "z"}, "secret": {".ssh/id_ed25519"}, "machine": {"config"},
+	}
+	type selCase struct {
+		Rules, Category, ID string
+		Selected            bool
+	}
+	type ruleSet struct {
+		Name, Text string
+		Machine    map[string][]string
+		Cases      []selCase
+	}
+	var sets []ruleSet
+	for name, text := range ruleSets {
+		r := selection.Parse(text)
+		rs := ruleSet{Name: name, Text: text, Machine: r.Machine()}
+		for cat, list := range ids {
+			for _, id := range list {
+				rs.Cases = append(rs.Cases, selCase{name, cat, id, r.Selected(cat, id)})
+			}
+		}
+		sets = append(sets, rs)
+	}
+	write(sel, "selected.json", sets)
+
+	type buildCase struct {
+		Choices []selection.Choice
+		Output  string
+	}
+	var builds []buildCase
+	for _, cs := range [][]selection.Choice{
+		{},
+		{{Category: "plugin", IDs: []string{"media", "weather"}, Selected: []bool{true, false}}},
+		{{Category: "config", IDs: []string{"a*b", "[x", "a\\", "q?"}, Selected: []bool{false, false, true, false}}},
+		{{Category: "theme", IDs: []string{"a", "b"}, Selected: []bool{false, false}}, {Category: "bin", IDs: nil, Selected: nil}},
+		{{Category: "secret", IDs: []string{".ssh/id_ed25519", ".ssh/id_rsa", "tok*"}, Selected: []bool{true, false, true}}},
+		{{Category: "secret", IDs: []string{"k"}, Selected: []bool{false}}},
+	} {
+		builds = append(builds, buildCase{cs, selection.Build(cs)})
+	}
+	write(sel, "build.json", builds)
+	os.WriteFile(filepath.Join(sel, "default.conf"), []byte(selection.Default), 0o644)
+}

@@ -1,0 +1,7382 @@
+[
+  {
+    "Pattern": "*",
+    "Name": "",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "a",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "b",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "abc",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "ab",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "aXb",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "acx",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "bx",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": ".config",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "*",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "[x",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "a*b",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "a\\",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "ü",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "üb",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "xyz",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "xaybz",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "]",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "-",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "ï",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": ".zshrc",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "a[",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*",
+    "Name": "\\",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "a",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "a",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "abc",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "ab",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "aXb",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "acx",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "a*b",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "a\\",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "a[",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "a",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*a",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "ab",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "aXb",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "a*b",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a*b",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "abc",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a?c",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "a",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "b",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "*",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "ü",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "]",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "-",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "ï",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?",
+    "Name": "\\",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "a/b",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "a/xb",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": ".config/hypr",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "/a",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/*",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": ".config/hypr",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/*/*",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".config/hypr/*.lua",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "a",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "b",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[abc]",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "bx",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[a-c]x",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "b",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "*",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "ü",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "]",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "-",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "ï",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[^a]",
+    "Name": "\\",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "a",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[!a]",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[]a]",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a-]",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "[a",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a[",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "*",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\*",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\",
+    "Name": "",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "a\\",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": true
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "[x",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "\\[x",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "*",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*\\*",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "]",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\]]",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "-",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[\\-]",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "üb",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "ü?",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "?ï",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "ü",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "[ü-ÿ]",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "a",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "b",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "abc",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "ab",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "aXb",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "acx",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "bx",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": ".config",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "*",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "[x",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "a*b",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "a\\",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "ü",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "üb",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "xyz",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "xaybz",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "]",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "-",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "ï",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": ".zshrc",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "a[",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "**",
+    "Name": "\\",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "ab",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "aXb",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "a*b",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a**b",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*.lua",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "xyz",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "xaybz",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "x*y*z",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*/",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "/a",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "/*",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": ".zshrc",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": ".z*",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "a/b",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/b",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "abc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "ab",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "aXb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "a/b",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "a/xb",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "bx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "a*b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "üb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "xaybz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "a/*b",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "b",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "abc",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "ab",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "aXb",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "a/b",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "a/xb",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "acx",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "bx",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": ".config",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": ".config/hypr",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": ".config/hypr/bindings.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": ".config/hypr/x/y.lua",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "*",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "[x",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "a*b",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "a\\",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "ü",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "üb",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "xyz",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "xaybz",
+    "Match": true,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "x/y/z",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "/a",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "]",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "-",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "ï",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": ".zshrc",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "a[",
+    "Match": false,
+    "BadPattern": false
+  },
+  {
+    "Pattern": "*b*",
+    "Name": "\\",
+    "Match": false,
+    "BadPattern": false
+  }
+]

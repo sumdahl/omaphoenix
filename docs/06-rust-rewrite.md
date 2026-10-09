@@ -38,7 +38,8 @@ omaphoenix/                    (new repo, or a rewrite branch: decision in 07)
 │  ├─ phx-store/               git-backed snapshot store               ← internal/store
 │  ├─ secaudit-core/           audit engine + contract (→ Manish)      ← secaudit bin/secaudit
 │  ├─ secaudit/                standalone Security Audit app (→ Manish)
-│  ├─ phx-contract/            Finding, Manifest, Selection types      ← the JSON contracts
+│  ├─ phx-contract/            Manifest, Selection types               ← the JSON contracts
+│  │                           (Finding lives in secaudit-core, which can't depend on phx-*)
 │  ├─ phx-tui/                 ratatui front end                       ← internal/tui + secaudit-tui
 │  └─ phx-cli/                 clap binary: `omaphoenix`, `omaphoenix audit`
 ├─ tests/fixtures/             JSON fixtures produced by the Go/Bash versions (parity)
