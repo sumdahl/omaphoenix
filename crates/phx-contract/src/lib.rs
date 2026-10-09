@@ -10,7 +10,7 @@
 pub mod manifest;
 pub mod selection;
 
-mod glob;
+pub mod glob;
 
 pub use manifest::{FORMAT, Item, Manifest, ManifestError};
 pub use selection::{Choice, Rules};

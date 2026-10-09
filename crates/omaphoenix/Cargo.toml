@@ -10,6 +10,14 @@ publish.workspace = true
 
 [dependencies]
 clap.workspace = true
+phx-contract.workspace = true
+phx-core.workspace = true
+ratatui.workspace = true
+secaudit-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+zeroize.workspace = true
 
 [lints]
 workspace = true

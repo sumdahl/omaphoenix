@@ -7,7 +7,8 @@
 
 /// Reports whether `name` matches `pattern`. `None` means the pattern is
 /// malformed (Go's `ErrBadPattern`).
-pub(crate) fn path_match(pattern: &str, name: &str) -> Option<bool> {
+#[must_use]
+pub fn path_match(pattern: &str, name: &str) -> Option<bool> {
     let mut pattern = pattern.as_bytes();
     let mut name = name.as_bytes();
     'pattern: while !pattern.is_empty() {

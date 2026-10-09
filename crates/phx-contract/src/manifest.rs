@@ -18,6 +18,17 @@ pub struct Item {
     pub note: String,
 }
 
+impl Item {
+    /// An item with an optional note.
+    #[must_use]
+    pub fn new(id: impl Into<String>, note: impl Into<String>) -> Self {
+        Self {
+            id: id.into(),
+            note: note.into(),
+        }
+    }
+}
+
 /// A snapshot's manifest. Category keys stay sorted (`BTreeMap`), as Go
 /// writes them, so a rewrite doesn't reorder the file.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
@@ -40,8 +51,13 @@ pub struct Manifest {
     /// Login shell.
     #[serde(default)]
     pub shell: String,
-    /// Items per category. Go writes `null` for none; read as empty.
-    #[serde(default, deserialize_with = "null_as_empty")]
+    /// Items per category. Go writes `null` for none (a nil list) and so
+    /// does this, so switching implementations doesn't change the file.
+    #[serde(
+        default,
+        deserialize_with = "null_as_empty",
+        serialize_with = "empty_as_null"
+    )]
     pub items: BTreeMap<String, Vec<Item>>,
 }
 
@@ -57,7 +73,27 @@ pub enum ManifestError {
     NewerFormat(u32),
 }
 
+impl Default for Manifest {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Manifest {
+    /// An empty manifest of the current [`FORMAT`].
+    #[must_use]
+    pub fn new() -> Self {
+        Self {
+            format: FORMAT,
+            omarchy_version: String::new(),
+            host: String::new(),
+            hardware: String::new(),
+            user: String::new(),
+            shell: String::new(),
+            items: BTreeMap::new(),
+        }
+    }
+
     /// Parses a manifest, refusing formats newer than [`FORMAT`].
     ///
     /// # Errors
@@ -69,6 +105,22 @@ impl Manifest {
         }
         Ok(m)
     }
+}
+
+fn empty_as_null<S: serde::Serializer>(
+    items: &BTreeMap<String, Vec<Item>>,
+    s: S,
+) -> Result<S::Ok, S::Error> {
+    use serde::ser::SerializeMap;
+    let mut m = s.serialize_map(Some(items.len()))?;
+    for (k, v) in items {
+        if v.is_empty() {
+            m.serialize_entry(k, &None::<()>)?;
+        } else {
+            m.serialize_entry(k, v)?;
+        }
+    }
+    m.end()
 }
 
 fn null_as_empty<'de, D: Deserializer<'de>>(d: D) -> Result<BTreeMap<String, Vec<Item>>, D::Error> {
@@ -109,6 +161,14 @@ mod tests {
             let mut want: serde_json::Value = serde_json::from_str(json).unwrap_or_default();
             if want["items"].is_null() {
                 want["items"] = serde_json::json!({});
+            }
+            // An empty list is written as null, as Go writes a nil one.
+            if let Some(items) = want["items"].as_object_mut() {
+                for v in items.values_mut() {
+                    if v.as_array().is_some_and(Vec::is_empty) {
+                        *v = serde_json::Value::Null;
+                    }
+                }
             }
             assert_eq!(serde_json::to_value(&m).ok(), Some(want), "{name}");
         }

@@ -8,8 +8,9 @@ exclude = ["spikes"]
 version = "0.0.0"
 edition = "2024"
 # 1.88: patched `time` (RUSTSEC) and `plist`/`quick-xml` need it; holding an
-# older MSRV pinned vulnerable versions.
-rust-version = "1.88"
+# older MSRV pinned vulnerable versions. 1.89: `File::try_lock` (the snapshot
+# repo lock) without a libc-wrapping crate.
+rust-version = "1.89"
 repository = "https://github.com/sumdahl/omaphoenix-secaudit"
 license = "MIT OR Apache-2.0" # ADR-0015
 # Unpublished until the handover (ADR-0013).
@@ -19,12 +20,17 @@ publish = false
 secaudit-core = { path = "crates/secaudit-core" }
 clap = { version = "4", features = ["derive"] }
 phx-contract = { path = "crates/phx-contract" }
+phx-core = { path = "crates/phx-core" }
 proptest = "1"
+age = "0.12"
+sha2 = "0.11"
+zeroize = "1"
 ratatui = "0.30"
 regex = { version = "1", default-features = false, features = ["std", "perf", "unicode-case", "unicode-perl"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tempfile = "3"
+tar = "0.4"
 thiserror = "2"
 toml = "1"
 
