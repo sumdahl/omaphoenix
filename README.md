@@ -35,6 +35,7 @@
 | 6 | [docs/06-rust-rewrite.md](docs/06-rust-rewrite.md) | Target architecture and crate choices for the joint Rust rewrite |
 | 7 | [docs/adr/](docs/adr/README.md) · [docs/07-decisions.md](docs/07-decisions.md) | Decisions as ADRs (one file each), and **open questions that need both owners** |
 | 8 | [docs/08-slow-download-watchdog.md](docs/08-slow-download-watchdog.md) | Generic rule: no slow or stalled download may delay or fail a restore (spec + required tests) |
+| 9 | [docs/09-gui-spike-findings.md](docs/09-gui-spike-findings.md) | Tauri 2 spike: measured frames, continuity, theming, accessibility, memory, supply chain; recommendation for Q9 |
 | — | [RUST.md](RUST.md) | **Engineering standards for the Rust codebase:** safe, idiomatic, modern; lints, errors, testing, deps, release |
 | — | [DESIGN.md](DESIGN.md) | **Single source of truth for UI/UX:** feel, voice, theme tokens from Omarchy, spring physics, keymap, consent patterns, definition of done |
 | — | [AGENTS.md](AGENTS.md) | Rules for AI agents working on this project |

@@ -5,7 +5,9 @@ members = ["crates/*"]
 [workspace.package]
 version = "0.0.0"
 edition = "2024"
-rust-version = "1.85"
+# 1.88: patched `time` (RUSTSEC) and `plist`/`quick-xml` need it; holding an
+# older MSRV pinned vulnerable versions.
+rust-version = "1.88"
 repository = "https://github.com/sumdahl/omaphoenix-secaudit"
 # No license yet: it is open question Q1 (issue #1). Nothing is published
 # until it is settled.

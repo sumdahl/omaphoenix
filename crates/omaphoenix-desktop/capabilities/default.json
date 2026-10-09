@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Least privilege: core events and window only; app commands are allowed explicitly.",
+  "windows": ["main"],
+  "permissions": ["core:default", "core:event:default"]
+}

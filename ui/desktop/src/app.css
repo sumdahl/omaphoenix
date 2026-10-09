@@ -1,0 +1,73 @@
+/* DESIGN.md §5. Colours come only from tokens; the Rust side fills them from
+   the live Omarchy theme. These defaults exist for a plain browser. */
+:root {
+  --surface-base: #1e1e2e;
+  --surface-sunken: #181825;
+  --surface-deep: #11111b;
+  --surface-raised: #313244;
+  --text-primary: #cdd6f4;
+  --text-secondary: #bac2de;
+  --text-muted: #7f849c;
+  --accent: #f38d70;
+  --selection: #45475a;
+  --state-risk: #f38ba8;
+  --state-attention: #f9e2af;
+  --state-fine: #a6e3a1;
+  --state-info: #89dceb;
+  --font: ui-monospace, monospace;
+  --radius-control: 6px;
+  --radius-card: 10px;
+  --radius-sheet: 14px;
+  color-scheme: dark;
+}
+:root[data-mode="light"] { color-scheme: light; }
+
+* { box-sizing: border-box; }
+html, body, #app { margin: 0; height: 100%; }
+body {
+  background: var(--surface-base);
+  color: var(--text-primary);
+  font: 13px/1.45 var(--font);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  overflow: hidden;
+}
+h1, h2, h3 { margin: 0; font-weight: 600; line-height: 1.2; }
+h1 { font-size: 20px; }
+h2 { font-size: 15px; }
+.muted { color: var(--text-muted); }
+.secondary { color: var(--text-secondary); }
+.num { font-variant-numeric: tabular-nums; }
+.caption { font-size: 12px; color: var(--text-muted); }
+
+/* Depth: tone in dark mode, one soft shadow in light mode (DESIGN.md §5.3). */
+.card {
+  background: var(--surface-raised);
+  border-radius: var(--radius-card);
+  padding: 16px;
+}
+:root[data-mode="light"] .card { box-shadow: 0 1px 3px rgb(0 0 0 / 0.12); }
+
+button {
+  font: inherit;
+  color: var(--text-primary);
+  background: var(--surface-raised);
+  border: 0;
+  border-radius: var(--radius-control);
+  padding: 8px 14px;
+  min-height: 28px;
+  cursor: pointer;
+}
+button.primary { background: var(--accent); color: var(--surface-deep); font-weight: 600; }
+button:disabled { opacity: 0.45; cursor: default; }
+button:focus { outline: none; } /* the spring-driven focus ring draws focus */
+
+.marker { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.risk { background: var(--state-risk); }
+.attention { background: var(--state-attention); }
+.fine { background: var(--state-fine); }
+.info { background: var(--state-info); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition-duration: 120ms !important; }
+}
