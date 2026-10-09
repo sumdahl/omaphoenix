@@ -19,12 +19,12 @@ Superseded by D11: the integration is built directly in Rust. The Go OmaPhoenix 
 
 ## Phase 4: Rust: shared audit engine, standalone Security Audit, joint OmaPhoenix
 
-The design is in [06-rust-rewrite](06-rust-rewrite.md). It starts when the Go OmaPhoenix passes its freeze gate (D10) and Q1 (license) is settled.
+The design is in [06-rust-rewrite](06-rust-rewrite.md). It starts when the Go OmaPhoenix passes its freeze gate (ADR-0010) and Q1 (license) is settled.
 
 **Products:**
 - **`secaudit-core`:** the audit engine and finding contract, shared.
-- **`secaudit`:** the standalone Security Audit app (CLI, TUI, desktop), handed to Manish (D13).
-- **`omaphoenix`:** the joint product: snapshot/restore plus the audit-before-backup gate (D12).
+- **`secaudit`:** the standalone Security Audit app (CLI, TUI, desktop), handed to Manish (ADR-0013).
+- **`omaphoenix`:** the joint product: snapshot/restore plus the audit-before-backup gate (ADR-0012).
 
 | ID | Task | Depends | Status | Acceptance |
 |---|---|---|---|---|

@@ -5,7 +5,7 @@ Read this before touching anything. It applies to Claude Code and any other codi
 ## Orientation (do this first)
 
 1. Read `README.md`, then `docs/05-roadmap.md` to find the current phase. The first task whose status isn't `done` is next.
-2. Read `docs/07-decisions.md`. **Never implement anything that depends on an open question.** Ask the user instead.
+2. Read the decisions in `docs/adr/` (index: `docs/adr/README.md`) and the open questions in `docs/07-decisions.md`. **Never implement anything that depends on an open question.** Ask the user instead. A new decision gets a new ADR (copy `docs/adr/template.md`); accepted ADRs are never edited, only superseded.
 3. For code work, also read the target repo's own docs:
    - OmaPhoenix: `~/personal/omaphoenix/docs/` (especially `08-implementation-notes.md`, which lists real traps) and its `CLAUDE.md`.
    - secaudit: `~/personal/secaudit/README.md` ("Adding a check" explains its helper functions).

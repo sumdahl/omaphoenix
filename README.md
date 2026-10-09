@@ -3,9 +3,9 @@
 > **Status: design.** No Rust code yet. The Go OmaPhoenix is being finished and frozen (its freeze gate G1–G7); then the Rust work starts.
 >
 > **Decided:**
-> - The integration is built **directly in Rust** (D11).
-> - The joint product is **OmaPhoenix** (D12).
-> - Security Audit also gets a **standalone Rust app on the shared engine, handed to Manish** (D13).
+> - The integration is built **directly in Rust** (ADR-0011).
+> - The joint product is **OmaPhoenix** (ADR-0012).
+> - Security Audit also gets a **standalone Rust app on the shared engine, handed to Manish** (ADR-0013).
 > Owners: **Sumiran Dahal** (OmaPhoenix) and **Manish Karki** (Security Audit). Both agreed to integrate.
 
 ## One paragraph
@@ -33,7 +33,7 @@
 | 4 | [docs/04-integration-design.md](docs/04-integration-design.md) | The audit gate, the finding contract, the mapping from findings to backup items |
 | 5 | [docs/05-roadmap.md](docs/05-roadmap.md) | Phased plan with task IDs and acceptance criteria |
 | 6 | [docs/06-rust-rewrite.md](docs/06-rust-rewrite.md) | Target architecture and crate choices for the joint Rust rewrite |
-| 7 | [docs/07-decisions.md](docs/07-decisions.md) | Decisions made, and **open questions that need both owners** |
+| 7 | [docs/adr/](docs/adr/README.md) · [docs/07-decisions.md](docs/07-decisions.md) | Decisions as ADRs (one file each), and **open questions that need both owners** |
 | 8 | [docs/08-slow-download-watchdog.md](docs/08-slow-download-watchdog.md) | Generic rule: no slow or stalled download may delay or fail a restore (spec + required tests) |
 | — | [RUST.md](RUST.md) | **Engineering standards for the Rust codebase:** safe, idiomatic, modern; lints, errors, testing, deps, release |
 | — | [DESIGN.md](DESIGN.md) | **Single source of truth for UI/UX:** feel, voice, theme tokens from Omarchy, spring physics, keymap, consent patterns, definition of done |

@@ -15,7 +15,7 @@
 
 **Risk to watch:** a rewrite stalls feature work for weeks. Keep the Go version shippable until cutover (P4.5).
 
-## Products and ownership (D12, D13)
+## Products and ownership (ADR-0012, ADR-0013)
 
 | Crate / app | What | Owner |
 |---|---|---|
@@ -78,7 +78,7 @@ The Bash checks are short and plentiful. Port them as data where possible:
 
 ## Desktop app
 
-There is **no Go/Wails app** (D5). The desktop app is part of the Rust rewrite, built to [DESIGN.md](../DESIGN.md). The Rust core crates are shared with the CLI and TUI, and the app is a front end only.
+There is **no Go/Wails app** (ADR-0005). The desktop app is part of the Rust rewrite, built to [DESIGN.md](../DESIGN.md). The Rust core crates are shared with the CLI and TUI, and the app is a front end only.
 
 **Requirements DESIGN.md puts on the UI stack:**
 - Interruptible springs that carry velocity.

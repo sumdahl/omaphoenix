@@ -4,7 +4,7 @@
 
 - If code, a mockup or another doc disagrees with this file, this file wins. Change it here first, then change the code.
 - It is framework-neutral on purpose: it states what a person must experience. The Rust UI stack is chosen in [docs/06-rust-rewrite.md](docs/06-rust-rewrite.md) against these requirements.
-- **Scope:** both front ends, the **desktop app** and the **TUI** (D7). They are equals over one Rust core and share the same IA, voice, keymap, consent rules and states. §12 says how each section translates to the terminal.
+- **Scope:** both front ends, the **desktop app** and the **TUI** (ADR-0007). They are equals over one Rust core and share the same IA, voice, keymap, consent rules and states. §12 says how each section translates to the terminal.
 - **Status:** v0.1 draft, 2026-10-09. The owners are Sumiran Dahal (OmaPhoenix) and Manish Karki (Security Audit). Changes need both.
 
 ---
