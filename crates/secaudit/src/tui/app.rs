@@ -103,7 +103,11 @@ pub struct App {
 
 impl App {
     pub fn new() -> Self {
-        let store = Store::from_env();
+        Self::with_store(Store::from_env())
+    }
+
+    /// The app over a given history; tests use a throwaway one.
+    pub fn with_store(store: Store) -> Self {
         store.prune_incomplete(600);
         let runs = store.runs();
         let current = (!runs.is_empty()).then_some(0);

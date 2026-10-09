@@ -3155,6 +3155,7 @@ dependencies = [
  "ratatui",
  "secaudit-core",
  "serde_json",
+ "tempfile",
  "toml 1.1.8+spec-1.1.0",
  "zeroize",
 ]
@@ -4245,6 +4246,7 @@ dependencies = [
  "ratatui",
  "secaudit-core",
  "serde_json",
+ "tempfile",
  "toml 1.1.8+spec-1.1.0",
 ]
 

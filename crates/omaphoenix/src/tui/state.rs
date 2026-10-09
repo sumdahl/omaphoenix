@@ -121,8 +121,12 @@ fn quiet(_: &str, _: &str) {}
 
 impl<'a> State<'a> {
     pub fn new(app: &'a App<'a>) -> Self {
+        Self::with_store(app, Store::from_env())
+    }
+
+    /// The state over a given audit history; tests use a throwaway one.
+    pub fn with_store(app: &'a App<'a>, audit_store: Store) -> Self {
         let (tx, rx) = mpsc::channel();
-        let audit_store = Store::from_env();
         let accepted = audit_store.accepted();
         let audit = audit_store.runs().into_iter().next();
         let migration = Migration::load(&app.state_dir());
