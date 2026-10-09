@@ -9,7 +9,6 @@ publish.workspace = true
 
 [dependencies]
 clap.workspace = true
-secaudit-core.workspace = true
 
 [lints]
 workspace = true

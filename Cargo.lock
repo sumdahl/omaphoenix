@@ -115,7 +115,6 @@ name = "omaphoenix"
 version = "0.0.0"
 dependencies = [
  "clap",
- "secaudit-core",
 ]
 
 [[package]]
@@ -147,7 +146,6 @@ name = "secaudit"
 version = "0.0.0"
 dependencies = [
  "clap",
- "secaudit-core",
 ]
 
 [[package]]
