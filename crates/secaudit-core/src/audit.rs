@@ -146,6 +146,16 @@ impl Ctx {
         }
     }
 
+    /// Whether `name` is an executable on [`Ctx::path_env`], as `command -v` checks.
+    #[must_use]
+    pub fn have(&self, name: &str) -> bool {
+        use std::os::unix::fs::PermissionsExt;
+        self.path_env.split(':').filter(|d| !d.is_empty()).any(|d| {
+            fs::metadata(self.sys(d).join(name))
+                .is_ok_and(|m| m.is_file() && m.permissions().mode() & 0o111 != 0)
+        })
+    }
+
     /// Runs a command; a failure to start counts as an unsuccessful, silent run.
     #[must_use]
     pub fn run(&self, argv: &[&str]) -> CmdOut {
@@ -320,6 +330,11 @@ impl Report {
         self.push(Severity::Skip, id, msg.into())
     }
 
+    /// The latest finding, which Bash's `detail` attaches to.
+    pub fn last(&mut self) -> Option<&mut Finding> {
+        self.findings.last_mut()
+    }
+
     /// The findings so far.
     #[must_use]
     pub fn findings(&self) -> &[Finding] {
@@ -367,6 +382,16 @@ impl Finding {
     /// Sets the advice.
     pub fn hint(&mut self, text: impl Into<String>) -> &mut Self {
         self.hint = text.into();
+        self
+    }
+    /// Appends a line to the detail, as Bash's `detail` does.
+    pub fn add_detail(&mut self, text: &str) -> &mut Self {
+        if !text.is_empty() {
+            if !self.detail.is_empty() {
+                self.detail.push('\n');
+            }
+            self.detail.push_str(text);
+        }
         self
     }
     /// Sets the detail.

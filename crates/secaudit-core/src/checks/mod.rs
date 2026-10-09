@@ -9,13 +9,17 @@
 
 use crate::audit::Section;
 
+mod boot;
 mod filesystem;
+mod packages;
 mod secrets;
 mod services;
 mod users;
 
 /// Every ported section, in report order.
 pub const SECTIONS: &[Section] = &[
+    packages::SECTION,
+    boot::SECTION,
     users::SECTION,
     filesystem::SECTION,
     services::SECTION,
@@ -87,6 +91,11 @@ pub(crate) mod testing {
             write(&self.home.path().join(rel), body, 0o644);
         }
 
+        /// An executable on the fake `/usr/bin`, so `have` finds it.
+        pub(crate) fn bin(&self, name: &str) {
+            self.file_mode(&format!("/usr/bin/{name}"), "", 0o755);
+        }
+
         pub(crate) fn cmd(&self, argv: &str, success: bool, stdout: &str) {
             if let Ok(mut t) = self.cmd.0.lock() {
                 t.insert(argv.to_owned(), CmdOut::new(success, stdout));
@@ -98,7 +107,7 @@ pub(crate) mod testing {
             ctx.root = self.root.path().to_path_buf();
             ctx.is_root = is_root;
             ctx.user = "u".into();
-            ctx.path_env = String::new();
+            ctx.path_env = "/usr/bin".into();
             ctx.cmd = self.cmd.clone();
             ctx
         }
