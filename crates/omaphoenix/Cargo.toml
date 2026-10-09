@@ -1,0 +1,15 @@
+[package]
+name = "omaphoenix"
+description = "OmaPhoenix: timestamped Omarchy snapshots that survive a reinstall, audited before backup"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+clap.workspace = true
+secaudit-core.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,15 @@
+[package]
+name = "secaudit"
+description = "Security Audit: a read-only security audit for Arch and Omarchy"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+clap.workspace = true
+secaudit-core.workspace = true
+
+[lints]
+workspace = true
