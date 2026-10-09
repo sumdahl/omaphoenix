@@ -1,6 +1,6 @@
 # OmaPhoenix × Security Audit: integration project
 
-> **Status: design.** No Rust code yet. The Go OmaPhoenix is being finished and frozen (its freeze gate G1–G7); then the Rust work starts.
+> **Status: built, not released (2026-10-10).** Both products are ported to Rust and checked against the Go and Bash versions on a real machine. Release, the GUI stack (Q9) and Slint's license (Q10) wait on the owners ([07](docs/07-decisions.md)). The Go OmaPhoenix is finished and waits on its freeze gate (G1–G7).
 >
 > **Decided:**
 > - The integration is built **directly in Rust** (ADR-0011).
@@ -11,6 +11,28 @@
 ## One paragraph
 
 [OmaPhoenix](#the-two-projects) snapshots an Omarchy machine so a fresh install can be restored to exactly that state. [Security Audit](#the-two-projects) audits an Arch/Omarchy machine and explains each risk. Combined, a migration becomes **audit → clean → back up → restore → re-audit**. Nothing sensitive leaves the machine for GitHub, and nothing compromised (a backdoor, a leaked token, a malicious hook) gets copied onto the fresh install. The end state is both tools rewritten as one Rust codebase, done only after the Go version of OmaPhoenix is complete and proven.
+
+## What's here
+
+| Binary | What | Crates |
+|---|---|---|
+| `omaphoenix` | Snapshot and restore an Omarchy setup; every snapshot is audited first, and risky files stay out of it. CLI (the Go version's commands) and a TUI with DESIGN.md's six sections | `phx-core`, `phx-contract`, `secaudit-core` |
+| `secaudit` | Security Audit: the Bash engine's 13 sections, same messages, plus a TUI. Shares scan history with the old Python TUI | `secaudit-core` (→ Manish) |
+| `omaphoenix-gui` | The desktop app (Slint), in `apps/` until Q9/Q10 are decided | `phx-core`, `secaudit-core` |
+
+```sh
+cargo build --release -p omaphoenix -p secaudit   # target/release/{omaphoenix,secaudit}
+omaphoenix                                        # TUI (or: init, snapshot, list, restore, undo, doctor, secrets, timer)
+secaudit                                          # report (or: secaudit tui)
+(cd apps/omaphoenix-gui && cargo run --release)   # desktop app
+```
+
+**How we know it matches the old versions** (run them yourself):
+- `scripts/secaudit-parity`: Bash vs Rust audit on this machine. Result: 82/82 findings and every detail list identical.
+- `scripts/omaphoenix-parity`: Go vs Rust snapshot of the real home. Result: identical tree, byte-identical manifest. It also restores across implementations, including each other's encrypted vaults.
+- `scripts/peak-rss`: every path's own memory, against RUST.md §9. All within budget; a snapshot peaks at ~9 MB.
+
+**Install** (once a release exists): `curl -fsSL https://raw.githubusercontent.com/sumdahl/omaphoenix-secaudit/<tag>/install.sh | bash`. It verifies `SHA256SUMS` and installs static binaries.
 
 ## The two projects
 
@@ -35,7 +57,9 @@
 | 6 | [docs/06-rust-rewrite.md](docs/06-rust-rewrite.md) | Target architecture and crate choices for the joint Rust rewrite |
 | 7 | [docs/adr/](docs/adr/README.md) · [docs/07-decisions.md](docs/07-decisions.md) | Decisions as ADRs (one file each), and **open questions that need both owners** |
 | 8 | [docs/08-slow-download-watchdog.md](docs/08-slow-download-watchdog.md) | Generic rule: no slow or stalled download may delay or fail a restore (spec + required tests) |
-| 9 | [docs/09-gui-spike-findings.md](docs/09-gui-spike-findings.md) | Tauri 2 spike: measured frames, continuity, theming, accessibility, memory, supply chain; recommendation for Q9 |
+| 9 | [docs/09-gui-spike-findings.md](docs/09-gui-spike-findings.md) | GUI spikes (Tauri, Slint, native floors): measured frames, theming, accessibility, memory; recommendation for Q9 |
+| 10 | [docs/10-secaudit-port-notes.md](docs/10-secaudit-port-notes.md) | Security Audit port: parity method, ids per section, Bash quirks S1–S7 (proposals for Manish) |
+| 11 | [docs/11-omaphoenix-port-notes.md](docs/11-omaphoenix-port-notes.md) | OmaPhoenix port: parity method and results, deliberate differences from Go |
 | — | [RUST.md](RUST.md) | **Engineering standards for the Rust codebase:** safe, idiomatic, modern; lints, errors, testing, deps, release |
 | — | [DESIGN.md](DESIGN.md) | **Single source of truth for UI/UX:** feel, voice, theme tokens from Omarchy, spring physics, keymap, consent patterns, definition of done |
 | — | [AGENTS.md](AGENTS.md) | Rules for AI agents working on this project |
@@ -50,10 +74,10 @@
 ~/personal/project-ideas/omaphoenix-secaudit → symlink to the design folder (old path)
 ```
 
-The Rust workspace for the joint OmaPhoenix and the standalone Security Audit (docs/06) will also live under `~/personal/joint-omaphoenix-secaudit/`.
+The Rust workspace for the joint OmaPhoenix and the standalone Security Audit (docs/06) is this repo (`crates/`, `apps/`).
 
 ## Where work happens
 
 - **Phases 1–2** (integration in Go): code goes into `~/personal/omaphoenix`. secaudit gets small contract changes, made in `~/personal/secaudit` by or with Manish.
-- **Phase 4** (Rust rewrite): a new repo, decided in [07-decisions](docs/07-decisions.md).
-- **This folder** holds only the design. Keep it updated when a decision is made.
+- **Phase 4** (Rust rewrite): this repo. Built 2026-10-10.
+- **Decisions:** keep [07](docs/07-decisions.md) and the ADRs current when one is made.

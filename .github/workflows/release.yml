@@ -1,0 +1,58 @@
+name: release
+
+# A tag v* builds static (musl) binaries for amd64 and arm64, checksums them,
+# attests their provenance, and publishes a GitHub release. install.sh
+# downloads from it and refuses anything that doesn't match SHA256SUMS.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        include:
+          - { target: x86_64-unknown-linux-musl, arch: amd64 }
+          - { target: aarch64-unknown-linux-musl, arch: arm64 }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.95.0
+        with:
+          targets: ${{ matrix.target }}
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cross
+      - run: cross build --locked --release --target ${{ matrix.target }} -p omaphoenix -p secaudit
+      - run: |
+          mkdir -p dist
+          tar -czf dist/omaphoenix_linux_${{ matrix.arch }}.tar.gz \
+            -C target/${{ matrix.target }}/release omaphoenix secaudit
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.arch }}
+          path: dist/*.tar.gz
+
+  release:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: dist-*
+          merge-multiple: true
+          path: dist
+      - run: cd dist && sha256sum *.tar.gz > SHA256SUMS
+      # Lets users check a download came from this workflow:
+      #   gh attestation verify omaphoenix_linux_amd64.tar.gz -R sumdahl/omaphoenix-secaudit
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/*.tar.gz
+      - run: gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --generate-notes --verify-tag
+        env:
+          GH_TOKEN: ${{ github.token }}
