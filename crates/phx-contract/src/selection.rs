@@ -3,12 +3,12 @@
 //! One rule per line, `category:pattern`, with a leading `!` to exclude.
 //! Patterns are Go `path.Match` globs over the item id; a bare `*` means the
 //! whole category, including ids with `/`. The last matching rule wins, so a
-//! broad include followed by narrow excludes reads top to bottom. `#` starts
-//! a comment anywhere on a line.
+//! broad include followed by narrow excludes reads top to bottom. An
+//! unescaped `#` starts a comment anywhere on a line; `\#` is a literal `#`.
 //!
-//! Known limit, kept for parity with Go: an id containing `#` can't be named
-//! in a rule, because the comment strips it. [`build`] therefore can't
-//! exclude such an item; the item stays captured.
+//! Go wrote ids containing `#` unescaped, so they couldn't be excluded
+//! (Go repo `docs/10-known-issues.md`, K1). Rust escapes them. Files Go wrote read the
+//! same here, because Go never wrote `\#`.
 
 use std::collections::BTreeMap;
 
@@ -55,7 +55,7 @@ impl Rules {
         let rules = text
             .lines()
             .filter_map(|line| {
-                let line = line.split('#').next().unwrap_or_default().trim();
+                let line = strip_comment(line).trim();
                 let (exclude, line) = match line.strip_prefix('!') {
                     Some(rest) => (true, rest),
                     None => (false, line),
@@ -150,11 +150,26 @@ pub fn build(choices: &[Choice]) -> String {
     out
 }
 
-/// Quotes glob metacharacters so an id matches only itself.
+/// The line up to its first unescaped `#`.
+fn strip_comment(line: &str) -> &str {
+    let mut escaped = false;
+    for (i, b) in line.bytes().enumerate() {
+        match b {
+            _ if escaped => escaped = false,
+            b'\\' => escaped = true,
+            b'#' => return line.get(..i).unwrap_or_default(),
+            _ => {}
+        }
+    }
+    line
+}
+
+/// Quotes glob metacharacters, and `#` so it isn't read as a comment, so an
+/// id matches only itself.
 fn escape(id: &str) -> String {
     let mut s = String::with_capacity(id.len());
     for c in id.chars() {
-        if matches!(c, '\\' | '*' | '?' | '[') {
+        if matches!(c, '\\' | '*' | '?' | '[' | '#') {
             s.push('\\');
         }
         s.push(c);
@@ -265,19 +280,41 @@ mod tests {
         }
     }
 
-    /// The known Go limit, pinned so a change to it is deliberate.
+    /// Go couldn't exclude ids containing `#`; Rust can.
     #[test]
-    fn ids_with_hash_cannot_be_excluded() {
+    fn ids_with_hash_can_be_excluded() {
         let text = build(&[Choice {
             category: "config".into(),
             items: vec![("#emacs#".into(), false), (".zshrc".into(), true)],
         }]);
-        assert!(Rules::parse(&text).selected("config", "#emacs#"));
+        assert!(text.contains("!config:\\#emacs\\#\n"), "{text}");
+        let rules = Rules::parse(&text);
+        assert!(!rules.selected("config", "#emacs#"));
+        assert!(rules.selected("config", ".zshrc"));
     }
 
-    /// Ids the format can represent: no `#`, line breaks, or edge whitespace.
+    /// Go silently dropped a ticked secret with `#` in its name (Go K1).
+    #[test]
+    fn ticked_secret_with_hash_is_captured() {
+        let text = build(&[Choice {
+            category: "secret".into(),
+            items: vec![(".ssh/#work#_key".into(), true), (".ssh/id".into(), false)],
+        }]);
+        let rules = Rules::parse(&text);
+        assert!(rules.selected("secret", ".ssh/#work#_key"));
+        assert!(!rules.selected("secret", ".ssh/id"));
+    }
+
+    #[test]
+    fn comments_still_strip() {
+        let rules = Rules::parse("config:*  # all\n!config:a\\\\# backslash, then a comment\n");
+        assert!(!rules.selected("config", "a\\"));
+        assert!(rules.selected("config", "b"));
+    }
+
+    /// Ids the format can represent: no line breaks or edge whitespace.
     fn id() -> impl Strategy<Value = String> {
-        "[^#\\r\\n]{1,24}".prop_filter("no edge whitespace", |s| s.trim() == s)
+        "[^\\r\\n]{1,24}".prop_filter("no edge whitespace", |s| s.trim() == s)
     }
 
     proptest! {
