@@ -452,17 +452,7 @@ fn migrate(f: &mut Frame, st: &State<'_>, area: Rect) {
         )));
     }
     lines.push(Line::from(""));
-    let explain = match st.migrate_sel {
-        0 => "Runs a quick audit, so nothing risky (exposed keys, unknown services) travels with you.".to_owned(),
-        1 => "Review the risks in 3 Audit: fix them, or accept the ones you mean to keep. Enter marks this step done.".to_owned(),
-        2 => "Takes a snapshot now. Risky items the audit found are left out of it.".to_owned(),
-        3 => {
-            let remote = st.app.repo.remote();
-            let from = if remote.is_empty() { "<your snapshot repo URL>".to_owned() } else { remote };
-            format!("On the new machine, install OmaPhoenix, then run:\n  omaphoenix restore --from {from}\nEnter marks this step as noted.")
-        }
-        _ => "On the new machine after restoring: run an audit there (3 Audit → s) and compare.".to_owned(),
-    };
+    let explain = phx_core::migrate::explain(st.migrate_sel, &st.app.repo.remote());
     lines.extend(explain.lines().map(|l| Line::from(l.to_owned())));
     f.render_widget(Paragraph::new(lines).wrap(Wrap { trim: false }), area);
 }

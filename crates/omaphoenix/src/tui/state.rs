@@ -13,9 +13,7 @@ use phx_core::doctor::Finding;
 use phx_core::store::Snapshot;
 use phx_core::{App, schedule};
 use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use secaudit_core::Severity;
 use secaudit_core::store::{Accepted, Run, Store};
-use serde::{Deserialize, Serialize};
 
 use super::theme::Theme;
 
@@ -62,22 +60,7 @@ pub enum Msg {
     Done(bool),
 }
 
-/// The Migrate wizard's progress, kept so quitting halfway is normal.
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub struct Migration {
-    pub audited: bool,
-    pub cleaned: bool,
-    pub snapshot: String,
-    pub restored_note_seen: bool,
-}
-
-pub const MIGRATE_STEPS: [&str; 5] = [
-    "Audit this machine",
-    "Clean up the risks",
-    "Take a snapshot",
-    "Restore on the new machine",
-    "Re-audit the new machine",
-];
+pub use phx_core::migrate::{Migration, STEPS as MIGRATE_STEPS};
 
 pub enum Suspend {
     /// Run `omaphoenix <args>` in the plain terminal.
@@ -142,10 +125,7 @@ impl<'a> State<'a> {
         let audit_store = Store::from_env();
         let accepted = audit_store.accepted();
         let audit = audit_store.runs().into_iter().next();
-        let migration = std::fs::read_to_string(app.state_dir().join("migrate.json"))
-            .ok()
-            .and_then(|t| serde_json::from_str(&t).ok())
-            .unwrap_or_default();
+        let migration = Migration::load(&app.state_dir());
         Self {
             app,
             theme: Theme::load(),
@@ -254,11 +234,7 @@ impl<'a> State<'a> {
     }
 
     fn save_migration(&self) {
-        let dir = self.app.state_dir();
-        let _ = std::fs::create_dir_all(&dir);
-        if let Ok(body) = serde_json::to_vec_pretty(&self.migration) {
-            let _ = std::fs::write(dir.join("migrate.json"), body);
-        }
+        self.migration.save(&self.app.state_dir());
     }
 
     /// Runs `omaphoenix <args>` with output captured into the output pane.
@@ -641,14 +617,7 @@ impl<'a> State<'a> {
 
     /// Steps done so far, from the wizard's saved state.
     pub fn migrate_done(&self) -> [bool; 5] {
-        let m = &self.migration;
-        [
-            m.audited,
-            m.cleaned,
-            !m.snapshot.is_empty(),
-            m.restored_note_seen,
-            false,
-        ]
+        self.migration.done()
     }
 
     fn migrate_key(&mut self, key: KeyEvent) {
@@ -711,40 +680,17 @@ impl<'a> State<'a> {
 
 /// Runs the quick audit and stores it like a Security Audit scan.
 fn audit_now(store: &Store) -> Result<PathBuf, String> {
-    use std::io::Write;
     let ctx = secaudit_core::audit::Ctx::from_env();
-    let host = std::fs::read_to_string("/proc/sys/kernel/hostname")
-        .unwrap_or_default()
-        .trim()
-        .to_owned();
-    let mut meta = secaudit_core::store::Meta {
-        mode: "quick".into(),
-        started: secaudit_core::store::now(),
-        host,
-        user: ctx.user.clone(),
-        kernel: std::fs::read_to_string("/proc/sys/kernel/osrelease")
-            .unwrap_or_default()
-            .trim()
-            .to_owned(),
-        finished: None,
-    };
-    let stamp = phx_core::category::stamp();
-    let dir = store.begin(&stamp, &meta).map_err(|e| e.to_string())?;
-    let report = secaudit_core::audit::run(&ctx, secaudit_core::checks::SECTIONS);
-    let mut f = std::fs::File::create(dir.join("findings.jsonl")).map_err(|e| e.to_string())?;
-    for finding in report.findings() {
-        serde_json::to_writer(&mut f, finding).map_err(|e| e.to_string())?;
-        f.write_all(b"\n").map_err(|e| e.to_string())?;
-    }
-    let lines: Vec<String> = report
-        .findings()
-        .iter()
-        .filter(|x| matches!(x.sev, Severity::Fail | Severity::Warn))
-        .map(|x| format!("[{:?}] {}: {}", x.sev, x.section, x.msg))
-        .collect();
-    let _ = std::fs::write(dir.join("output.txt"), lines.join("\n"));
-    store.finish(&dir, &mut meta).map_err(|e| e.to_string())?;
-    Ok(dir)
+    let host = std::fs::read_to_string("/proc/sys/kernel/hostname").unwrap_or_default();
+    let kernel = std::fs::read_to_string("/proc/sys/kernel/osrelease").unwrap_or_default();
+    store
+        .record_quick_scan(
+            &ctx,
+            host.trim(),
+            kernel.trim(),
+            &phx_core::category::stamp(),
+        )
+        .map_err(|e| e.to_string())
 }
 
 impl State<'_> {

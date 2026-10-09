@@ -120,7 +120,7 @@ fn main() -> ExitCode {
             }
         };
     }
-        let code = match audit_cli(&cli) {
+    let code = match audit_cli(&cli) {
         Ok(failed) if failed => ExitCode::FAILURE,
         Ok(_) => ExitCode::SUCCESS,
         Err(e) => {

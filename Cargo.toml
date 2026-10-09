@@ -1,8 +1,9 @@
 [workspace]
 resolver = "3"
 members = ["crates/*"]
-# Throwaway measurement projects, each its own workspace (see their README).
-exclude = ["spikes"]
+# Throwaway measurement projects, and apps waiting on a decision (apps/: the
+# Slint desktop, Q9/Q10), each its own workspace so CI and cargo-deny skip them.
+exclude = ["spikes", "apps"]
 
 [workspace.package]
 version = "0.0.0"
