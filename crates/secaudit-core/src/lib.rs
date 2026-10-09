@@ -5,9 +5,12 @@
 //! OmaPhoenix crate: it moves to its owner's repository at handover
 //! (ADR-0013).
 //!
-//! Status: the finding contract is in [`contract`]. The ported checks arrive
-//! with issue #5.
+//! - [`contract`]: the finding contract (docs/04, ADR-0016).
+//! - [`audit`]: the engine: context, report, score.
+//! - [`checks`]: report sections, ported from the Bash version (issue #5).
 
+pub mod audit;
+pub mod checks;
 pub mod contract;
 
 pub use contract::{CONTRACT_SCHEMA, ContractError, Finding, Severity, Target};

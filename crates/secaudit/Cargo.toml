@@ -10,6 +10,8 @@ publish.workspace = true
 
 [dependencies]
 clap.workspace = true
+secaudit-core.workspace = true
+serde_json.workspace = true
 
 [lints]
 workspace = true

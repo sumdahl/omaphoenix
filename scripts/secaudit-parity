@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Parity harness (issue #5): runs the Bash and Rust secaudit on this machine
+# and diffs (section, sev, msg) for every section the Rust port has. Rust
+# keeps Bash's messages word for word, so any line here is a real difference.
+#
+# Deliberate differences, normalised before the diff (report to the owner):
+# - Bash's `${1/#$target_home/~}` prints the full home path when
+#   `patsub_replacement` is on (Bash 5.2+ default): the `~` in the
+#   replacement is tilde-expanded. Rust prints `~/…` as intended.
+#
+# Usage: scripts/secaudit-parity [path/to/bash/secaudit]
+set -euo pipefail
+
+bash_secaudit=${1:-$HOME/personal/secaudit/bin/secaudit}
+root=$(cd "$(dirname "$0")/.." && pwd)
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+
+cargo build -q --release -p secaudit --manifest-path "$root/Cargo.toml"
+"$bash_secaudit" --no-color --json "$work/bash.jsonl" >/dev/null || true
+"$root/target/release/secaudit" --no-color --json "$work/rust.jsonl" >/dev/null || true
+
+sections=$(jq -r .section "$work/rust.jsonl" | sort -u)
+key='[.section, .sev, .msg] | @tsv'
+jq -r --arg s "$sections" --arg home "$HOME/" \
+  'select(.section as $x | $s | split("\n") | index($x)) | .msg |= (if startswith($home) then "~/" + .[($home | length):] else . end) | '"$key" \
+  "$work/bash.jsonl" | sort >"$work/bash.tsv"
+jq -r "$key" "$work/rust.jsonl" | sort >"$work/rust.tsv"
+
+echo "Sections compared:"; sed 's/^/  /' <<<"$sections"
+if diff -u --label bash --label rust "$work/bash.tsv" "$work/rust.tsv"; then
+  echo "PARITY: $(wc -l <"$work/rust.tsv") findings identical"
+else
+  echo "DIFFERENT (lines above: - only in Bash, + only in Rust)"
+  exit 1
+fi
