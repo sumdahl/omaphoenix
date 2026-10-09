@@ -21,6 +21,8 @@ How the Rust port of `bin/secaudit` is checked, and what it found in the Bash ve
 
 ## Bash quirks found
 
+Fixes for all seven are proposed in [patches/secaudit-quirks-S1-S7.patch](patches/README.md), for Manish.
+
 | # | Where | What happens | Rust | Proposal |
 |---|---|---|---|---|
 | S1 | every `${1/#$target_home/~}` | Bash 5.2+ has `patsub_replacement` on, which tilde-expands the replacement, so messages show `/home/<user>/…` instead of `~/…` | prints `~/…`; the harness normalises this one difference | quote it: `${1/#"$target_home"/\~}` |

@@ -1,0 +1,110 @@
+--- a/bin/secaudit	2026-10-10 01:33:47.374266997 +0545
++++ b/bin/secaudit	2026-10-10 01:34:10.289755070 +0545
+@@ -153,8 +153,10 @@
+ if [[ -n "$hooks" ]]; then
+   info "Custom pacman hooks (run as root on transactions):"
+   for h in $hooks; do
++    printf '%s -> %s\n' "${h##*/}" "$(grep -m1 '^Exec' "$h" | cut -d= -f2- | xargs)"
++  done | detail
++  for h in $hooks; do
+     exe=$(grep -m1 '^Exec' "$h" | cut -d= -f2- | xargs)
+-    printf '%s -> %s\n' "${h##*/}" "$exe" | detail
+     bin=${exe%% *}
+     [[ -f "$bin" ]] && grep -Eq 'curl|wget' "$bin" && grep -Eq '\|\s*(ba)?sh' "$bin" &&
+       { wn "${h##*/}: $bin pipes a remote download into a shell as root"
+@@ -397,13 +399,13 @@
+     [[ -f "$k" ]] || continue
+     head -c 40 "$k" 2>/dev/null | grep -q 'PRIVATE KEY' || continue
+     p=$(stat -c %a "$k")
+-    [[ "$p" == 600 || "$p" == 400 ]] || { bad "${k/#$target_home/~} perms $p (want 600)"; fix "chmod 600 $(q "$k")"; }
++    [[ "$p" == 600 || "$p" == 400 ]] || { bad "${k/#"$target_home"/\~} perms $p (want 600)"; fix "chmod 600 $(q "$k")"; }
+     if have ssh-keygen && ssh-keygen -y -P "" -f "$k" >/dev/null 2>&1; then
+-      wn "${k/#$target_home/~} has no passphrase"
++      wn "${k/#"$target_home"/\~} has no passphrase"
+       fix "ssh-keygen -p -f $(q "$k")"
+     fi
+     grep -q 'BEGIN RSA PRIVATE KEY\|BEGIN DSA' "$k" &&
+-      { wn "${k/#$target_home/~} uses legacy RSA/DSA PEM format"; fix "ssh-keygen -p -o -f $(q "$k")"; }
++      { wn "${k/#"$target_home"/\~} uses legacy RSA/DSA PEM format"; fix "ssh-keygen -p -o -f $(q "$k")"; }
+   done
+   [[ -f "$ssh_dir/authorized_keys" ]] &&
+     info "authorized_keys has $(grep -cv '^\s*\(#\|$\)' "$ssh_dir/authorized_keys") key(s)"
+@@ -416,7 +418,7 @@
+ [[ "$uid0" == root ]] && ok "Only root has UID 0" || { bad "Multiple UID 0 accounts: $(paste -sd' ' <<<"$uid0")"; hint "Any UID 0 account besides root is a backdoor; investigate, then remove with userdel"; }
+ 
+ if need_root "Empty/locked password check"; then
+-  empty=$(awk -F: '$2==""{print $1}' /etc/shadow)
++  empty=$(awk -F: 'NF>1 && $2==""{print $1}' /etc/shadow)
+   [[ -z "$empty" ]] && ok "No accounts with empty passwords" ||
+     { bad "Accounts with empty passwords: $empty"; fix "$(for u in $empty; do printf 'sudo passwd -l %q; ' "$u"; done)"; }
+   rootpw=$(awk -F: '$1=="root"{print $2}' /etc/shadow)
+@@ -460,10 +462,10 @@
+   info "faillock deny=${dn:-3 (default)}"
+ fi
+ 
+-autologin=$(grep -rhsE '^\s*(User|autologin-user)\s*=' /etc/sddm.conf /etc/sddm.conf.d/ 2>/dev/null | head -1)
+-grep -rqsE -- '--autologin' /etc/systemd/system/getty@*.service.d/ && autologin+=" getty"
++autologin=$(grep -rhsE '^\s*(User|autologin-user)\s*=' /etc/sddm.conf /etc/sddm.conf.d/ 2>/dev/null | head -1 | tr -d ' ')
++grep -rqsE -- '--autologin' /etc/systemd/system/getty@*.service.d/ && autologin+="${autologin:+, }getty"
+ if [[ -n "$autologin" ]]; then
+-  info "Autologin enabled (${autologin// /}) - acceptable only because the LUKS passphrase gates boot"
++  info "Autologin enabled ($autologin) - acceptable only because the LUKS passphrase gates boot"
+ fi
+ 
+ # ---------------------------------------------------------------------------
+@@ -481,7 +483,7 @@
+     ((lock_t <= 600)) && ok "Omarchy idle lock after ${lock_t}s" ||
+       { wn "Omarchy idle lock after ${lock_t}s (consider <= 600)"; hint "Lower .idle.lock in ~/.config/omarchy/shell.json"; }
+   else
+-    wn "No idle lock timeout set in ${shell_conf/#$target_home/~} (.idle.lock)"
++    wn "No idle lock timeout set in ${shell_conf/#"$target_home"/\~} (.idle.lock)"
+     hint "Set .idle.lock to e.g. 300 in ~/.config/omarchy/shell.json"
+   fi
+   systemctl --user -M "$target_user@" is-active -q omarchy-sleep-lock.service 2>/dev/null ||
+@@ -490,7 +492,7 @@
+     { wn "omarchy-sleep-lock.service not active (no lock on suspend)"; fix "systemctl --user enable --now omarchy-sleep-lock.service"; }
+ elif [[ -f "$idle_conf" ]]; then
+   pgrep -x hypridle >/dev/null && ok "hypridle running" || wn "hypridle not running (no automatic lock on idle)"
+-  lock_t=$(awk '/listener/{l=1} l&&/timeout/{t=$3} l&&/on-timeout.*lock/{print t; exit}' "$idle_conf")
++  lock_t=$(awk '/listener/{l=1} l&&/^[[:space:]]*timeout[[:space:]]*=/{t=$3} l&&/on-timeout.*lock/{print t; exit}' "$idle_conf")
+   if [[ -n "$lock_t" ]]; then
+     ((lock_t <= 600)) && ok "Idle lock after ${lock_t}s" || wn "Idle lock after ${lock_t}s (consider <= 600)"
+   else
+@@ -565,7 +567,7 @@
+ for f in "$target_home"/.zshrc "$target_home"/.bashrc "$target_home"/.profile "$target_home"/.zprofile "$target_home"/.bash_profile; do
+   [[ -f "$f" ]] || continue
+   hits=$(grep -nE '(curl|wget)[^|#]*\|\s*(ba|z)?sh|base64 -d.*\|\s*(ba)?sh|/dev/tcp/|\bnc\b.*-e' "$f" 2>/dev/null)
+-  [[ -n "$hits" ]] && { wn "Suspicious remote-exec pattern in ${f/#$target_home/~}:"; detail <<<"$hits"; hint "Make sure you added these lines yourself"; }
++  [[ -n "$hits" ]] && { wn "Suspicious remote-exec pattern in ${f/#"$target_home"/\~}:"; detail <<<"$hits"; hint "Make sure you added these lines yourself"; }
+ done
+ 
+ journal_store=$(grep -hE '^\s*Storage=' /etc/systemd/journald.conf /etc/systemd/journald.conf.d/*.conf 2>/dev/null | tail -1)
+@@ -612,11 +614,11 @@
+ # Report file locations and counts only; never print secret values
+ check_perm() { # file
+   [[ -e "$1" ]] || return
+-  local p; p=$(stat -c %a "$1")
++  local p; p=$(stat -Lc %a "$1")
+   if [[ "$p" =~ [1-7]$ || "$p" =~ [4-7].$ ]]; then
+-    bad "${1/#$target_home/~} perms $p (readable by others, want 600)"
++    bad "${1/#"$target_home"/\~} perms $p (readable by others, want 600)"
+     [[ -d "$1" ]] && fix "chmod 700 $(q "$1")" || fix "chmod 600 $(q "$1")"
+-  else ok "${1/#$target_home/~} perms $p"; fi
++  else ok "${1/#"$target_home"/\~} perms $p"; fi
+ }
+ for f in .aws/credentials .kube/config .docker/config.json .netrc .git-credentials .pgpass \
+   .config/gh/hosts.yml .npmrc .pypirc .config/rclone/rclone.conf .vault-token .terraform.d/credentials.tfrc.json \
+@@ -636,10 +638,11 @@
+ secret_re='(AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{40,}|glpat-[A-Za-z0-9_-]{20}|sk-ant-[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9]{40,}|xox[baprs]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|(password|passwd|secret|token)=[^ ]{6,})'
+ for h in "$target_home"/.zsh_history "$target_home"/.bash_history "$target_home"/.local/share/fish/fish_history; do
+   [[ -f "$h" ]] || continue
++  [[ -r "$h" ]] || { skp "${h/#"$target_home"/\~}: can't read it"; continue; }
+   n=$(grep -aEc "$secret_re" "$h" 2>/dev/null)
+-  ((n > 0)) && { wn "${h/#$target_home/~}: $n line(s) look like secrets/tokens (values not shown)"
++  ((n > 0)) && { wn "${h/#"$target_home"/\~}: $n line(s) look like secrets/tokens (values not shown)"
+     hint "Rotate those credentials, then delete the lines; in zsh, setopt HIST_IGNORE_SPACE and prefix secret commands with a space"; } ||
+-    ok "${h/#$target_home/~}: no obvious secrets"
++    ok "${h/#"$target_home"/\~}: no obvious secrets"
+ done
+ 
+ info "Scanning home for .env / key files readable by others..."
