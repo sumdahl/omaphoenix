@@ -23,7 +23,7 @@ cargo build -q --release -p secaudit --manifest-path "$root/Cargo.toml"
 sections=$(jq -r .section "$work/rust.jsonl" | sort -u)
 key='[.section, .sev, .msg] | @tsv'
 jq -r --arg s "$sections" --arg home "$HOME/" \
-  'select(.section as $x | $s | split("\n") | index($x)) | .msg |= (if startswith($home) then "~/" + .[($home | length):] else . end) | '"$key" \
+  'select(.section as $x | $s | split("\n") | index($x)) | .msg |= (split($home) | join("~/")) | '"$key" \
   "$work/bash.jsonl" | sort >"$work/bash.tsv"
 jq -r "$key" "$work/rust.jsonl" | sort >"$work/rust.tsv"
 

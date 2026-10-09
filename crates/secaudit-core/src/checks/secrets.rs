@@ -9,7 +9,7 @@ use std::sync::LazyLock;
 
 use regex::bytes::Regex;
 
-use crate::audit::{Ctx, Report, Section, shell_quote};
+use crate::audit::{Ctx, Report, Section, shell_quote, walk};
 
 pub(super) const SECTION: Section = Section {
     name: "Secrets & credentials in home",
@@ -212,49 +212,30 @@ const PRUNE_NAMES: &[&str] = &["site-packages", "node_modules", ".git", "testdat
 /// [`MAX_LOOSE`], without crossing into other filesystems (`find -xdev`).
 fn loose_files(home: &Path) -> Vec<PathBuf> {
     let prune: Vec<PathBuf> = PRUNE_PATHS.iter().map(|p| home.join(p)).collect();
-    let Ok(root) = fs::symlink_metadata(home) else {
-        return Vec::new();
-    };
     let mut found = Vec::new();
-    let mut stack = vec![home.to_path_buf()];
-    while let Some(dir) = stack.pop() {
-        let Ok(entries) = fs::read_dir(&dir) else {
-            continue;
-        };
-        let mut subdirs = Vec::new();
-        for entry in entries.flatten() {
-            let path = entry.path();
-            let Ok(meta) = fs::symlink_metadata(&path) else {
-                continue;
-            };
-            let name = entry.file_name();
-            let name = name.to_string_lossy();
-            if meta.is_dir() {
-                if meta.dev() == root.dev()
-                    && !PRUNE_NAMES.contains(&name.as_ref())
-                    && !prune.contains(&path)
-                {
-                    subdirs.push(path);
-                }
-            } else if meta.is_file() && meta.mode() & 0o044 != 0 && secret_like(&name) {
-                found.push(path);
-                if found.len() == MAX_LOOSE {
-                    return found;
-                }
+    walk(
+        home,
+        |dir, _| {
+            let name = dir.file_name().map(|n| n.to_string_lossy());
+            !name.is_some_and(|n| PRUNE_NAMES.contains(&n.as_ref()))
+                && !prune.iter().any(|p| p == dir)
+        },
+        |path, meta| {
+            let name = path
+                .file_name()
+                .map(|n| n.to_string_lossy())
+                .unwrap_or_default();
+            if meta.is_file() && meta.mode() & 0o044 != 0 && secret_like(&name) {
+                found.push(path.to_path_buf());
             }
-        }
-        // Depth-first in directory order, like find.
-        stack.extend(subdirs.into_iter().rev());
-    }
+            found.len() < MAX_LOOSE
+        },
+    );
     found
 }
 
 /// Names Bash's `find` matches: `.env`, `.env.*`, `*.pem`, `*.key`, `id_*`
 /// (not `*.pub`), `*.kdbx`, `*.ovpn`, `kubeconfig*`, never `*.example` or `*.sample`.
-#[allow(
-    clippy::case_sensitive_file_extension_comparisons,
-    reason = "find -name is case-sensitive; parity with Bash"
-)]
 fn secret_like(name: &str) -> bool {
     let matched = name == ".env"
         || name.starts_with(".env.")
@@ -294,6 +275,14 @@ mod tests {
 
     fn tmp() -> tempfile::TempDir {
         tempfile::tempdir().unwrap_or_else(|e| unreachable!("tempdir: {e}"))
+    }
+
+    #[test]
+    fn pattern_compiles() {
+        assert!(
+            super::SECRET_RE.is_some(),
+            "a bad pattern would skip the check silently"
+        );
     }
 
     #[test]

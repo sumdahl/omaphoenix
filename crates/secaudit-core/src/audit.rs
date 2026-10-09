@@ -3,10 +3,93 @@
 //! Each report section is a plain function over [`Ctx`] that records
 //! findings in a [`Report`], like the Bash helpers `ok`/`wn`/`bad`/`info`/`skp`.
 
-use std::fs;
+use std::fs::{self, Metadata};
+use std::io::Read;
+use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+use std::{env, thread};
 
 use crate::contract::{CONTRACT_SCHEMA, Finding, Severity, Target};
+
+/// Output of an external command.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct CmdOut {
+    /// Exited with status 0.
+    pub success: bool,
+    /// Standard output, lossily decoded, at most [`MAX_OUTPUT`] bytes.
+    pub stdout: String,
+}
+
+impl CmdOut {
+    /// A result, for fake runners in tests.
+    #[must_use]
+    pub fn new(success: bool, stdout: &str) -> Self {
+        Self {
+            success,
+            stdout: stdout.to_owned(),
+        }
+    }
+}
+
+/// Runs external commands. A seam so tests can fake the system.
+pub trait CommandRunner: Send + Sync + std::fmt::Debug {
+    /// Runs `argv` (no shell). `None` if it can't start or times out.
+    fn run(&self, argv: &[&str]) -> Option<CmdOut>;
+}
+
+/// Longest any audit command may run.
+pub const TIMEOUT: Duration = Duration::from_secs(30);
+
+/// Most stdout kept from one command.
+pub const MAX_OUTPUT: u64 = 4 * 1024 * 1024;
+
+/// The real system: `std::process::Command` with `LC_ALL=C`, stdin closed,
+/// stderr discarded, and a [`TIMEOUT`].
+#[derive(Debug, Default)]
+pub struct System;
+
+impl CommandRunner for System {
+    fn run(&self, argv: &[&str]) -> Option<CmdOut> {
+        let (program, rest) = argv.split_first()?;
+        let mut child = Command::new(program)
+            .args(rest)
+            .env("LC_ALL", "C")
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .spawn()
+            .ok()?;
+        let mut out = child.stdout.take()?;
+        let reader = thread::spawn(move || {
+            let mut buf = Vec::new();
+            let _ = out.by_ref().take(MAX_OUTPUT).read_to_end(&mut buf);
+            buf
+        });
+        let deadline = Instant::now() + TIMEOUT;
+        // ponytail: kills the command, not its children; none of the audit's
+        // commands fork. Use a process group if one ever does.
+        let status = loop {
+            match child.try_wait() {
+                Ok(Some(status)) => break Some(status),
+                Ok(None) if Instant::now() < deadline => thread::sleep(Duration::from_millis(2)),
+                _ => {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    break None;
+                }
+            }
+        };
+        let stdout = reader.join().ok()?;
+        Some(CmdOut {
+            success: status?.success(),
+            stdout: String::from_utf8_lossy(&stdout).into_owned(),
+        })
+    }
+}
 
 /// Who and what is being audited.
 #[derive(Clone, Debug)]
@@ -14,32 +97,98 @@ use crate::contract::{CONTRACT_SCHEMA, Finding, Severity, Target};
 pub struct Ctx {
     /// The audited user's home. Under sudo this is the invoking user's.
     pub home: PathBuf,
+    /// The audited user's name.
+    pub user: String,
     /// Running as root, so root-only checks run instead of being skipped.
     pub is_root: bool,
+    /// `--deep`: slower, wider scans.
+    pub deep: bool,
+    /// `$PATH` of the audit, whose directories are checked.
+    pub path_env: String,
+    /// Where `/` is; tests point it at a fake system tree.
+    pub root: PathBuf,
+    /// How external commands run.
+    pub cmd: Arc<dyn CommandRunner>,
 }
 
 impl Ctx {
-    /// The real machine: `SUDO_USER`'s home under sudo, else `$HOME`.
+    /// The real machine: `SUDO_USER`'s home under sudo, else `$USER`'s `$HOME`.
     #[must_use]
     pub fn from_env() -> Self {
-        let home = std::env::var("SUDO_USER")
-            .ok()
+        let sudo_user = env::var("SUDO_USER").ok();
+        let user = sudo_user
+            .clone()
+            .or_else(|| env::var("USER").ok())
+            .unwrap_or_default();
+        let home = sudo_user
             .and_then(|u| passwd_home(&u))
-            .or_else(|| std::env::var_os("HOME").map(PathBuf::from))
+            .or_else(|| env::var_os("HOME").map(PathBuf::from))
             .unwrap_or_default();
         Self {
             home,
+            user,
             is_root: effective_uid() == Some(0),
+            ..Self::for_home("")
         }
     }
 
-    /// An audit of `home`, as a normal user. For tests and `--home`.
+    /// An audit of `home` as a normal user on the real system. For `--home` and tests.
     #[must_use]
     pub fn for_home(home: impl Into<PathBuf>) -> Self {
         Self {
             home: home.into(),
+            user: env::var("USER").unwrap_or_default(),
             is_root: false,
+            deep: false,
+            path_env: env::var("PATH").unwrap_or_default(),
+            root: PathBuf::from("/"),
+            cmd: Arc::new(System),
         }
+    }
+
+    /// Runs a command; a failure to start counts as an unsuccessful, silent run.
+    #[must_use]
+    pub fn run(&self, argv: &[&str]) -> CmdOut {
+        self.cmd.run(argv).unwrap_or_default()
+    }
+
+    /// Where absolute system path `abs` (e.g. `/etc/shadow`) is under [`Ctx::root`].
+    #[must_use]
+    pub fn sys(&self, abs: &str) -> PathBuf {
+        self.root.join(abs.trim_start_matches('/'))
+    }
+
+    /// The system path as the report prints it, i.e. without [`Ctx::root`].
+    #[must_use]
+    pub fn unsys(&self, path: &Path) -> String {
+        match path.strip_prefix(&self.root) {
+            Ok(rest) => format!("/{}", rest.display()),
+            Err(_) => path.display().to_string(),
+        }
+    }
+
+    /// Lines of a system text file; empty if missing or unreadable.
+    #[must_use]
+    pub fn read_lines(&self, abs: &str) -> Vec<String> {
+        read_text(&self.sys(abs))
+            .lines()
+            .map(str::to_owned)
+            .collect()
+    }
+
+    /// Name for a uid or gid from `/etc/passwd` or `/etc/group`, or `UNKNOWN` as `stat` prints.
+    #[must_use]
+    pub fn id_name(&self, db: &str, id: u32) -> String {
+        let id = id.to_string();
+        self.read_lines(db)
+            .iter()
+            .find_map(|l| {
+                let f: Vec<&str> = l.split(':').collect();
+                (f.get(2) == Some(&id.as_str()))
+                    .then(|| f.first().map(|n| (*n).to_owned()))
+                    .flatten()
+            })
+            .unwrap_or_else(|| "UNKNOWN".to_owned())
     }
 
     /// `path` with the home prefix shown as `~`, as the report prints it.
@@ -61,6 +210,57 @@ fn passwd_home(user: &str) -> Option<PathBuf> {
             .then(|| f.get(5).map(PathBuf::from))
             .flatten()
     })
+}
+
+/// Small config files are read whole, up to this size.
+const MAX_TEXT: u64 = 1024 * 1024;
+
+/// A small text file, at most [`MAX_TEXT`] bytes; empty if unreadable.
+#[must_use]
+pub fn read_text(path: &Path) -> String {
+    let mut buf = Vec::new();
+    let _ = fs::File::open(path).and_then(|f| f.take(MAX_TEXT).read_to_end(&mut buf));
+    String::from_utf8_lossy(&buf).into_owned()
+}
+
+/// Walks `start` depth-first in directory order, exactly as `find -xdev`
+/// does: `visit` sees `start` and every entry below it (return `false` to
+/// stop the walk); `enter` decides whether to descend into a directory on
+/// the same filesystem as `start`. Unreadable directories are skipped.
+pub fn walk(
+    start: &Path,
+    mut enter: impl FnMut(&Path, &Metadata) -> bool,
+    mut visit: impl FnMut(&Path, &Metadata) -> bool,
+) {
+    let Ok(meta) = fs::symlink_metadata(start) else {
+        return;
+    };
+    if !visit(start, &meta) || !meta.is_dir() || !enter(start, &meta) {
+        return;
+    }
+    let dev = meta.dev();
+    let mut stack: Vec<fs::ReadDir> = fs::read_dir(start).into_iter().collect();
+    while let Some(dir) = stack.last_mut() {
+        let Some(entry) = dir.next() else {
+            stack.pop();
+            continue;
+        };
+        let Ok(entry) = entry else { continue };
+        let path = entry.path();
+        let Ok(meta) = fs::symlink_metadata(&path) else {
+            continue;
+        };
+        if !visit(&path, &meta) {
+            return;
+        }
+        if meta.is_dir()
+            && meta.dev() == dev
+            && enter(&path, &meta)
+            && let Ok(rd) = fs::read_dir(&path)
+        {
+            stack.push(rd);
+        }
+    }
 }
 
 /// Effective uid from `/proc/self/status`, without `unsafe` libc calls.
@@ -210,8 +410,55 @@ pub fn shell_quote(s: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{Ctx, Report, shell_quote};
+    use super::{Ctx, Report, shell_quote, walk};
+    use std::fs;
     use std::path::Path;
+
+    #[test]
+    fn walk_is_preorder_and_stops_on_request() {
+        let t = tempfile::tempdir().unwrap_or_else(|e| unreachable!("{e}"));
+        for d in ["a/b", "c"] {
+            fs::create_dir_all(t.path().join(d)).ok();
+        }
+        fs::write(t.path().join("a/b/f"), "").ok();
+        let mut seen = Vec::new();
+        walk(
+            t.path(),
+            |_, _| true,
+            |p, _| {
+                seen.push(
+                    p.strip_prefix(t.path())
+                        .map(|r| r.display().to_string())
+                        .unwrap_or_default(),
+                );
+                true
+            },
+        );
+        let pos = |s: &str| seen.iter().position(|x| x == s);
+        assert_eq!(seen.len(), 5, "{seen:?}");
+        assert!(
+            pos("a") < pos("a/b") && pos("a/b") < pos("a/b/f"),
+            "a's subtree right after a: {seen:?}"
+        );
+        let mut n = 0;
+        walk(
+            t.path(),
+            |_, _| true,
+            |_, _| {
+                n += 1;
+                n < 2
+            },
+        );
+        assert_eq!(n, 2);
+    }
+
+    #[test]
+    fn sys_paths_map_under_root_and_back() {
+        let mut ctx = Ctx::for_home("/home/u");
+        ctx.root = "/tmp/fake".into();
+        assert_eq!(ctx.sys("/etc/shadow"), Path::new("/tmp/fake/etc/shadow"));
+        assert_eq!(ctx.unsys(Path::new("/tmp/fake/etc/shadow")), "/etc/shadow");
+    }
 
     #[test]
     fn score_and_grade_follow_bash() {
