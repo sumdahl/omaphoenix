@@ -106,19 +106,42 @@
   - semver, changelog via `git-cliff` or similar
   - the snapshot format and finding contract carry their own versions (see docs/06 compatibility promises)
 
-## 9. Performance
+## 9. Memory: a hard requirement
+
+The user's standing requirement: **"optimize memory usage, very efficient."** Budgets are pass/fail, like tests, and are measured on a real Omarchy machine (the reference: Dell Latitude 7430, ~235 packages, 41 plugins, 57 themes).
+
+| Path | Budget (peak RSS) | Go baseline, 2026-10-09 |
+|---|---|---|
+| `snapshot` (full machine) | **≤ 48 MB** | 126 MB |
+| `restore --dry-run` | **≤ 48 MB** | 142 MB |
+| `doctor`, `list`, `status` | **≤ 16 MB** | 12–16 MB |
+| TUI, idle | **≤ 24 MB** | n/a |
+| Timer snapshot (background) | **≤ 48 MB**, `Nice=19`, idle I/O | 126 MB |
+| Desktop app, idle (all processes, PSS) | **target ≤ 150 MB, ceiling 250 MB** | Tauri spike ≈ 400 MB |
+
+**Rules that get there:**
+- **Stream, never slurp.** Files are hashed and compared in fixed-size chunks (`BufReader`, 64 KiB), never `fs::read` for content of unknown size. The secret scanner works line by line with a bounded line length. JSONL is parsed one line at a time.
+- **Compare by hash and size first.** Two files differ if sizes differ; otherwise compare streamed hashes. Never hold both contents.
+- **Iterate trees lazily** (`walkdir`-style iterators), and don't collect whole trees into a `Vec`.
+- **Ask, don't dump.** Prefer `pacman -Qo <path>` batches over loading `pacman -Qlq` (hundreds of thousands of paths) into a set. If a full set is needed, hold paths as interned, sorted `Box<str>` and binary-search them, not `HashSet<String>`.
+- **Bounded concurrency.** Parallel work uses a fixed pool; no unbounded spawning that multiplies buffers.
+- **Borrow over clone; `Cow`** where a value is usually unchanged; `Box<str>` / `Arc<str>` for long-lived immutable strings.
+- **No hidden caches.** Any cache has a size bound and a reason in a comment.
+- **Measure every PR that touches these paths:** a `scripts/peak-rss` check runs the CLI paths against a fixture home and fails over budget. `dhat` heap profiling for investigations.
+
+## 10. Performance
 - **Measure before optimising,** with `criterion` benches for scans that touch thousands of files.
 - **Budgets:**
   - TUI starts in < 100 ms and never blocks on a terminal query (DESIGN.md §12)
   - snapshot of a typical machine in < 20 s (Go today: ~20 s)
 - **Release profile:** `lto = "thin"`, `codegen-units = 1`, `strip = true`, `panic = "abort"` only in binaries.
 
-## 10. Release and supply chain
+## 11. Release and supply chain
 - **Builds:** static `musl` for amd64/arm64 (`cargo-dist` or the CI matrix), reproducible build flags, SHA256SUMS, and GitHub artifact attestations, as the Go release does.
 - **Dependency hygiene:** `cargo-audit` in CI on a schedule, not only on push.
 - **Installers:** `install.sh` keeps its rules: everything in `main()`, verify before install, refuse on mismatch.
 
-## 11. Review checklist (every PR)
+## 12. Review checklist (every PR)
 - [ ] fmt, clippy (pedantic, `-D warnings`), tests, deny and docs pass.
 - [ ] No `unsafe`, `unwrap`, `panic!` or shell strings. Secrets wrapped and never logged.
 - [ ] Outside input parsed into types at the edge, with bounds and traversal checks.
@@ -126,3 +149,4 @@
 - [ ] Behaviour proven by a test (unit/property/snapshot/integration), and the VM rehearsal for restore changes.
 - [ ] Public API documented; errors actionable and in DESIGN.md voice.
 - [ ] No new dependency without the justification in §7.
+- [ ] Memory budget (§9) still met for any touched path; no whole-file reads of unknown-size content.

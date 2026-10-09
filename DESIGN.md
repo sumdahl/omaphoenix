@@ -196,7 +196,8 @@ These are the only places motion is allowed to be noticed.
 | **Restore progress** | Categories are a vertical stack of cards. Each card's progress fills with the *real* fraction; a finished card settles with `spring.snap` and its icon becomes a check. No indeterminate spinners for work that has a count. |
 | **Migration complete** | The ember appears (`spring.ember`), the before/after scores sit side by side, and the copy reads: "Everything came back. Nothing risky came with it." This is the one exclamation point we allow, if the copy wants it. |
 
-### 6.5 Performance budget
+### 6.5 Performance and memory budget
+- **Memory (hard requirement):** the desktop app idles at **≤ 150 MB** total across all its processes (PSS), with a ceiling of **250 MB**; the TUI at **≤ 24 MB**. Details and the CLI budgets are in RUST.md §9. A stack that can't meet this doesn't ship, however good it looks.
 - **Frame rate:** 120 fps on 120 Hz displays, never below 60. Only transform and opacity are animated; never layout properties per frame.
 - **Responsiveness:** first paint in under 300 ms, and input-to-feedback within one frame (8–16 ms). Anything slower than 100 ms shows progress in place.
 
