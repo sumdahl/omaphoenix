@@ -1,0 +1,15 @@
+[package]
+name = "floor-gpui"
+version = "0.0.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+gpui = "0.2"
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
+
+[patch.crates-io]
+xattr = { path = "vendor/xattr" }

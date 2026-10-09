@@ -1,0 +1,12 @@
+[package]
+name = "floor-slint"
+version = "0.0.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+slint = "1.18"
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true

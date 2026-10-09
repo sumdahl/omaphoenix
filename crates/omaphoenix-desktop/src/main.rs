@@ -13,7 +13,7 @@ use std::time::{Duration, SystemTime};
 use std::{env, fs, thread};
 
 use serde::Serialize;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 /// Design tokens (DESIGN.md §5.1) resolved from Omarchy's `colors.toml`.
 #[derive(Serialize, Clone, Debug, PartialEq, Eq)]
@@ -168,6 +168,37 @@ fn watch_theme(app: AppHandle) {
     });
 }
 
+/// Trims WebKit to what a single-document app needs (ADR-0017 memory budget):
+/// the leanest cache profile, no back/forward page cache. Hardware
+/// acceleration is left on unless `OMAPHOENIX_SPIKE_NO_GPU` is set, because
+/// turning it off saves memory but may cost frames; the bench decides.
+#[cfg(target_os = "linux")]
+fn tune_webview(app: &tauri::App) {
+    use webkit2gtk::{
+        CacheModel, HardwareAccelerationPolicy, SettingsExt, WebContextExt, WebViewExt,
+    };
+    let Some(window) = app.get_webview_window("main") else {
+        return;
+    };
+    let no_gpu = env::var_os("OMAPHOENIX_SPIKE_NO_GPU").is_some();
+    let untuned = env::var_os("OMAPHOENIX_SPIKE_UNTUNED").is_some();
+    let _ = window.with_webview(move |wv| {
+        if untuned {
+            return;
+        }
+        let view = wv.inner();
+        if let Some(context) = view.context() {
+            context.set_cache_model(CacheModel::DocumentViewer);
+        }
+        if let Some(settings) = WebViewExt::settings(&view) {
+            settings.set_enable_page_cache(false);
+            if no_gpu {
+                settings.set_hardware_acceleration_policy(HardwareAccelerationPolicy::Never);
+            }
+        }
+    });
+}
+
 fn main() {
     let result = tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
@@ -177,6 +208,8 @@ fn main() {
             bench_report
         ])
         .setup(|app| {
+            #[cfg(target_os = "linux")]
+            tune_webview(app);
             watch_theme(app.handle().clone());
             Ok(())
         })

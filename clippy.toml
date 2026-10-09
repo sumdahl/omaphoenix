@@ -1,2 +1,2 @@
 # Product names are prose, not code identifiers (clippy::doc_markdown).
-doc-valid-idents = ["OmaPhoenix", "Omarchy", ".."]
+doc-valid-idents = ["OmaPhoenix", "Omarchy", "WebKit", "WebKitGTK", ".."]

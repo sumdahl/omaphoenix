@@ -1,6 +1,8 @@
 [workspace]
 resolver = "3"
 members = ["crates/*"]
+# Throwaway measurement projects, each its own workspace (see their README).
+exclude = ["spikes"]
 
 [workspace.package]
 version = "0.0.0"

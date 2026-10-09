@@ -1,0 +1,12 @@
+[package]
+name = "floor-iced"
+version = "0.0.0"
+edition = "2024"
+publish = false
+[workspace]
+[dependencies]
+iced = "0.14"
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true

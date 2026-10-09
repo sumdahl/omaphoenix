@@ -19,7 +19,7 @@
 | Reduced motion (§6.1 law 6) | `hyprctl animations:enabled` + `prefers-reduced-motion` → springs settle instantly, fades ≤ 120 ms | ✅ implemented; not bench-measured |
 | Screen reader / AT-SPI (§9) | Buttons named ("Pulse", "Take snapshot"), shortcuts via `aria-keyshortcuts` (not read into names), 3 headings, score as a progress bar with value, landmarks, list items, live region | ✅ 5/5 checks |
 | Startup and size | Release binary 6.2 MB; UI JS 52 KB (20 KB gzip) | ✅ |
-| **Memory** | **≈ 400 MB** (app + WebKit network + web processes, PSS) for an idle window | ❌ heavy for a utility |
+| **Memory** | **234 MB** idle PSS: app 80 + WebKit web process 125 + network process 30 (`scripts/spike-mem.py`). WebKit knobs (`WEBKIT_DISABLE_COMPOSITING_MODE` or `…_DMABUF_RENDERER`) give 211 MB, with unmeasured cost to animation | ⚠ under the 250 MB ceiling, over the 150 MB target (ADR-0017) |
 | Supply chain (RUST.md §7) | Clean after work. Upgrading fixed 2 vulnerabilities (`quick-xml`, `time`), which forced MSRV 1.88. MPL-2.0 (Servo `cssparser`) allowed with a reason. **6 unmaintained-crate notices from Tauri's Linux stack**: gtk-rs 0.18 GTK3 bindings (end of life upstream) and `unic-*` via `urlpattern` | ⚠ long-term risk |
 
 ## What we learned building it
@@ -33,7 +33,9 @@
 
 ## Recommendation for Q9 (#11)
 
-**Tauri 2 meets DESIGN.md's experience requirements today**: smooth, interruptible motion, live theming, and real accessibility. Its costs are **≈ 400 MB of memory** and **dependence on end-of-life GTK3 bindings on Linux**.
+**Tauri 2 meets DESIGN.md's experience requirements today**: smooth, interruptible motion, live theming, and real accessibility. Its costs are **234 MB idle memory** (over the 150 MB target, under the 250 MB ceiling) and **dependence on end-of-life GTK3 bindings on Linux**.
+
+> **Correction (same day):** an earlier version of this doc said ≈ 400 MB. That came from a shell loop that listed WebKit's child processes more than once. Measured per process with `scripts/spike-mem.py`, the figure is 234 MB.
 
 **Proposal:**
 1. **Keep Tauri 2 as the desktop stack** for the first release, because it's the only option that met every UX and accessibility requirement in this spike.
@@ -42,3 +44,18 @@
 4. **Track Tauri's GTK4/WebKitGTK 6 migration;** the `deny.toml` ignores are tied to it.
 
 The final call is the owners' (Q9 is "decision needed").
+
+## Native floor tests (issue #19, 2026-10-09)
+
+Same minimal window in each native candidate (`spikes/gui-floor`), with accessibility enabled as it would be for a screen-reader user:
+
+| Toolkit | Idle PSS | On AT-SPI | Button named | Text exposed | Meets ADR-0017 + DESIGN.md §9 |
+|---|---|---|---|---|---|
+| **Slint 1.18** | **46 MB** | ✅ | ✅ | ✅ | ✅ |
+| iced 0.14 | 46 MB | ❌ | ❌ | ❌ | ❌ no accessibility |
+| GPUI 0.2.2 | 22 MB | ❌ | ❌ | ❌ | ❌ no accessibility; published crate needed a dependency patch to build |
+| Tauri 2 (spike above) | 224 MB | ✅ | ✅ | ✅ | ❌ over the 150 MB target |
+
+**Updated recommendation for Q9:** Slint is the only candidate that meets both hard requirements.
+
+Before deciding, a **full Slint spike** must prove DESIGN.md §6: interruptible springs with velocity, driven from Rust; frame pacing; live theme; the Omarchy font. It uses the same two screens and the same bench as the Tauri spike. Slint's built-in `animate` keeps position on interruption but not velocity, so the spring engine runs in Rust and writes properties per frame.

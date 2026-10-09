@@ -4,3 +4,4 @@
 /ui/desktop/node_modules/
 /ui/desktop/dist/
 /crates/omaphoenix-desktop/gen/
+/spikes/*/*/target/

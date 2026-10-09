@@ -2119,6 +2119,7 @@ dependencies = [
  "tauri",
  "tauri-build",
  "toml 0.9.12+spec-1.1.0",
+ "webkit2gtk",
 ]
 
 [[package]]
