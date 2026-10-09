@@ -10,11 +10,14 @@
 use crate::audit::Section;
 
 mod boot;
+mod containers;
 mod filesystem;
 mod firewall;
 mod kernel;
 mod network;
 mod packages;
+mod rootkit;
+mod screen_lock;
 mod secrets;
 mod services;
 mod ssh;
@@ -29,9 +32,12 @@ pub const SECTIONS: &[Section] = &[
     network::SECTION,
     ssh::SECTION,
     users::SECTION,
+    screen_lock::SECTION,
     filesystem::SECTION,
     services::SECTION,
+    containers::SECTION,
     secrets::SECTION,
+    rootkit::SECTION,
 ];
 
 /// A fake machine for section tests: a throwaway system root and home, and

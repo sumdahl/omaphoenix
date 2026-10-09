@@ -8,9 +8,11 @@
 //! - [`contract`]: the finding contract (docs/04, ADR-0016).
 //! - [`audit`]: the engine: context, report, score.
 //! - [`checks`]: report sections, ported from the Bash version (issue #5).
+//! - [`store`]: scan history and accepted risks, shared with the Python TUI.
 
 pub mod audit;
 pub mod checks;
 pub mod contract;
+pub mod store;
 
 pub use contract::{CONTRACT_SCHEMA, ContractError, Finding, Severity, Target};

@@ -414,10 +414,32 @@ pub struct Section {
 /// Runs `sections` in order.
 #[must_use]
 pub fn run(ctx: &Ctx, sections: &[Section]) -> Report {
+    run_with(ctx, sections, |_| {})
+}
+
+/// Progress of a run, for front ends that stream the report.
+#[derive(Debug)]
+#[non_exhaustive]
+pub enum Progress<'a> {
+    /// A section is starting.
+    Start(&'a str),
+    /// A section finished with these findings.
+    Done(&'a str, &'a [Finding]),
+}
+
+/// Runs `sections` in order, reporting each section's start and findings,
+/// so the report streams like the Bash version's.
+pub fn run_with(ctx: &Ctx, sections: &[Section], mut progress: impl FnMut(Progress<'_>)) -> Report {
     let mut report = Report::default();
     for s in sections {
+        progress(Progress::Start(s.name));
+        let start = report.findings.len();
         report.section(s.name);
         (s.run)(ctx, &mut report);
+        progress(Progress::Done(
+            s.name,
+            report.findings.get(start..).unwrap_or_default(),
+        ));
     }
     report
 }

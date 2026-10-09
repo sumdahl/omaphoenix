@@ -15,7 +15,7 @@ pub const CONTRACT_SCHEMA: u32 = 1;
 pub const MAX_LINE: usize = 64 * 1024;
 
 /// How bad a finding is.
-#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[serde(rename_all = "lowercase")]
 #[non_exhaustive]
 pub enum Severity {
