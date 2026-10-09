@@ -120,13 +120,28 @@ fn main() -> ExitCode {
             }
         };
     }
-    match audit_cli(&cli) {
+        let code = match audit_cli(&cli) {
         Ok(failed) if failed => ExitCode::FAILURE,
         Ok(_) => ExitCode::SUCCESS,
         Err(e) => {
             let _ = writeln!(io::stderr(), "secaudit: {e}");
             ExitCode::from(2)
         }
+    };
+    report_hwm();
+    code
+}
+
+/// With `SECAUDIT_REPORT_HWM` set, prints this process's own peak RSS
+/// (`VmHWM`) to stderr, for `scripts/peak-rss`: wait4's figure also counts
+/// children such as `checkupdates`.
+fn report_hwm() {
+    if std::env::var_os("SECAUDIT_REPORT_HWM").is_none() {
+        return;
+    }
+    let status = std::fs::read_to_string("/proc/self/status").unwrap_or_default();
+    if let Some(hwm) = status.lines().find(|l| l.starts_with("VmHWM:")) {
+        let _ = writeln!(io::stderr(), "secaudit {hwm}");
     }
 }
 

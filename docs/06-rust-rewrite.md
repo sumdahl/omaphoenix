@@ -30,20 +30,18 @@ Both apps follow [DESIGN.md](../DESIGN.md) and [RUST.md](../RUST.md). The standa
 ## Workspace
 
 ```
-omaphoenix/                    (new repo, or a rewrite branch: decision in 07)
-├─ Cargo.toml                  workspace
+omaphoenix-secaudit/            (this repo; built 2026-10-10, ADR-0018)
+├─ Cargo.toml                   workspace
 ├─ crates/
-│  ├─ phx-core/                snapshot/restore orchestration, no UI   ← internal/core
-│  ├─ phx-category/            one module per category                 ← internal/category
-│  ├─ phx-store/               git-backed snapshot store               ← internal/store
-│  ├─ secaudit-core/           audit engine + contract (→ Manish)      ← secaudit bin/secaudit
-│  ├─ secaudit/                standalone Security Audit app (→ Manish)
-│  ├─ phx-contract/            Manifest, Selection types               ← the JSON contracts
-│  │                           (Finding lives in secaudit-core, which can't depend on phx-*)
-│  ├─ phx-tui/                 ratatui front end                       ← internal/tui + secaudit-tui
-│  └─ phx-cli/                 clap binary: `omaphoenix`, `omaphoenix audit`
-├─ tests/fixtures/             JSON fixtures produced by the Go/Bash versions (parity)
-└─ scripts/vm/                 same VM harness, pointed at the Rust binary
+│  ├─ phx-contract/             Manifest, Selection, Go path.Match port   ← the on-disk contracts
+│  ├─ phx-core/                 engine, one module per Go package:        ← internal/{sys,store,category,core,schedule}
+│  │                            sys, store, category/*, app, doctor, undo, schedule, gate
+│  ├─ omaphoenix/               binary: CLI (Go's commands) + TUI         ← cmd/omaphoenix + internal/tui
+│  ├─ omaphoenix-desktop/       desktop app (spike; Slint chosen by measurements, Q9)
+│  ├─ secaudit-core/            audit engine + contract + store (→ Manish) ← bin/secaudit
+│  └─ secaudit/                 binary: CLI + TUI (→ Manish)              ← bin/secaudit, secaudit-tui
+├─ tests/fixtures/              behaviour captured from the Go and Bash versions
+└─ scripts/                     secaudit-parity, omaphoenix-parity, peak-rss
 ```
 
 ## Crate choices

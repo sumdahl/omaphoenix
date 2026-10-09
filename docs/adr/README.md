@@ -21,3 +21,4 @@ One file per decision. Records are never edited after acceptance, only **superse
 | [0015](0015-manish-agrees-license-mit-or-apache.md) | Manish agrees to the rewrite; dual MIT OR Apache-2.0 | Accepted |
 | [0016](0016-finding-contract-v1-adopted.md) | Finding contract v1 adopted as proposed | Accepted |
 | [0017](0017-memory-budgets-are-binding.md) | Memory budgets are binding | Accepted |
+| [0018](0018-one-engine-crate.md) | One engine crate, modules per Go package | Accepted |

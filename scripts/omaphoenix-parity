@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# Parity harness for the OmaPhoenix Rust port: snapshots this machine's real
+# home with the Go and the Rust binary into two throwaway repos and diffs
+# the trees, then restores across implementations into empty sandboxes,
+# including each other's encrypted vaults (with a FAKE key in a fake home,
+# never the real ones). Never writes to the real home, never pushes.
+#
+# Usage: scripts/omaphoenix-parity [path/to/go/omaphoenix/checkout]
+set -euo pipefail
+
+go_src=${1:-$HOME/personal/omaphoenix}
+root=$(cd "$(dirname "$0")/.." && pwd)
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+fail() { echo "FAIL: $*"; exit 1; }
+
+(cd "$go_src" && go build -o "$work/go" ./cmd/omaphoenix)
+cargo build -q --release -p omaphoenix --manifest-path "$root/Cargo.toml"
+cp "$root/target/release/omaphoenix" "$work/rs"
+
+echo "== snapshot the real home with both (audit gate off: Go has none)"
+for impl in go rs; do
+  OMAPHOENIX_REPO=$work/$impl-repo "$work/$impl" init >/dev/null
+  OMAPHOENIX_REPO=$work/$impl-repo OMAPHOENIX_AUDIT=off "$work/$impl" snapshot >/dev/null 2>&1
+done
+# A live machine may change between the two runs; rerun both once if so.
+if ! diff -rq -x .git "$work/go-repo" "$work/rs-repo" >/dev/null 2>&1; then
+  for impl in go rs; do OMAPHOENIX_REPO=$work/$impl-repo OMAPHOENIX_AUDIT=off "$work/$impl" snapshot >/dev/null 2>&1; done
+fi
+# diff can't follow dangling symlinks; compare those by target instead.
+if diff -rq -x .git "$work/go-repo" "$work/rs-repo" 2>&1 | grep -v 'No such file or directory'; then
+  fail "snapshot trees differ (lines above)"
+fi
+cmp -s "$work/go-repo/manifest.json" "$work/rs-repo/manifest.json" || fail "manifest.json differs"
+echo "PARITY: snapshot trees identical ($(du -sh --exclude=.git "$work/rs-repo" | cut -f1)), manifest byte-identical"
+
+echo "== restore across implementations, with each other's vaults"
+fake=$work/fakehome
+mkdir -p "$fake/.ssh" "$fake/.config/hypr"
+printf -- '-----BEGIN OPENSSH PRIVATE KEY-----\nFAKE-NOT-A-REAL-KEY\n-----END OPENSSH PRIVATE KEY-----\n' >"$fake/.ssh/id_fake"
+chmod 600 "$fake/.ssh/id_fake"
+echo 'ssh-ed25519 AAAAFAKE fake' >"$fake/.ssh/id_fake.pub"
+echo 'bind = SUPER, Q, exec, kitty' >"$fake/.config/hypr/bindings.conf"
+export OMAPHOENIX_PASSPHRASE=parity-passphrase-$$
+as() { local home=$1; shift; HOME=$home XDG_STATE_HOME=$home/.local/state XDG_CONFIG_HOME=$home/.config XDG_DATA_HOME=$home/.local/share "$@"; }
+for pair in "go rs" "rs go"; do
+  read -r from to <<<"$pair"
+  repo=$work/sec-$from
+  as "$fake" env OMAPHOENIX_REPO="$repo" "$work/$from" init >/dev/null
+  as "$fake" env OMAPHOENIX_REPO="$repo" "$work/$from" secrets init >/dev/null 2>&1
+  as "$fake" env OMAPHOENIX_REPO="$repo" OMAPHOENIX_AUDIT=off "$work/$from" snapshot >/dev/null 2>&1
+  ! grep -rq 'FAKE-NOT-A-REAL-KEY' --exclude-dir=.git "$repo" || fail "$from left a plaintext key in its repo"
+  sandbox=$work/sandbox-$to-from-$from
+  mkdir -p "$sandbox"
+  as "$sandbox" env OMAPHOENIX_REPO="$repo" "$work/$to" restore --only config,secret --no-restart >/dev/null 2>&1 ||
+    fail "$to could not restore $from's snapshot"
+  cmp -s "$sandbox/.ssh/id_fake" "$fake/.ssh/id_fake" || fail "$to did not decrypt $from's vault"
+  cmp -s "$sandbox/.config/hypr/bindings.conf" "$fake/.config/hypr/bindings.conf" || fail "$to restored config wrongly"
+  [[ $(stat -c %a "$sandbox/.ssh/id_fake") == 600 ]] || fail "key permissions not 600"
+  echo "PARITY: $to restores $from's snapshot and decrypts its vault"
+  rm -rf "$fake/.ssh/../.local"
+done

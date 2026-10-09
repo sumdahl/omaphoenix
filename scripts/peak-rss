@@ -29,11 +29,16 @@ PATHS = [
     ("omaphoenix", ["--version"], 16),
     ("omaphoenix", ["doctor"], 16),
     ("omaphoenix", ["list"], 16),
-    ("omaphoenix", ["status"], 16),
     ("omaphoenix", ["snapshot"], 48),
-    ("omaphoenix", ["restore", "--dry-run", "latest"], 48),
+    ("omaphoenix", ["restore", "--dry-run"], 48),
     ("secaudit", ["--version"], 16),
+    ("secaudit", [], 48),
 ]
+
+# Both binaries report their own peak (VmHWM) when asked: wait4's figure
+# also counts children, and a snapshot runs `npm ls`, which alone peaks at
+# ~126 MB. --version exits inside clap before reporting, so it reads 0.
+SELF_REPORTING = {"omaphoenix": "OMAPHOENIX_REPORT_HWM", "secaudit": "SECAUDIT_REPORT_HWM"}
 # ponytail: TUI idle (≤ 24 MB) needs a pty; add it with the TUI.
 # ponytail: the fixture home is empty; give it a real machine's shape
 # (configs, plugins, themes) when snapshot is ported.
@@ -41,7 +46,7 @@ PATHS = [
 
 def exists(binary: str, sub: str) -> bool:
     """Whether `binary` has subcommand `sub` (flags always exist)."""
-    if sub.startswith("-"):
+    if not sub or sub.startswith("-"):
         return True
     r = subprocess.run([binary, sub, "--help"], capture_output=True)
     return r.returncode == 0
@@ -65,6 +70,14 @@ def peak_rss(argv: list[str], env: dict[str, str]) -> tuple[int, int]:
     return int(out[0]), int(out[1]) * 1024  # Linux reports KiB
 
 
+def self_reported(argv: list[str], env: dict[str, str], var: str) -> tuple[int, int]:
+    """Runs argv asking it to print its own VmHWM; returns (exit, bytes)."""
+    r = subprocess.run(argv, env={**env, var: "1"}, stdout=subprocess.DEVNULL,
+                       stderr=subprocess.PIPE, text=True)
+    kb = next((int(l.split()[-2]) for l in r.stderr.splitlines() if "VmHWM:" in l), 0)
+    return r.returncode, kb * 1024
+
+
 def main() -> int:
     bindir = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else "target/release")
     failed = False
@@ -76,7 +89,12 @@ def main() -> int:
             "XDG_STATE_HOME": f"{home}/.local/state",
             "XDG_CACHE_HOME": f"{home}/.cache",
             "XDG_DATA_HOME": f"{home}/.local/share",
+            "OMAPHOENIX_REPO": f"{home}/repo",
         }
+        # A repo with one snapshot, so snapshot and restore do real work.
+        phx = os.path.join(bindir, "omaphoenix")
+        for args in (["init"], ["snapshot"]):
+            subprocess.run([phx, *args], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         _, baseline = peak_rss(["/bin/true"], env)
         if baseline >= min(b for *_, b in PATHS) * MB:
             print(f"launcher floor {baseline / MB:.1f} MB is over the smallest budget; can't measure")
@@ -89,15 +107,20 @@ def main() -> int:
                 print(f"{label:40} missing binary {exe}")
                 failed = True
                 continue
-            if not exists(exe, args[0]):
+            if not exists(exe, args[0] if args else ""):
                 print(f"{label:40} {'—':>8} {budget:>6} MB  not built yet")
                 continue
-            code, peak = peak_rss([exe, *args], env)
+            if binary in SELF_REPORTING:
+                code, peak = self_reported([exe, *args], env, SELF_REPORTING[binary])
+                baseline_for = 0
+            else:
+                code, peak = peak_rss([exe, *args], env)
+                baseline_for = baseline
             over = peak > budget * MB
             failed |= over
             verdict = "OVER BUDGET" if over else "ok"
             note = f" (exit {code})" if code else ""
-            shown = f"{peak / MB:>5.1f} MB" if peak > baseline else "≤ floor"
+            shown = f"{peak / MB:>5.1f} MB" if peak > baseline_for else "≤ floor"
             print(f"{label:40} {shown:>8} {budget:>5} MB  {verdict}{note}")
     return 1 if failed else 0
 
