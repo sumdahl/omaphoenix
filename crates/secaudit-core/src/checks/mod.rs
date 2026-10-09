@@ -11,15 +11,23 @@ use crate::audit::Section;
 
 mod boot;
 mod filesystem;
+mod firewall;
+mod kernel;
+mod network;
 mod packages;
 mod secrets;
 mod services;
+mod ssh;
 mod users;
 
 /// Every ported section, in report order.
 pub const SECTIONS: &[Section] = &[
     packages::SECTION,
     boot::SECTION,
+    kernel::SECTION,
+    firewall::SECTION,
+    network::SECTION,
+    ssh::SECTION,
     users::SECTION,
     filesystem::SECTION,
     services::SECTION,
@@ -88,7 +96,17 @@ pub(crate) mod testing {
         }
 
         pub(crate) fn home_file(&self, rel: &str, body: &str) {
-            write(&self.home.path().join(rel), body, 0o644);
+            self.home_file_mode(rel, body, 0o644);
+        }
+
+        pub(crate) fn home_file_mode(&self, rel: &str, body: &str, mode: u32) {
+            write(&self.home.path().join(rel), body, mode);
+        }
+
+        pub(crate) fn home_dir(&self, rel: &str, mode: u32) {
+            let p = self.home.path().join(rel);
+            fs::create_dir_all(&p).ok();
+            fs::set_permissions(&p, fs::Permissions::from_mode(mode)).ok();
         }
 
         /// An executable on the fake `/usr/bin`, so `have` finds it.

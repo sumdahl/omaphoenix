@@ -27,10 +27,20 @@ jq -r --arg s "$sections" --arg home "$HOME/" \
   "$work/bash.jsonl" | sort >"$work/bash.tsv"
 jq -r "$key" "$work/rust.jsonl" | sort >"$work/rust.tsv"
 
+# Details (lists of paths, units, sockets) compared per finding, normalised the same way.
+detail='select(.detail != "") | "## \(.section) | \(.sev) | \(.msg)\n\(.detail)"'
+jq -r --arg s "$sections" --arg home "$HOME/" \
+  'select(.section as $x | $s | split("\n") | index($x)) | .msg |= (split($home) | join("~/")) | .detail |= (split($home) | join("~/")) | '"$detail" \
+  "$work/bash.jsonl" >"$work/bash.det"
+jq -r --arg home "$HOME/" '.detail |= (split($home) | join("~/")) | '"$detail" "$work/rust.jsonl" >"$work/rust.det"
+
 echo "Sections compared:"; sed 's/^/  /' <<<"$sections"
-if diff -u --label bash --label rust "$work/bash.tsv" "$work/rust.tsv"; then
-  echo "PARITY: $(wc -l <"$work/rust.tsv") findings identical"
+status=0
+diff -u --label bash --label rust "$work/bash.tsv" "$work/rust.tsv" || status=1
+diff -u --label bash-detail --label rust-detail "$work/bash.det" "$work/rust.det" || status=1
+if ((status == 0)); then
+  echo "PARITY: $(wc -l <"$work/rust.tsv") findings and $(grep -c '^## ' "$work/rust.det") details identical"
 else
   echo "DIFFERENT (lines above: - only in Bash, + only in Rust)"
-  exit 1
 fi
+exit "$status"
