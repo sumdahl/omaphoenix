@@ -51,6 +51,11 @@ pub struct Manifest {
     /// Login shell.
     #[serde(default)]
     pub shell: String,
+    /// What the audit gate left out or flagged; absent when no audit ran
+    /// (the Go version, or `OMAPHOENIX_AUDIT=off`). Additive: format 1
+    /// readers ignore it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub audit: Option<AuditSummary>,
     /// Items per category. Go writes `null` for none (a nil list) and so
     /// does this, so switching implementations doesn't change the file.
     #[serde(
@@ -59,6 +64,71 @@ pub struct Manifest {
         serialize_with = "empty_as_null"
     )]
     pub items: BTreeMap<String, Vec<Item>>,
+}
+
+/// The audit gate's record in a snapshot (docs/04): counts and IDs only,
+/// never finding text that could hold a secret.
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct AuditSummary {
+    /// What ran the audit.
+    pub tool: String,
+    /// Its version.
+    pub version: String,
+    /// Score over the gate sections.
+    pub score: u32,
+    /// Letter grade.
+    pub grade: String,
+    /// Items left out of this snapshot (fail findings).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub excluded: Vec<GateItem>,
+    /// Items captured despite a warning.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub warned: Vec<GateItem>,
+}
+
+/// One item the gate acted on.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct GateItem {
+    /// `category:id`, e.g. `config:.config/app/.env`.
+    pub item: String,
+    /// The finding's stable check id.
+    pub id: String,
+    /// `fail` or `warn`.
+    pub sev: String,
+}
+
+impl GateItem {
+    /// A gate record.
+    #[must_use]
+    pub fn new(item: impl Into<String>, id: impl Into<String>, sev: impl Into<String>) -> Self {
+        Self {
+            item: item.into(),
+            id: id.into(),
+            sev: sev.into(),
+        }
+    }
+}
+
+impl AuditSummary {
+    /// A summary for `tool` at `version`.
+    #[must_use]
+    pub fn new(
+        tool: impl Into<String>,
+        version: impl Into<String>,
+        score: u32,
+        grade: char,
+    ) -> Self {
+        Self {
+            tool: tool.into(),
+            version: version.into(),
+            score,
+            grade: grade.to_string(),
+            excluded: Vec::new(),
+            warned: Vec::new(),
+        }
+    }
 }
 
 /// Why a manifest can't be used.
@@ -90,6 +160,7 @@ impl Manifest {
             hardware: String::new(),
             user: String::new(),
             shell: String::new(),
+            audit: None,
             items: BTreeMap::new(),
         }
     }

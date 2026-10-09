@@ -60,7 +60,17 @@ impl Category for Service {
         if items.is_empty() {
             return Ok(());
         }
-        let ids: Vec<&str> = items.iter().map(|i| i.id.as_str()).collect();
+        let ids: Vec<&str> = items
+            .iter()
+            .map(|i| i.id.as_str())
+            .filter(|id| {
+                let out = env.excluded_units.contains(*id);
+                if out {
+                    env.info(&format!("left out by the audit: service {id}"));
+                }
+                !out
+            })
+            .collect();
         std::fs::write(
             env.tree.join("services.txt"),
             format!("{}\n", ids.join("\n")),

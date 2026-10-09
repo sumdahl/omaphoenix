@@ -80,6 +80,7 @@ impl App<'_> {
         } else {
             add("risk", "snapshots", "not set up: nothing is protected. Run: omaphoenix init --github <you>/omaphoenix-backup".into());
         }
+        check_audit(&mut add);
         self.check_repos(&mut add);
         self.check_units(&mut add);
         self.check_secrets(&mut add);
@@ -299,6 +300,32 @@ impl App<'_> {
         let _ = write_json(&file, &Notified { hash, at: now });
         worthy
     }
+}
+
+/// The last Security Audit scan, from the history both apps share.
+fn check_audit(add: &mut dyn FnMut(&str, &str, String)) {
+    let Some(run) = secaudit_core::store::Store::from_env()
+        .runs()
+        .into_iter()
+        .next()
+    else {
+        add("warn", "audit", "no security audit yet; snapshots audit themselves, but run one to see the whole picture (TUI: 3 Audit)".into());
+        return;
+    };
+    let c = run.counts();
+    let level = if c.fail > 0 { "warn" } else { "ok" };
+    let age = go_duration(secaudit_core::store::now().saturating_sub(run.meta.started));
+    add(
+        level,
+        "audit",
+        format!(
+            "last audit {age} ago: score {} ({}), {} fail, {} warn",
+            c.score(),
+            c.grade(),
+            c.fail,
+            c.warn
+        ),
+    );
 }
 
 fn covered_by_snapshot(rel: &str) -> bool {

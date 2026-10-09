@@ -231,8 +231,14 @@ impl<'a> App<'a> {
                 fs::remove_file(&path)?;
             }
         }
-        let env = Env::new(&self.home, &self.repo.dir, self.log);
+        let mut env = Env::new(&self.home, &self.repo.dir, self.log);
         let mut m = Self::manifest_for_machine();
+        if crate::gate::enabled() {
+            let gate = crate::gate::run(&self.home, self.log);
+            env.excluded = gate.excluded_paths;
+            env.excluded_units = gate.excluded_units;
+            m.audit = gate.summary;
+        }
         for c in category::all() {
             let found = c
                 .detect(&env)
@@ -284,57 +290,16 @@ impl<'a> App<'a> {
         let text = fs::read_to_string(tree.path().join("manifest.json"))?;
         let m =
             Manifest::parse(&text).map_err(|e| AppError::Other(format!("read manifest: {e}")))?;
-        let here_version = sys::output(None, &["omarchy", "version"]).unwrap_or_default();
-        if !m.omarchy_version.is_empty() && here_version != m.omarchy_version {
-            (self.log)(
-                "warn",
-                &format!(
-                    "snapshot was taken on Omarchy {}, this machine runs {here_version}; consider `omarchy update` first",
-                    m.omarchy_version
-                ),
-            );
-        }
-        let me = std::env::var("USER").unwrap_or_default();
-        if !m.user.is_empty() && m.user != me {
-            (self.log)(
-                "warn",
-                &format!(
-                    "snapshot was taken as user {:?}, this is {me:?}: paths saved as /home/{}/… in configs and symlinks will point at the wrong home; reinstall with the same username for an exact restore",
-                    m.user, m.user
-                ),
-            );
-        }
+        self.warn_mismatch(&m, opt.dry_run);
         let mut env = Env::new(&self.home, tree.path(), self.log);
         env.dry_run = opt.dry_run;
         env.passphrase = self.passphrase;
         env.items.clone_from(&opt.items);
-        let here = category::hardware();
-        if !m.hardware.is_empty() && !here.is_empty() && m.hardware != here && !opt.all_hardware {
+        if !opt.all_hardware
+            && let Some(machine) = self.foreign_hardware(&m, tree.path())
+        {
             env.foreign = true;
-            let mut machine: BTreeMap<String, Vec<String>> = BTreeMap::new();
-            for (cat, pats) in MACHINE_SPECIFIC {
-                machine
-                    .entry((*cat).to_owned())
-                    .or_default()
-                    .extend(pats.iter().map(|p| (*p).to_owned()));
-            }
-            // The snapshot's own selection.conf can declare more.
-            if let Ok(t) = fs::read_to_string(tree.path().join("selection.conf")) {
-                for (cat, pats) in Rules::parse(&t).machine() {
-                    machine
-                        .entry(cat.to_owned())
-                        .or_default()
-                        .extend(pats.iter().map(|p| (*p).to_owned()));
-                }
-            }
             env.machine = machine;
-            (self.log)(
-                "warn",
-                &format!(
-                    "snapshot is from a {}, this is a {here}: hardware-specific settings (monitor layout, touchpad, battery limits…) are skipped; pass --all-hardware or name an item to restore one anyway",
-                    m.hardware
-                ),
-            );
         }
         let wanted = |name: &str| opt.only.is_empty() || opt.only.iter().any(|o| o == name);
         let mut reports = Vec::new();
@@ -374,6 +339,74 @@ impl<'a> App<'a> {
             self.save_deferred(&snap, &reports);
         }
         Ok((snap, reports))
+    }
+
+    /// Warns about an Omarchy version or user name that differs from the
+    /// snapshot's, and (dry run) lists what the audit left out.
+    fn warn_mismatch(&self, m: &Manifest, dry_run: bool) {
+        let here_version = sys::output(None, &["omarchy", "version"]).unwrap_or_default();
+        if !m.omarchy_version.is_empty() && here_version != m.omarchy_version {
+            (self.log)(
+                "warn",
+                &format!(
+                    "snapshot was taken on Omarchy {}, this machine runs {here_version}; consider `omarchy update` first",
+                    m.omarchy_version
+                ),
+            );
+        }
+        let me = std::env::var("USER").unwrap_or_default();
+        if !m.user.is_empty() && m.user != me {
+            (self.log)(
+                "warn",
+                &format!(
+                    "snapshot was taken as user {:?}, this is {me:?}: paths saved as /home/{}/… in configs and symlinks will point at the wrong home; reinstall with the same username for an exact restore",
+                    m.user, m.user
+                ),
+            );
+        }
+        if dry_run {
+            for g in m.audit.iter().flat_map(|a| &a.excluded) {
+                (self.log)(
+                    "info",
+                    &format!(
+                        "left out of this snapshot by the audit: {} ({})",
+                        g.item, g.id
+                    ),
+                );
+            }
+        }
+    }
+
+    /// On different hardware than the snapshot's: the hardware-specific
+    /// patterns to skip, built-in plus the snapshot's own `machine:` rules.
+    fn foreign_hardware(&self, m: &Manifest, tree: &Path) -> Option<BTreeMap<String, Vec<String>>> {
+        let here = category::hardware();
+        if m.hardware.is_empty() || here.is_empty() || m.hardware == here {
+            return None;
+        }
+        let mut machine: BTreeMap<String, Vec<String>> = BTreeMap::new();
+        for (cat, pats) in MACHINE_SPECIFIC {
+            machine
+                .entry((*cat).to_owned())
+                .or_default()
+                .extend(pats.iter().map(|p| (*p).to_owned()));
+        }
+        if let Ok(t) = fs::read_to_string(tree.join("selection.conf")) {
+            for (cat, pats) in Rules::parse(&t).machine() {
+                machine
+                    .entry(cat.to_owned())
+                    .or_default()
+                    .extend(pats.iter().map(|p| (*p).to_owned()));
+            }
+        }
+        (self.log)(
+            "warn",
+            &format!(
+                "snapshot is from a {}, this is a {here}: hardware-specific settings (monitor layout, touchpad, battery limits…) are skipped; pass --all-hardware or name an item to restore one anyway",
+                m.hardware
+            ),
+        );
+        Some(machine)
     }
 
     fn journal_file(&self) -> PathBuf {

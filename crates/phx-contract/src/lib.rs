@@ -12,5 +12,5 @@ pub mod selection;
 
 pub mod glob;
 
-pub use manifest::{FORMAT, Item, Manifest, ManifestError};
+pub use manifest::{AuditSummary, FORMAT, GateItem, Item, Manifest, ManifestError};
 pub use selection::{Choice, Rules};

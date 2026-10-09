@@ -352,7 +352,9 @@ pub fn copy_tree(
             .file_name()
             .map(|n| n.to_string_lossy().into_owned())
             .unwrap_or_default();
-        if !rel.as_os_str().is_empty() && (is_junk(&name) || skip(rel, &name, meta)) {
+        if (!rel.as_os_str().is_empty() && (is_junk(&name) || skip(rel, &name, meta)))
+            || env.audit_excludes(path)
+        {
             return Walk::Skip;
         }
         // `dst.join("")` would add a trailing slash; a single-file src copies to dst itself.

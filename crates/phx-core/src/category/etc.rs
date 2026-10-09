@@ -154,6 +154,9 @@ impl Category for Etc {
     fn capture(&self, env: &Env<'_>, items: &[Item]) -> Result<(), Error> {
         let mut files = Vec::new();
         for it in items {
+            if env.audit_excludes(Path::new(&it.id)) {
+                continue;
+            }
             let Ok(meta) = fs::metadata(&it.id) else {
                 continue;
             };

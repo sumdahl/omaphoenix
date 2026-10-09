@@ -5,6 +5,7 @@
 pub mod app;
 pub mod category;
 pub mod doctor;
+pub mod gate;
 pub mod schedule;
 pub mod store;
 pub mod sys;

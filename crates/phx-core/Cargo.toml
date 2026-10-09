@@ -15,6 +15,7 @@ tar.workspace = true
 zeroize.workspace = true
 phx-contract.workspace = true
 regex.workspace = true
+secaudit-core.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tempfile.workspace = true

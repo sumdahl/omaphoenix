@@ -132,6 +132,9 @@ impl Category for Bin {
         let mut entries = Vec::new();
         for it in items {
             let a = abs(env, &it.id);
+            if env.audit_excludes(&a) {
+                continue;
+            }
             let Some(mut e) = classify(&a) else { continue };
             e.path.clone_from(&it.id);
             if e.kind == "script" {

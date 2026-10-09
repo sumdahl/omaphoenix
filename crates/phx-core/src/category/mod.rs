@@ -79,6 +79,10 @@ pub struct Env<'a> {
     pub machine: BTreeMap<String, Vec<String>>,
     /// Items skipped because they are hardware-specific.
     pub skipped: RefCell<Vec<String>>,
+    /// Files the audit gate leaves out of a capture (absolute paths).
+    pub excluded: std::collections::BTreeSet<PathBuf>,
+    /// Services (`scope/unit`) the audit gate leaves out of a capture.
+    pub excluded_units: std::collections::BTreeSet<String>,
 }
 
 impl<'a> Env<'a> {
@@ -95,7 +99,18 @@ impl<'a> Env<'a> {
             foreign: false,
             machine: BTreeMap::new(),
             skipped: RefCell::new(Vec::new()),
+            excluded: std::collections::BTreeSet::new(),
+            excluded_units: std::collections::BTreeSet::new(),
         }
+    }
+
+    /// Whether the audit gate leaves `path` out, logging it when it does.
+    pub fn audit_excludes(&self, path: &Path) -> bool {
+        let out = self.excluded.contains(path);
+        if out {
+            self.info(&format!("left out by the audit: {}", path.display()));
+        }
+        out
     }
 
     /// Logs at `info`.
