@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+"""Memory budget check (RUST.md §9, ADR-0017): peak RSS per CLI path.
+
+Runs each path against a throwaway fixture home and fails if any goes over
+its budget. Peak RSS is the kernel's ru_maxrss for that one child (wait4).
+
+Linux starts a child's ru_maxrss at its parent's RSS when it forks, so every
+reading is max(launcher RSS, the child's real peak). Each path is therefore
+spawned from a bare Python (`-S -I`, only `os` loaded, ~9.5 MB) rather than
+from this script (~14 MB). The check stays exact while that floor is under
+every budget, which is asserted; readings at the floor show as "≤ floor".
+
+A path whose subcommand doesn't exist yet is reported as "not built" and
+skipped. The moment the subcommand lands it is measured, so a new command
+can't ship without meeting its budget.
+
+Usage: scripts/peak-rss [target-dir]    (default: target/release)
+"""
+
+import os
+import subprocess
+import sys
+import tempfile
+
+MB = 1024 * 1024
+
+# (binary, args, budget in MB). Budgets are RUST.md §9; change both together.
+PATHS = [
+    ("omaphoenix", ["--version"], 16),
+    ("omaphoenix", ["doctor"], 16),
+    ("omaphoenix", ["list"], 16),
+    ("omaphoenix", ["status"], 16),
+    ("omaphoenix", ["snapshot"], 48),
+    ("omaphoenix", ["restore", "--dry-run", "latest"], 48),
+    ("secaudit", ["--version"], 16),
+]
+# ponytail: TUI idle (≤ 24 MB) needs a pty; add it with the TUI.
+# ponytail: the fixture home is empty; give it a real machine's shape
+# (configs, plugins, themes) when snapshot is ported.
+
+
+def exists(binary: str, sub: str) -> bool:
+    """Whether `binary` has subcommand `sub` (flags always exist)."""
+    if sub.startswith("-"):
+        return True
+    r = subprocess.run([binary, sub, "--help"], capture_output=True)
+    return r.returncode == 0
+
+
+LAUNCHER = """import os, sys
+null = os.open(os.devnull, os.O_WRONLY)
+fa = [(os.POSIX_SPAWN_DUP2, null, 1), (os.POSIX_SPAWN_DUP2, null, 2)]
+pid = os.posix_spawn(sys.argv[1], sys.argv[1:], os.environ, file_actions=fa)
+_, status, usage = os.wait4(pid, 0)
+print(os.waitstatus_to_exitcode(status), usage.ru_maxrss)
+"""
+
+
+def peak_rss(argv: list[str], env: dict[str, str]) -> tuple[int, int]:
+    """Runs argv from the bare launcher; returns (exit code, peak RSS in bytes)."""
+    out = subprocess.run(
+        [sys.executable, "-S", "-I", "-c", LAUNCHER, *argv],
+        env=env, capture_output=True, text=True, check=True,
+    ).stdout.split()
+    return int(out[0]), int(out[1]) * 1024  # Linux reports KiB
+
+
+def main() -> int:
+    bindir = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else "target/release")
+    failed = False
+    with tempfile.TemporaryDirectory(prefix="peak-rss-") as home:
+        env = {
+            "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
+            "HOME": home,
+            "XDG_CONFIG_HOME": f"{home}/.config",
+            "XDG_STATE_HOME": f"{home}/.local/state",
+            "XDG_CACHE_HOME": f"{home}/.cache",
+            "XDG_DATA_HOME": f"{home}/.local/share",
+        }
+        _, baseline = peak_rss(["/bin/true"], env)
+        if baseline >= min(b for *_, b in PATHS) * MB:
+            print(f"launcher floor {baseline / MB:.1f} MB is over the smallest budget; can't measure")
+            return 2
+        print(f"{'path':40} {'peak':>8} {'budget':>8}   (floor {baseline / MB:.1f} MB)")
+        for binary, args, budget in PATHS:
+            exe = os.path.join(bindir, binary)
+            label = " ".join([binary, *args])
+            if not os.access(exe, os.X_OK):
+                print(f"{label:40} missing binary {exe}")
+                failed = True
+                continue
+            if not exists(exe, args[0]):
+                print(f"{label:40} {'—':>8} {budget:>6} MB  not built yet")
+                continue
+            code, peak = peak_rss([exe, *args], env)
+            over = peak > budget * MB
+            failed |= over
+            verdict = "OVER BUDGET" if over else "ok"
+            note = f" (exit {code})" if code else ""
+            shown = f"{peak / MB:>5.1f} MB" if peak > baseline else "≤ floor"
+            print(f"{label:40} {shown:>8} {budget:>5} MB  {verdict}{note}")
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

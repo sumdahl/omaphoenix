@@ -46,6 +46,9 @@ jobs:
       - run: cargo doc --workspace --no-deps
         env:
           RUSTDOCFLAGS: -D warnings
+      # Memory budgets (RUST.md §9, ADR-0017): release builds, as users run them.
+      - run: cargo build --release -p omaphoenix -p secaudit
+      - run: scripts/peak-rss
 
   msrv:
     runs-on: ubuntu-24.04

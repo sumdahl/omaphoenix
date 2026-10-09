@@ -117,7 +117,7 @@ The user's standing requirement: **"optimize memory usage, very efficient."** Bu
 | `doctor`, `list`, `status` | **≤ 16 MB** | 12–16 MB |
 | TUI, idle | **≤ 24 MB** | n/a |
 | Timer snapshot (background) | **≤ 48 MB**, `Nice=19`, idle I/O | 126 MB |
-| Desktop app, idle (all processes, PSS) | **target ≤ 150 MB, ceiling 250 MB** | Tauri spike ≈ 400 MB |
+| Desktop app, idle (all processes, PSS) | **target ≤ 150 MB, ceiling 250 MB** | Tauri spike 234 MB; Slint spike 46 MB (docs/09) |
 
 **Rules that get there:**
 - **Stream, never slurp.** Files are hashed and compared in fixed-size chunks (`BufReader`, 64 KiB), never `fs::read` for content of unknown size. The secret scanner works line by line with a bounded line length. JSONL is parsed one line at a time.
@@ -127,7 +127,7 @@ The user's standing requirement: **"optimize memory usage, very efficient."** Bu
 - **Bounded concurrency.** Parallel work uses a fixed pool; no unbounded spawning that multiplies buffers.
 - **Borrow over clone; `Cow`** where a value is usually unchanged; `Box<str>` / `Arc<str>` for long-lived immutable strings.
 - **No hidden caches.** Any cache has a size bound and a reason in a comment.
-- **Measure every PR that touches these paths:** a `scripts/peak-rss` check runs the CLI paths against a fixture home and fails over budget. `dhat` heap profiling for investigations.
+- **Measured in CI on every push:** `scripts/peak-rss` runs each CLI path against a throwaway home and fails over budget. A path is checked from the moment its subcommand exists. `dhat` heap profiling for investigations.
 
 ## 10. Performance
 - **Measure before optimising,** with `criterion` benches for scans that touch thousands of files.
