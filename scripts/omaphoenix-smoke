@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# End-to-end smoke test of the Rust omaphoenix, adapted from the Go repo's
+# scripts/smoke.sh (P4.3's acceptance check). Snapshots the real $HOME into
+# a throwaway repo, then restores plugins, themes, config and local state
+# into an empty sandbox HOME and checks the result. Never writes to the real
+# HOME, never pushes, never restarts the shell.
+#
+# Unlike the Go script it never touches real SSH keys: no `secrets init`.
+# Vaults are covered by scripts/omaphoenix-parity with a fake key.
+set -euo pipefail
+
+root=$(cd "$(dirname "$0")/.." && pwd)
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+export OMAPHOENIX_REPO=$work/repo
+real_home=$HOME
+real_state_before=$(ls -A "$real_home/.local/state/omaphoenix" 2>/dev/null || true)
+sandbox=$work/home
+bin=$work/omaphoenix
+
+cargo build -q --release -p omaphoenix --manifest-path "$root/Cargo.toml"
+cp "$root/target/release/omaphoenix" "$bin"
+"$bin" init >/dev/null
+"$bin" snapshot >/dev/null 2>&1
+# A second snapshot must change nothing (allow one retry on a live machine).
+if ! "$bin" snapshot 2>/dev/null | grep -q "no changes since the last snapshot"; then
+  echo "note: files changed between snapshots (live machine?):"
+  git -C "$OMAPHOENIX_REPO" show --stat --format= HEAD | head -10
+  "$bin" snapshot 2>/dev/null | grep -q "no changes since the last snapshot" ||
+    { echo "FAIL: snapshot is not a no-op twice in a row"; exit 1; }
+fi
+
+if grep -rlq 'PRIVATE KEY' --exclude-dir=.git "$OMAPHOENIX_REPO"; then
+  echo "FAIL: plaintext private key in the snapshot"
+  exit 1
+fi
+"$bin" restore --dry-run --only pkg-repo,pkg-aur,pkg-other,bin,etc,service | grep -q '+ ' &&
+  { echo "FAIL: dry run on the live machine wants to change packages, scripts, /etc or services"; exit 1; }
+"$bin" doctor --json | jq -e 'length > 0' >/dev/null || { echo "FAIL: doctor produced no findings"; exit 1; }
+jq -e '.audit.score >= 0' "$OMAPHOENIX_REPO/manifest.json" >/dev/null || { echo "FAIL: snapshot has no audit summary"; exit 1; }
+
+sbx() {
+  HOME=$sandbox XDG_STATE_HOME=$sandbox/.local/state XDG_CONFIG_HOME=$sandbox/.config \
+    XDG_DATA_HOME=$sandbox/.local/share "$bin" "$@"
+}
+theme=$(cat "$real_home"/.local/state/omarchy/current/theme.name 2>/dev/null || true)
+mkdir -p "$sandbox/.local/state/omarchy/current"
+[[ -n $theme ]] && echo "$theme" >"$sandbox/.local/state/omarchy/current/theme.name"
+
+for pass in 1 2 3; do
+  out=$(sbx restore --only plugin,theme,config,local --no-restart 2>&1)
+  echo "$out" | grep -E '^(✓|✗|⏸)'
+  grep -q '^⏸' <<<"$out" || break
+  echo "pass $pass deferred some items (slow network); running restore again"
+done
+grep -q '^⏸' <<<"$out" && { echo "FAIL: items still deferred after 3 passes"; exit 1; }
+grep -q '^✗' <<<"$out" && { echo "FAIL: a restore stage failed"; exit 1; }
+sbx restore --only plugin,theme,config,local --no-restart 2>/dev/null | grep -E '^(✓|✗|⏸)' | grep -qv '^✓ .*applied 0 ·' &&
+  { echo "FAIL: restore after completion was not a no-op"; exit 1; }
+
+echo "# local edit" >>"$sandbox/.bashrc"
+sbx restore --only config --no-restart >/dev/null 2>&1
+ls "$sandbox"/.bashrc.pre-restore.* >/dev/null || { echo "FAIL: overwritten file was not kept"; exit 1; }
+cmp -s "$sandbox/.bashrc" "$real_home/.bashrc" || { echo "FAIL: .bashrc not restored"; exit 1; }
+
+sbx undo >/dev/null
+tail -1 "$sandbox/.bashrc" | grep -qx '# local edit' || { echo "FAIL: undo did not bring back the pre-restore .bashrc"; exit 1; }
+second=$(sbx undo 2>&1 || true)
+grep -q 'nothing to undo' <<<"$second" || { echo "FAIL: second undo was not a no-op: $second"; exit 1; }
+[[ $(ls -A "$real_home/.local/state/omaphoenix" 2>/dev/null || true) == "$real_state_before" ]] ||
+  { echo "FAIL: sandbox state leaked into the real home"; exit 1; }
+
+echo "PASS"
