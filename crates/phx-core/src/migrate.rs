@@ -74,7 +74,7 @@ pub fn explain(i: usize, remote: &str) -> String {
             let from = if remote.is_empty() { "<your snapshot repo URL>" } else { remote };
             format!("On the new machine, install OmaPhoenix, then run: omaphoenix restore --from {from}")
         }
-        _ => "On the new machine after restoring: run an audit there and compare.".into(),
+        _ => "On the new machine after restoring: audits it and compares with the snapshot's audit (omaphoenix reaudit).".into(),
     }
 }
 

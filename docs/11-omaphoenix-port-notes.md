@@ -32,4 +32,4 @@ How the Rust port of the Go OmaPhoenix is checked, where it deliberately differs
 
 ## Not done
 - The TUI's Settings section toggles the timer and sets up secrets. Per-category audit policy (`block`/`exclude`/`warn` in docs/04) is fixed at fail = exclude, warn = record. A policy file comes when someone asks for one.
-- The re-audit comparison after a restore (docs/04 "Restore side") is a Migrate step that runs the audit. Comparing it against the snapshot's recorded score is not automated yet.
+- The re-audit after a restore (docs/04 "Restore side") is `omaphoenix reaudit`: it compares the gate audit now with the one the restored snapshot recorded, listing new and resolved failures. It is Migrate's last step in the TUI and the app.

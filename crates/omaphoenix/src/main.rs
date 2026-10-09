@@ -87,6 +87,8 @@ enum Cmd {
         #[arg(long)]
         notify: bool,
     },
+    /// After a restore: audit this machine and compare it with the restored snapshot's audit
+    Reaudit,
     /// Encrypted SSH keys and credentials (opt-in)
     Secrets {
         #[command(subcommand)]
@@ -390,6 +392,27 @@ fn run(cli: Cli) -> Result<(), String> {
             }
             if risks > 0 {
                 return Err(format!("{risks} thing(s) would be lost in a reinstall"));
+            }
+        }
+        Cmd::Reaudit => {
+            let (snap, r) = app.reaudit().map_err(|e| e.to_string())?;
+            say(&format!(
+                "re-audit against snapshot {snap}: score {} → {}",
+                r.before, r.after
+            ));
+            r.new_fails
+                .iter()
+                .for_each(|f| say(&format!("  ✗ new since the snapshot: {f}")));
+            r.resolved
+                .iter()
+                .for_each(|f| say(&format!("  ✓ resolved: {f}")));
+            if r.new_fails.is_empty() {
+                say("  ✓ the restore brought no new risks");
+            } else {
+                return Err(format!(
+                    "{} new risk(s) since the snapshot",
+                    r.new_fails.len()
+                ));
             }
         }
         Cmd::Secrets {

@@ -540,6 +540,33 @@ impl<'a> App<'a> {
         Ok(())
     }
 
+    /// Re-audits this machine after a restore and compares it with the audit
+    /// recorded in the restored snapshot (docs/04, restore side).
+    ///
+    /// # Errors
+    /// When no restore is recorded, or its snapshot carries no audit (taken
+    /// with the gate off, or by the Go version).
+    pub fn reaudit(&self) -> Result<(String, crate::gate::Reaudit), AppError> {
+        let j = self.journal()?;
+        let text = sys::output(
+            Some(&self.repo.dir),
+            &["git", "show", &format!("{}:manifest.json", j.snapshot)],
+        )
+        .map_err(|e| AppError::Other(format!("read snapshot {}: {e}", j.snapshot)))?;
+        let m =
+            Manifest::parse(&text).map_err(|e| AppError::Other(format!("read manifest: {e}")))?;
+        let before = m.audit.ok_or_else(|| {
+            AppError::Other(format!(
+                "snapshot {} has no audit record (taken with the gate off, or by the Go version)",
+                j.snapshot
+            ))
+        })?;
+        let now = crate::gate::run(&self.home, &|_, _| {})
+            .summary
+            .unwrap_or_default();
+        Ok((j.snapshot, crate::gate::compare(&before, &now)))
+    }
+
     /// Creates the vault key pair and opts `~/.ssh` into snapshots.
     ///
     /// # Errors

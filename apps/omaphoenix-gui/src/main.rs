@@ -974,9 +974,32 @@ fn main() -> Result<(), slint::PlatformError> {
         move |i| {
             let Some(app) = weak.upgrade() else { return };
             match i {
-                0 | 4 => {
+                0 => {
                     app.invoke_go(2);
                     app.invoke_scan();
+                }
+                4 => {
+                    set_busy(&app, "Re-auditing against the restored snapshot…");
+                    background(
+                        &app,
+                        || {
+                            sys::command(&cli()).arg("reaudit").output().map(|o| {
+                                String::from_utf8_lossy(&if o.stdout.is_empty() {
+                                    o.stderr
+                                } else {
+                                    o.stdout
+                                })
+                                .lines()
+                                .take(4)
+                                .collect::<Vec<_>>()
+                                .join(" · ")
+                            })
+                        },
+                        |app, r| {
+                            set_busy(app, "");
+                            app.set_toast(r.unwrap_or_else(|e| e.to_string()).into());
+                        },
+                    );
                 }
                 1 => {
                     let mut s = state.borrow_mut();

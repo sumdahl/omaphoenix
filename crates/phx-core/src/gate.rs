@@ -179,3 +179,81 @@ mod tests {
         );
     }
 }
+
+/// The audit after a restore compared with the one recorded in the restored
+/// snapshot (docs/04, restore side).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Reaudit {
+    /// Gate score the snapshot recorded.
+    pub before: u32,
+    /// Gate score on this machine now.
+    pub after: u32,
+    /// Failing items now that the snapshot didn't have (`category:id (check)`).
+    pub new_fails: Vec<String>,
+    /// Failing items the snapshot had that are gone now.
+    pub resolved: Vec<String>,
+}
+
+/// Compares `before` (from a snapshot) with `after` (this machine now).
+#[must_use]
+pub fn compare(before: &AuditSummary, after: &AuditSummary) -> Reaudit {
+    let key = |g: &GateItem| format!("{} ({})", g.item, g.id);
+    let had: BTreeSet<String> = before
+        .excluded
+        .iter()
+        .chain(&before.warned)
+        .map(key)
+        .collect();
+    let fails_before: BTreeSet<String> = before.excluded.iter().map(key).collect();
+    let fails_after: BTreeSet<String> = after.excluded.iter().map(key).collect();
+    Reaudit {
+        before: before.score,
+        after: after.score,
+        new_fails: fails_after
+            .iter()
+            .filter(|k| !had.contains(*k))
+            .cloned()
+            .collect(),
+        resolved: fails_before.difference(&fails_after).cloned().collect(),
+    }
+}
+
+#[cfg(test)]
+mod compare_tests {
+    use super::compare;
+    use phx_contract::{AuditSummary, GateItem};
+
+    #[test]
+    fn finds_new_and_resolved_failures() {
+        let mut before = AuditSummary::new("t", "0", 80, 'B');
+        before.excluded.push(GateItem::new(
+            "config:.netrc",
+            "secrets.credential_perms",
+            "fail",
+        ));
+        before.warned.push(GateItem::new(
+            "config:.zshrc",
+            "services.rc_remote_exec",
+            "warn",
+        ));
+        let mut after = AuditSummary::new("t", "0", 70, 'C');
+        after.excluded.push(GateItem::new(
+            "config:.zshrc",
+            "services.rc_remote_exec",
+            "fail",
+        ));
+        after.excluded.push(GateItem::new(
+            "etc:/etc/sudoers.d/x",
+            "users.sudo_nopasswd",
+            "fail",
+        ));
+        let r = compare(&before, &after);
+        assert_eq!((r.before, r.after), (80, 70));
+        assert_eq!(
+            r.new_fails,
+            ["etc:/etc/sudoers.d/x (users.sudo_nopasswd)"],
+            "a known warning that now fails isn't new"
+        );
+        assert_eq!(r.resolved, ["config:.netrc (secrets.credential_perms)"]);
+    }
+}

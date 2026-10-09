@@ -454,6 +454,10 @@ fn migrate(f: &mut Frame, st: &State<'_>, area: Rect) {
     lines.push(Line::from(""));
     let explain = phx_core::migrate::explain(st.migrate_sel, &st.app.repo.remote());
     lines.extend(explain.lines().map(|l| Line::from(l.to_owned())));
+    if st.output_title == "Re-audit" {
+        lines.push(Line::from(""));
+        lines.extend(st.output.iter().map(|l| Line::from(l.clone())));
+    }
     f.render_widget(Paragraph::new(lines).wrap(Wrap { trim: false }), area);
 }
 

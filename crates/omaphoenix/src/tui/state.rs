@@ -629,10 +629,11 @@ impl<'a> State<'a> {
                 self.migrate_sel = self.migrate_sel.saturating_sub(1);
             }
             KeyCode::Enter | KeyCode::Char(' ') => match self.migrate_sel {
-                0 | 4 => {
+                0 => {
                     self.section = Section::Audit;
                     self.run_audit();
                 }
+                4 => self.run_captured("Re-audit", &["reaudit"]),
                 1 => {
                     self.migration.cleaned = true;
                     self.save_migration();
