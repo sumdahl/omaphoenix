@@ -223,7 +223,7 @@ fn passwd_home(user: &str) -> Option<PathBuf> {
 }
 
 /// Small config files are read whole, up to this size.
-const MAX_TEXT: u64 = 1024 * 1024;
+pub const MAX_TEXT: u64 = 1024 * 1024;
 
 /// A small text file, at most [`MAX_TEXT`] bytes; empty if unreadable.
 #[must_use]
