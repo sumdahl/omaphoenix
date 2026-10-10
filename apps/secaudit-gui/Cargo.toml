@@ -13,6 +13,9 @@ publish = false
 
 [dependencies]
 secaudit-core = { path = "../../crates/secaudit-core" }
+# The AI assistant (prompts, redaction, backends), shared with secaudit-tui.
+secaudit = { path = "../../crates/secaudit" }
+serde_json = "1"
 slint = "1.18"
 toml = "1"
 

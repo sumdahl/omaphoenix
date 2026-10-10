@@ -24,6 +24,8 @@ export global Theme {
 
 export struct Row { sev: string, title: string, section: string, detail: string, fix: string, hint: string, accepted: bool, applied: bool }
 export struct Past { label: string, score: int, grade: string, mode: string, change: string }
+// AI answer blocks: "h" heading, "p" paragraph, "li" list item, "code", "q" a question you asked.
+export struct AiBlock { kind: string, text: string }
 
 component KeyHint inherits Rectangle {
     in property <string> key;
@@ -185,6 +187,22 @@ export component App inherits Window {
     in-out property <bool> show-history;
     in-out property <bool> show-about;
 
+    // AI explanations (Manish's i / I), on secaudit::ai.
+    in property <bool> ai-open;
+    in property <string> ai-title;
+    in property <string> ai-via;
+    in property <[AiBlock]> ai-blocks;
+    in property <string> ai-status;
+    in property <bool> ai-error;
+    in property <bool> ai-busy;
+    in property <bool> setup-open;
+    in property <string> setup-mode;
+    in property <bool> setup-asks-key;
+    in property <bool> setup-alt;
+    in property <string> setup-error;
+    in property <string> setup-key-path;
+    in property <string> ai-model;
+
     callback set-tab(int);
     callback search(string);
     callback scan(string);
@@ -194,10 +212,24 @@ export component App inherits Window {
     callback export();
     callback open-run(int);
     callback delete-run(int);
+    callback explain();
+    callback plan();
+    callback ai-send(string);
+    callback ai-regenerate();
+    callback ai-copy();
+    callback ai-close();
+    callback setup-enable(string);
+    callback setup-switch(string);
+    callback setup-cancel();
 
     forward-focus: keys;
     keys := FocusScope {
         key-pressed(e) => {
+            if (e.text == Key.Escape && root.setup-open) { root.setup-cancel(); return accept; }
+            if (e.text == Key.Escape && root.ai-open) { root.ai-close(); return accept; }
+            if (root.ai-open || root.setup-open) { return reject; }
+            if (e.text == "i" && root.rows.length > 0 && root.rows[root.sel].sev != "pass") { root.explain(); return accept; }
+            if (e.text == "I" && root.has-run) { root.plan(); return accept; }
             if (e.text == Key.Escape) {
                 if (root.show-history || root.show-about) { root.show-history = false; root.show-about = false; return accept; }
                 if (root.query != "") { root.search(""); search-box.text = ""; return accept; }
@@ -291,6 +323,7 @@ export component App inherits Window {
                 if root.accepted > 0 : Text { text: "≈ " + root.accepted + " accepted"; color: Theme.text-muted; }
                 Muted { text: root.since; font-size: 12px; }
                 Button { label: "Export report"; key: "e"; clicked => { root.export(); } }
+                Button { label: "AI action plan"; key: "I"; clicked => { root.plan(); } }
             }
 
             // Middle: tabs, search, the findings.
@@ -346,6 +379,7 @@ export component App inherits Window {
                         if root.rows[root.sel].fix != "" && !root.rows[root.sel].accepted : Button { label: "Run fix"; key: "x"; primary: true; clicked => { root.run-fix(root.sel); } }
                         if root.rows[root.sel].fix != "" || root.rows[root.sel].hint != "" : Button { label: root.rows[root.sel].fix != "" ? "Copy fix" : "Copy advice"; key: "c"; clicked => { root.copy(root.sel); } }
                         if root.rows[root.sel].sev == "fail" || root.rows[root.sel].sev == "warn" : Button { label: root.rows[root.sel].accepted ? "Un-accept" : "Accept risk"; key: "a"; clicked => { root.toggle-accept(root.sel); } }
+                        if root.rows[root.sel].sev != "pass" : Button { label: "Explain"; key: "i"; clicked => { root.explain(); } }
                     }
                     if root.rows[root.sel].detail != "" : Caption { text: "DETAILS"; }
                     if root.rows[root.sel].detail != "" : Text { text: root.rows[root.sel].detail; color: Theme.text-secondary; wrap: char-wrap; }
@@ -409,6 +443,92 @@ export component App inherits Window {
                         }
                         hta := TouchArea { clicked => { root.open-run(i); root.show-history = false; } }
                     }
+                }
+            }
+        }
+    }
+
+    // AI consent (the original's AISetupScreen): asked once.
+    if root.setup-open : Rectangle {
+        background: Theme.surface-deep.with-alpha(0.6);
+        TouchArea { }
+        Card {
+            width: min(640px, parent.width - 80px);
+            height: setup-layout.preferred-height;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            setup-layout := VerticalLayout {
+                padding: 22px; spacing: 12px;
+                Text { text: "Explain findings with Claude"; font-size: 18px; font-weight: 600; color: Theme.text-primary; }
+                if root.setup-mode == "claude-code" : Muted { text: "Explanations come from Claude Code using your existing sign-in, so no API key is needed. It runs with every tool, MCP server and hook turned off, so it can only answer."; }
+                Muted { text: root.setup-mode == "claude-code" ? "When you ask, the finding (section, message, details and suggested fix) is sent to Claude. Your username, hostname and home path are replaced first, and the scan never collects secret values." : "When you ask, the finding (section, message, details and suggested fix) is sent to Anthropic's API so Claude can explain it. Your username, hostname and home path are replaced first, and the scan never collects secret values."; }
+                Muted { color: Theme.text-muted; text: root.setup-mode == "claude-code" ? "Nothing is sent until you press i or I. Usage counts toward your Claude plan." : "Nothing is sent until you press i or I. Model: " + root.ai-model + ". API usage is billed to your Anthropic account."; }
+                if root.setup-asks-key : Muted { text: "Paste an API key from console.anthropic.com → API keys. It's saved to " + root.setup-key-path + " readable only by you. Setting ANTHROPIC_API_KEY instead also works."; }
+                key-box := LineEdit { visible: root.setup-asks-key; height: root.setup-asks-key ? self.preferred-height : 0px; input-type: password; placeholder-text: "sk-ant-…"; accessible-label: "Anthropic API key"; accepted => { root.setup-enable(self.text); } }
+                if root.setup-error != "" : Text { text: root.setup-error; color: Theme.state-risk; wrap: word-wrap; }
+                HorizontalLayout {
+                    spacing: 8px; alignment: end;
+                    Button { label: "Cancel"; clicked => { root.setup-cancel(); } }
+                    if root.setup-mode == "claude-code" : Button { label: "Use an API key instead"; clicked => { root.setup-switch("api"); } }
+                    if root.setup-mode == "api" && root.setup-alt : Button { label: "Use Claude Code instead"; clicked => { root.setup-switch("claude-code"); } }
+                    Button { label: root.setup-mode == "claude-code" ? "Use Claude Code" : "Enable"; primary: true; clicked => { root.setup-enable(key-box.text); } }
+                }
+            }
+        }
+    }
+
+    // The AI answer (the original's AIScreen): streams in; follow-ups below.
+    if root.ai-open : Rectangle {
+        background: Theme.surface-deep.with-alpha(0.6);
+        TouchArea { }
+        Card {
+            width: parent.width - 80px;
+            height: parent.height - 60px;
+            x: 40px;
+            y: 30px;
+            VerticalLayout {
+                padding: 20px; spacing: 10px;
+                HorizontalLayout {
+                    spacing: 10px;
+                    Text { text: root.ai-title; font-size: 15px; font-weight: 600; color: Theme.text-primary; overflow: elide; horizontal-stretch: 1; vertical-alignment: center; }
+                    Text { text: "AI · " + root.ai-via; color: Theme.text-muted; vertical-alignment: center; }
+                }
+                Text { text: "AI-generated. Review commands before running them; secaudit's own fixes are in the main window."; color: Theme.text-muted; font-italic: true; wrap: word-wrap; }
+                ai-scroll := ScrollView {
+                    vertical-stretch: 1;
+                    VerticalLayout {
+                        width: ai-scroll.visible-width;
+                        padding: 8px; spacing: 8px;
+                        for b in root.ai-blocks : Rectangle {
+                            background: b.kind == "code" ? Theme.surface-sunken : transparent;
+                            border-radius: 6px;
+                            height: block-text.preferred-height + (b.kind == "code" ? 16px : 0px) + (b.kind == "h" ? 6px : 0px);
+                            block-text := Text {
+                                x: b.kind == "code" ? 10px : (b.kind == "li" ? 16px : 0px);
+                                y: b.kind == "code" ? 8px : (b.kind == "h" ? 6px : 0px);
+                                width: parent.width - self.x * 2;
+                                text: b.kind == "q" ? "You  " + b.text : b.text;
+                                wrap: b.kind == "code" ? char-wrap : word-wrap;
+                                color: b.kind == "h" || b.kind == "q" ? Theme.accent : (b.kind == "code" ? Theme.text-primary : Theme.text-secondary);
+                                font-weight: b.kind == "h" || b.kind == "q" ? 600 : 400;
+                                font-size: b.kind == "h" ? 15px : 13px;
+                            }
+                        }
+                    }
+                }
+                Text { text: root.ai-status; color: root.ai-error ? Theme.state-risk : Theme.text-muted; wrap: word-wrap; }
+                HorizontalLayout {
+                    spacing: 8px;
+                    follow-up := LineEdit {
+                        horizontal-stretch: 1;
+                        enabled: !root.ai-busy;
+                        placeholder-text: "Ask a follow-up, e.g. \"what breaks if I do this?\"  (enter to send)";
+                        accessible-label: "Follow-up question";
+                        accepted => { root.ai-send(self.text); self.text = ""; }
+                    }
+                    Button { label: "Ask again"; enabled: !root.ai-busy; clicked => { root.ai-regenerate(); } }
+                    Button { label: "Copy answer"; clicked => { root.ai-copy(); } }
+                    Button { label: "Close"; key: "esc"; clicked => { root.ai-close(); } }
                 }
             }
         }

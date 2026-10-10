@@ -26,10 +26,13 @@ use std::rc::Rc;
 use std::time::{Duration, Instant, SystemTime};
 use std::{env, fs, thread};
 
+use secaudit::ai::{self, Event, Request};
 use secaudit_core::audit::Ctx;
 use secaudit_core::store::{Accepted, Item, Meta, Run, Store, now, sev_name, sev_order};
+use serde_json::{Value, json};
 use slint::{ComponentHandle, ModelRc, SharedString, Timer, TimerMode, VecModel, Weak};
-use ui::{App, Past, Row, Theme};
+use std::sync::mpsc::{self, Receiver};
+use ui::{AiBlock, App, Past, Row, Theme};
 
 // ---------- theme (DESIGN.md §5.1), as in omaphoenix-gui ----------
 
@@ -159,6 +162,36 @@ struct State {
     toast_until: Option<Instant>,
     /// History row armed for deletion, and until when.
     delete_armed: Option<(usize, Instant)>,
+    /// The AI conversation on screen, if any.
+    ai: Option<AiSess>,
+    /// What the consent dialog leads to, and its backend choice.
+    setup: Option<(Then, &'static str)>,
+}
+
+/// What asking Claude is about.
+#[derive(Clone, Copy)]
+enum Then {
+    /// Finding `n` of the current run.
+    Explain(usize),
+    Plan,
+}
+
+/// One AI conversation (the original's `AIScreen` state).
+struct AiSess {
+    prompt: String,
+    title: String,
+    backend: &'static str,
+    messages: Vec<Value>,
+    session: Option<String>,
+    request: Option<Request>,
+    rx: Option<Receiver<Event>>,
+    /// (is a question, text)
+    parts: Vec<(bool, String)>,
+    streaming: String,
+    last_answer: String,
+    status: String,
+    error: bool,
+    busy: bool,
 }
 
 impl State {
@@ -192,6 +225,8 @@ fn state() -> Shared {
             shown: Vec::new(),
             toast_until: None,
             delete_armed: None,
+            ai: None,
+            setup: None,
         }))
     })
 }
@@ -673,6 +708,319 @@ fn delete_run(app: &App, i: usize) {
     toast(app, "Scan deleted");
 }
 
+// ---------- AI (Manish's i / I) ----------
+
+/// Markdown to display blocks: headings, paragraphs, list items, code.
+fn md_blocks(md: &str) -> Vec<AiBlock> {
+    let clean = |t: &str| t.replace("**", "").replace('`', "");
+    let mut out = Vec::new();
+    let mut para: Vec<String> = Vec::new();
+    let flush = |para: &mut Vec<String>, out: &mut Vec<AiBlock>| {
+        if !para.is_empty() {
+            out.push(AiBlock {
+                kind: "p".into(),
+                text: clean(&para.join(" ")).into(),
+            });
+            para.clear();
+        }
+    };
+    let mut lines = md.lines();
+    while let Some(raw) = lines.next() {
+        let t = raw.trim();
+        if t.starts_with("```") {
+            flush(&mut para, &mut out);
+            let code: Vec<&str> = lines
+                .by_ref()
+                .take_while(|l| !l.trim_start().starts_with("```"))
+                .collect();
+            out.push(AiBlock {
+                kind: "code".into(),
+                text: code.join("\n").into(),
+            });
+        } else if t.is_empty() {
+            flush(&mut para, &mut out);
+        } else if t.starts_with('#') {
+            flush(&mut para, &mut out);
+            out.push(AiBlock {
+                kind: "h".into(),
+                text: clean(t.trim_start_matches('#').trim()).into(),
+            });
+        } else if let Some(item) = t.strip_prefix("- ").or_else(|| t.strip_prefix("* ")) {
+            flush(&mut para, &mut out);
+            out.push(AiBlock {
+                kind: "li".into(),
+                text: format!("•  {}", clean(item)).into(),
+            });
+        } else if t
+            .split_once(". ")
+            .is_some_and(|(n, _)| !n.is_empty() && n.chars().all(|c| c.is_ascii_digit()))
+        {
+            flush(&mut para, &mut out);
+            out.push(AiBlock {
+                kind: "li".into(),
+                text: clean(t).into(),
+            });
+        } else {
+            para.push(t.to_owned());
+        }
+    }
+    flush(&mut para, &mut out);
+    out
+}
+
+/// Puts the conversation and the consent dialog on screen.
+fn show_ai(app: &App) {
+    let st = state();
+    let s = st.borrow();
+    app.set_setup_open(s.setup.is_some());
+    if let Some((_, mode)) = s.setup {
+        app.set_setup_mode(mode.into());
+        app.set_setup_asks_key(mode == "api" && !ai::env_credentials() && !ai::has_stored_key());
+        app.set_setup_alt(ai::claude_bin().is_some());
+    }
+    let Some(sess) = &s.ai else {
+        app.set_ai_open(false);
+        return;
+    };
+    app.set_ai_open(true);
+    app.set_ai_title(sess.title.as_str().into());
+    app.set_ai_via(if sess.backend == "claude-code" {
+        "Claude Code".into()
+    } else {
+        ai::model().into()
+    });
+    let mut blocks = Vec::new();
+    for (q, text) in &sess.parts {
+        if *q {
+            blocks.push(AiBlock {
+                kind: "q".into(),
+                text: text.as_str().into(),
+            });
+        } else {
+            blocks.extend(md_blocks(text));
+        }
+    }
+    if sess.busy {
+        blocks.extend(md_blocks(&sess.streaming));
+    }
+    app.set_ai_blocks(model(blocks));
+    app.set_ai_status(sess.status.as_str().into());
+    app.set_ai_error(sess.error);
+    app.set_ai_busy(sess.busy);
+}
+
+fn ask(sess: &mut AiSess, question: &str, show: bool, state_dir: &Path) {
+    sess.busy = true;
+    sess.error = false;
+    if show {
+        sess.parts.push((true, question.to_owned()));
+    }
+    let redacted = ai::redact(question);
+    sess.messages
+        .push(json!({"role": "user", "content": redacted}));
+    sess.streaming.clear();
+    sess.status = "Claude is thinking…".into();
+    let (tx, rx) = mpsc::channel();
+    sess.rx = Some(rx);
+    sess.request = Some(if sess.backend == "claude-code" {
+        let mut prompt = redacted;
+        if sess.session.is_none() && sess.messages.len() > 1 {
+            let prev: Vec<String> = sess.messages[..sess.messages.len() - 1]
+                .iter()
+                .map(|m| {
+                    let role = m["role"].as_str().unwrap_or_default();
+                    format!(
+                        "<{role}>\n{}\n</{role}>",
+                        m["content"].as_str().unwrap_or_default()
+                    )
+                })
+                .collect();
+            prompt = format!(
+                "Earlier in this conversation:\n{}\n\nFollow-up question: {prompt}",
+                prev.join("\n\n")
+            );
+        }
+        ai::ask_claude_code(
+            &state_dir.join("claude-code"),
+            &prompt,
+            sess.session.as_deref(),
+            tx,
+        )
+    } else {
+        ai::ask_api(&sess.messages, tx)
+    });
+}
+
+fn open_ai(app: &App, then: Then) {
+    let st = state();
+    let mut s = st.borrow_mut();
+    let Some(run) = s.run() else { return };
+    let (title, prompt) = match then {
+        Then::Explain(n) => {
+            let Some(f) = run.items.iter().find(|i| i.n == n) else {
+                return;
+            };
+            (
+                format!("{}   {}", f.title(), f.finding.section),
+                ai::explain_prompt(f, run),
+            )
+        }
+        Then::Plan => {
+            let c = run.counts();
+            let n = c.fail + c.warn;
+            (
+                format!(
+                    "Action plan  {n} open issue{} · score {} {}",
+                    if n == 1 { "" } else { "s" },
+                    c.score(),
+                    c.grade()
+                ),
+                ai::plan_prompt(run),
+            )
+        }
+    };
+    let dir = s.store.dir.clone();
+    let mut sess = AiSess {
+        prompt,
+        title,
+        backend: ai::backend(),
+        messages: Vec::new(),
+        session: None,
+        request: None,
+        rx: None,
+        parts: Vec::new(),
+        streaming: String::new(),
+        last_answer: String::new(),
+        status: String::new(),
+        error: false,
+        busy: false,
+    };
+    if let Ok(text) = fs::read_to_string(ai::cache_path(&dir, &sess.prompt)) {
+        sess.messages = vec![
+            json!({"role": "user", "content": sess.prompt}),
+            json!({"role": "assistant", "content": text}),
+        ];
+        sess.last_answer.clone_from(&text);
+        sess.parts.push((false, text));
+        sess.status = "saved answer  ·  Ask again to regenerate".into();
+    } else {
+        let p = sess.prompt.clone();
+        ask(&mut sess, &p, false, &dir);
+    }
+    s.ai = Some(sess);
+    drop(s);
+    show_ai(app);
+}
+
+/// `with_ai()`: the AI, or first the one-time consent.
+fn with_ai(app: &App, then: Then) {
+    if ai::ready() {
+        open_ai(app, then);
+    } else {
+        let mode = if ai::claude_bin().is_some() {
+            "claude-code"
+        } else {
+            "api"
+        };
+        state().borrow_mut().setup = Some((then, mode));
+        app.set_setup_error(SharedString::new());
+        show_ai(app);
+    }
+}
+
+fn setup_enable(app: &App, key: &str) {
+    let Some((then, mode)) = state().borrow().setup else {
+        return;
+    };
+    if mode == "api" && !ai::env_credentials() && !ai::has_stored_key() {
+        if !key.trim().starts_with("sk-ant-") {
+            app.set_setup_error(
+                "That doesn't look like an Anthropic API key (they start with sk-ant-).".into(),
+            );
+            return;
+        }
+        if let Err(e) = ai::store_key(key) {
+            app.set_setup_error(e.to_string().into());
+            return;
+        }
+    }
+    if let Err(e) = ai::save_consent(mode) {
+        app.set_setup_error(e.to_string().into());
+        return;
+    }
+    state().borrow_mut().setup = None;
+    open_ai(app, then);
+}
+
+/// Takes what arrived from Claude.
+fn poll_ai(app: &App) {
+    let st = state();
+    let mut s = st.borrow_mut();
+    let dir = s.store.dir.clone();
+    let Some(sess) = &mut s.ai else { return };
+    let Some(rx) = &sess.rx else { return };
+    let events: Vec<Event> = rx.try_iter().collect();
+    if events.is_empty() {
+        return;
+    }
+    for e in events {
+        match e {
+            Event::Started => sess.status = "Writing…".into(),
+            Event::Text(t) => sess.streaming.push_str(&t),
+            Event::Done {
+                note,
+                warning,
+                turn,
+                session,
+            } => {
+                let text = std::mem::take(&mut sess.streaming);
+                sess.messages
+                    .push(turn.unwrap_or_else(|| json!({"role": "assistant", "content": text})));
+                if session.is_some() {
+                    sess.session = session;
+                }
+                if sess.messages.len() == 2 && !text.is_empty() {
+                    let path = ai::cache_path(&dir, &sess.prompt);
+                    if let Some(d) = path.parent() {
+                        let _ = fs::create_dir_all(d);
+                    }
+                    let _ = fs::write(path, &text);
+                }
+                sess.last_answer.clone_from(&text);
+                sess.parts.push((false, text));
+                sess.status = format!("{note}{}", warning.unwrap_or_default());
+                sess.busy = false;
+                sess.rx = None;
+                sess.request = None;
+            }
+            Event::Error { message, retry } => {
+                if sess.messages.last().is_some_and(|m| m["role"] == "user") {
+                    sess.messages.pop();
+                }
+                let partial = std::mem::take(&mut sess.streaming);
+                if !partial.is_empty() {
+                    sess.parts.push((false, partial));
+                }
+                sess.status = format!(
+                    "✗ {message}{}",
+                    if retry {
+                        "  ·  Ask again to retry"
+                    } else {
+                        ""
+                    }
+                );
+                sess.error = true;
+                sess.busy = false;
+                sess.rx = None;
+                sess.request = None;
+            }
+        }
+    }
+    drop(s);
+    show_ai(app);
+}
+
+#[allow(clippy::too_many_lines, reason = "one callback per UI action, wired in one place")]
 fn main() -> Result<(), slint::PlatformError> {
     let app = App::new()?;
     slint::set_xdg_app_id("secaudit-gui")?;
@@ -752,6 +1100,131 @@ fn main() -> Result<(), slint::PlatformError> {
     app.on_delete_run(move |i| {
         if let Some(app) = weak.upgrade() {
             delete_run(&app, usize::try_from(i).unwrap_or(0));
+        }
+    });
+
+    let weak = app.as_weak();
+    app.on_explain(move || {
+        let Some(app) = weak.upgrade() else { return };
+        if let Some((_, item)) = selected(&app).filter(|(_, i)| sev_name(i.finding.sev) != "pass") {
+            with_ai(&app, Then::Explain(item.n));
+        }
+    });
+    let weak = app.as_weak();
+    app.on_plan(move || {
+        if let Some(app) = weak.upgrade() {
+            with_ai(&app, Then::Plan);
+        }
+    });
+    let weak = app.as_weak();
+    app.on_ai_send(move |q| {
+        let Some(app) = weak.upgrade() else { return };
+        let st = state();
+        let mut s = st.borrow_mut();
+        let dir = s.store.dir.clone();
+        if let Some(sess) = &mut s.ai
+            && !sess.busy
+            && !q.trim().is_empty()
+        {
+            ask(sess, q.trim(), true, &dir);
+        }
+        drop(s);
+        show_ai(&app);
+    });
+    let weak = app.as_weak();
+    app.on_ai_regenerate(move || {
+        let Some(app) = weak.upgrade() else { return };
+        let st = state();
+        let mut s = st.borrow_mut();
+        let dir = s.store.dir.clone();
+        if let Some(sess) = &mut s.ai
+            && !sess.busy
+        {
+            let _ = fs::remove_file(ai::cache_path(&dir, &sess.prompt));
+            sess.messages.clear();
+            sess.session = None;
+            sess.parts.clear();
+            let p = sess.prompt.clone();
+            ask(sess, &p, false, &dir);
+        }
+        drop(s);
+        show_ai(&app);
+    });
+    let weak = app.as_weak();
+    app.on_ai_copy(move || {
+        let Some(app) = weak.upgrade() else { return };
+        let text = state()
+            .borrow()
+            .ai
+            .as_ref()
+            .map(|a| a.last_answer.clone())
+            .unwrap_or_default();
+        if text.is_empty() {
+            return;
+        }
+        let ok = Command::new("wl-copy")
+            .stdin(Stdio::piped())
+            .spawn()
+            .ok()
+            .and_then(|mut c| {
+                c.stdin.take()?.write_all(text.as_bytes()).ok()?;
+                c.wait().ok()
+            })
+            .is_some_and(|s| s.success());
+        toast(
+            &app,
+            if ok {
+                "Answer copied"
+            } else {
+                "wl-copy isn't available to copy with"
+            },
+        );
+    });
+    let weak = app.as_weak();
+    app.on_ai_close(move || {
+        let Some(app) = weak.upgrade() else { return };
+        if let Some(mut sess) = state().borrow_mut().ai.take()
+            && let Some(r) = &mut sess.request
+        {
+            r.cancel();
+        }
+        show_ai(&app);
+    });
+    let weak = app.as_weak();
+    app.on_setup_enable(move |key| {
+        if let Some(app) = weak.upgrade() {
+            setup_enable(&app, &key);
+        }
+    });
+    let weak = app.as_weak();
+    app.on_setup_switch(move |mode| {
+        let Some(app) = weak.upgrade() else { return };
+        let m: &'static str = if mode == "api" { "api" } else { "claude-code" };
+        if let Some(setup) = &mut state().borrow_mut().setup {
+            setup.1 = m;
+        }
+        app.set_setup_error(SharedString::new());
+        show_ai(&app);
+    });
+    let weak = app.as_weak();
+    app.on_setup_cancel(move || {
+        let Some(app) = weak.upgrade() else { return };
+        state().borrow_mut().setup = None;
+        show_ai(&app);
+    });
+    app.set_ai_model(ai::model().into());
+    let home = env::var("HOME").unwrap_or_default();
+    app.set_setup_key_path(
+        ai::key_file()
+            .to_string_lossy()
+            .replacen(&home, "~", 1)
+            .into(),
+    );
+    let ai_ticker = Timer::default();
+    let weak = app.as_weak();
+    ai_ticker.start(TimerMode::Repeated, Duration::from_millis(100), move || {
+        if let Some(app) = weak.upgrade() {
+            poll_ai(&app);
         }
     });
 
