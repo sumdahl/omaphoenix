@@ -104,6 +104,8 @@ pub struct State<'a> {
     pub output_title: String,
 
     pub timer: String,
+    /// Automatic snapshot interval; `None` is manual only.
+    pub interval: Option<&'static str>,
     pub findings: Option<Vec<Finding>>,
 
     pub audit_store: Store,
@@ -164,6 +166,7 @@ impl<'a> State<'a> {
             output: Vec::new(),
             output_title: String::new(),
             timer: schedule::status(),
+            interval: schedule::interval(),
             findings: None,
             audit_store,
             accepted,

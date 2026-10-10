@@ -9,15 +9,18 @@ impl State<'_> {
     pub(super) fn settings_key(&mut self, key: KeyEvent) {
         match key.code {
             KeyCode::Char('t') => {
-                let off = self.timer.starts_with("timer off");
-                let r = if off {
-                    schedule::on("30m")
-                } else {
-                    schedule::off()
+                let next = match self
+                    .interval
+                    .and_then(|i| schedule::CHOICES.iter().position(|c| *c == i))
+                {
+                    None => schedule::CHOICES.first().copied(),
+                    Some(i) => schedule::CHOICES.get(i + 1).copied(),
                 };
-                if let Err(e) = r {
-                    self.notify(e);
+                match schedule::set(next) {
+                    Ok(()) => self.notify(schedule::describe(next)),
+                    Err(e) => self.notify(e),
                 }
+                self.interval = schedule::interval();
                 self.timer = schedule::status();
             }
             KeyCode::Char('e') => {

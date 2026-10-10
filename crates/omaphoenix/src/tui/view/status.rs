@@ -45,8 +45,11 @@ pub(super) fn line(st: &State<'_>) -> Line<'static> {
         )),
         None => spans.push(Span::styled(" · no snapshot yet", t.fg(t.muted))),
     }
-    let timer = st.timer.split(':').next().unwrap_or_default();
-    spans.push(Span::styled(format!(" · {timer}"), t.fg(t.muted)));
+    let schedule = st.interval.map_or_else(
+        || "manual snapshots".to_owned(),
+        |i| format!("automatic every {i}"),
+    );
+    spans.push(Span::styled(format!(" · {schedule}"), t.fg(t.muted)));
     Line::from(spans)
 }
 

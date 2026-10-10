@@ -20,7 +20,7 @@ pub(super) fn pulse(f: &mut Frame, st: &State<'_>, area: Rect) {
             ))),
             None => lines.push(Line::from(Span::styled("  ✗ No snapshot yet", t.fg(t.red)))),
         }
-        let timer_on = !st.timer.starts_with("timer off");
+        let timer_on = st.interval.is_some();
         lines.push(Line::from(if timer_on {
             "  ✓ Automatic snapshots on".to_owned()
         } else {

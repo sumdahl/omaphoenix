@@ -16,6 +16,43 @@ pub const INTERVALS: &[(&str, &str)] = &[
     ("daily", "daily"),
 ];
 
+/// What the apps offer, most frequent first; no interval means manual only.
+pub const CHOICES: [&str; 5] = ["15m", "30m", "1h", "6h", "daily"];
+
+/// An interval in words, or what manual means.
+#[must_use]
+pub fn describe(interval: Option<&str>) -> &'static str {
+    match interval {
+        None => "Manual only: a snapshot is taken when you take one",
+        Some("15m") => "Automatic, every 15 minutes",
+        Some("30m") => "Automatic, every 30 minutes",
+        Some("1h") => "Automatic, every hour",
+        Some("6h") => "Automatic, every 6 hours",
+        Some("daily") => "Automatic, once a day",
+        Some(_) => "Automatic",
+    }
+}
+
+/// The timer's interval, or `None` when snapshots are manual only.
+#[must_use]
+pub fn interval() -> Option<&'static str> {
+    let text = fs::read_to_string(unit_dir()?.join(format!("{UNIT}.timer"))).ok()?;
+    let cal = text.lines().find_map(|l| l.strip_prefix("OnCalendar="))?;
+    INTERVALS.iter().find(|(_, c)| *c == cal).map(|(n, _)| *n)
+}
+
+/// Automatic snapshots every `interval`, or manual only with `None`.
+///
+/// # Errors
+/// When systemd or the filesystem fail.
+pub fn set(interval: Option<&str>) -> Result<(), String> {
+    match interval {
+        Some(i) => on(i),
+        None if self::interval().is_none() => Ok(()),
+        None => off(),
+    }
+}
+
 /// "15m, 1h, 30m, 6h, daily" (sorted like Go's).
 #[must_use]
 pub fn interval_names() -> String {
@@ -89,9 +126,21 @@ fn hooks(bin: &str) -> [(&'static str, String); 2] {
 /// # Errors
 /// When the binary lives in a temp dir, or systemd/fs fail.
 pub fn on(interval: &str) -> Result<(), String> {
-    let bin = std::env::current_exe()
+    let exe = std::env::current_exe()
         .and_then(fs::canonicalize)
         .map_err(|e| e.to_string())?;
+    // The desktop app calls this too; the timer must run the CLI, never the app.
+    let bin = if exe.file_name().is_some_and(|n| n == "omaphoenix") {
+        exe.clone()
+    } else {
+        exe.with_file_name("omaphoenix")
+    };
+    if !bin.is_file() {
+        return Err(format!(
+            "the omaphoenix command isn't next to {}; rerun install.sh",
+            exe.display()
+        ));
+    }
     if bin.starts_with(std::env::temp_dir()) {
         return Err(format!(
             "refusing to schedule {}: it lives in a temp dir; install omaphoenix first",

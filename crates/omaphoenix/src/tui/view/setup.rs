@@ -1,5 +1,6 @@
 //! Migrate and Settings.
 
+use phx_core::schedule;
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::text::{Line, Span};
@@ -45,6 +46,22 @@ pub(super) fn migrate(f: &mut Frame, st: &State<'_>, area: Rect) {
     f.render_widget(Paragraph::new(lines).wrap(Wrap { trim: false }), area);
 }
 
+fn interval_choices(st: &State<'_>) -> Line<'static> {
+    let t = &st.theme;
+    let mut spans = vec![Span::raw("  ")];
+    let options = std::iter::once(None).chain(schedule::CHOICES.iter().map(|c| Some(*c)));
+    for o in options {
+        let label = o.unwrap_or("manual");
+        spans.push(if o == st.interval {
+            Span::styled(format!("[{label}]"), t.selected())
+        } else {
+            Span::styled(format!(" {label} "), t.fg(t.muted))
+        });
+        spans.push(Span::raw(" "));
+    }
+    Line::from(spans)
+}
+
 pub(super) fn settings(f: &mut Frame, st: &State<'_>, area: Rect) {
     let t = &st.theme;
     let repo = &st.app.repo;
@@ -52,9 +69,10 @@ pub(super) fn settings(f: &mut Frame, st: &State<'_>, area: Rect) {
     let secrets = phx_core::category::secret::secrets_ready(&repo.dir);
     let lines = vec![
         super::heading(st, "Schedule"),
-        Line::from(format!("  {}", st.timer.lines().next().unwrap_or_default())),
+        Line::from(format!("  {}", schedule::describe(st.interval))),
+        interval_choices(st),
         Line::from(Span::styled(
-            "  t turns automatic snapshots on (every 30m) or off",
+            "  t switches to the next choice. Manual: press s whenever you want a snapshot.",
             t.fg(t.muted),
         )),
         Line::from(""),
