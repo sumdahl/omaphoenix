@@ -16,7 +16,7 @@ use sha2::{Digest, Sha256};
 use super::config::restore_tree;
 use super::files::{Walk, copy_file, exists, is_secret, walk};
 use super::{Category, Env, Error, Outcome, hex};
-use vault::{open_vault, tar_files, write_private};
+use vault::{open_vault, plan_vault, tar_files, write_private};
 
 pub use keys::{private_ssh_keys, secrets_ready, setup_secrets, unlock_identity};
 
@@ -134,12 +134,16 @@ impl Category for Secret {
         let mut res = restore_tree(env, &plain_dir(env), &env.home);
         let vault = secrets_path(env, "vault.age");
         if exists(&vault) {
-            if env.dry_run {
-                let names = fs::read_to_string(secrets_path(env, "vault.txt")).unwrap_or_default();
-                res.planned
-                    .extend(names.split_whitespace().map(|n| format!("decrypt ~/{n}")));
-            } else if let Err(e) = open_vault(env, &vault, &mut res) {
-                res.failed.push(e.to_string());
+            let names = fs::read_to_string(secrets_path(env, "vault.txt")).unwrap_or_default();
+            let all: Vec<&str> = names.split_whitespace().collect();
+            let wanted: Vec<&str> = all.iter().copied().filter(|n| env.want(n)).collect();
+            // Only an encrypted item in scope may ask for the passphrase.
+            if !wanted.is_empty() {
+                if env.dry_run {
+                    plan_vault(env, &all, &wanted, &mut res);
+                } else if let Err(e) = open_vault(env, &vault, &mut res) {
+                    res.failed.push(e.to_string());
+                }
             }
         }
         if !env.dry_run && res.applied > 0 {

@@ -6,7 +6,7 @@
 | Version | 0.1.0-rc.7 |
 | Found | 2026-10-10, rolling back a single config item on the reference laptop |
 | Severity | medium: no wrong files are written, but it asks for the most sensitive input when it isn't needed. Without a terminal (desktop app, scripts) such a restore would fail. |
-| Status | open |
+| Status | fixed in 0.1.0-rc.8; test `phx_core::category::secret::tests::restoring_other_items_never_asks_for_the_passphrase` |
 
 ## What happens
 

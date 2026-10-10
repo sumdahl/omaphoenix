@@ -8,7 +8,9 @@ use zeroize::Zeroizing;
 use super::keys::unlock_identity;
 use super::{MAX_SECRET_FILE, age_err, secrets_path};
 use crate::category::files::exists;
-use crate::category::{Env, Error, Outcome, stamp};
+use sha2::{Digest, Sha256};
+
+use crate::category::{Env, Error, Outcome, hex, stamp};
 
 /// A reproducible tar (sorted, real modes, no times or owners) so identical secrets hash the same.
 pub(super) fn tar_files(home: &Path, ids: &[&str]) -> Result<Zeroizing<Vec<u8>>, Error> {
@@ -33,6 +35,22 @@ pub(super) fn tar_files(home: &Path, ids: &[&str]) -> Result<Zeroizing<Vec<u8>>,
         b.append(&h, body.as_slice())?;
     }
     Ok(Zeroizing::new(b.into_inner()?))
+}
+
+/// A dry run can't decrypt, but the files on disk hashing like the vault proves nothing would change.
+pub(super) fn plan_vault(env: &Env<'_>, all: &[&str], wanted: &[&str], res: &mut Outcome) {
+    let sum = fs::read_to_string(secrets_path(env, "vault.sha256")).unwrap_or_default();
+    let unchanged =
+        tar_files(&env.home, all).is_ok_and(|t| hex(&Sha256::digest(t.as_slice())) == sum.trim());
+    if unchanged {
+        res.present += wanted.len();
+        return;
+    }
+    res.planned.extend(
+        wanted
+            .iter()
+            .map(|n| format!("decrypt ~/{n} (written only if it differs)")),
+    );
 }
 
 pub(super) fn write_private(path: &Path, body: &[u8]) -> std::io::Result<()> {

@@ -70,3 +70,75 @@ fn vault_round_trip_never_stores_plaintext() {
         (0o700, 0o600, 0o644)
     );
 }
+
+fn vault_fixture() -> (tempfile::TempDir, std::path::PathBuf, std::path::PathBuf) {
+    let t = tempfile::tempdir().unwrap_or_else(|e| unreachable!("{e}"));
+    let (home, tree) = (t.path().join("home"), t.path().join("tree"));
+    fs::create_dir_all(home.join(".ssh")).ok();
+    fs::write(
+        home.join(".ssh/id_a"),
+        "-----BEGIN OPENSSH PRIVATE KEY-----\na\n",
+    )
+    .ok();
+    fs::write(
+        home.join(".ssh/id_b"),
+        "-----BEGIN OPENSSH PRIVATE KEY-----\nb\n",
+    )
+    .ok();
+    setup_secrets(&tree.join("secrets"), "correct horse battery")
+        .unwrap_or_else(|e| unreachable!("{e}"));
+    let log = |_: &str, _: &str| {};
+    let env = Env::new(&home, &tree, &log);
+    let items = vec![Item::new(".ssh/id_a", ""), Item::new(".ssh/id_b", "")];
+    Secret
+        .capture(&env, &items)
+        .unwrap_or_else(|e| unreachable!("{e}"));
+    (t, home, tree)
+}
+
+#[test]
+fn restoring_other_items_never_asks_for_the_passphrase() {
+    let (_t, home, tree) = vault_fixture();
+    let log = |_: &str, _: &str| {};
+    let never = || -> Result<zeroize::Zeroizing<String>, String> {
+        unreachable!("the passphrase was asked for")
+    };
+    let mut env = Env::new(&home, &tree, &log);
+    env.passphrase = Some(&never);
+    env.items = vec![".config/phx-demo".into()];
+    for dry_run in [true, false] {
+        env.dry_run = dry_run;
+        let res = Secret.restore(&env).unwrap_or_default();
+        assert!(res.planned.is_empty() && res.failed.is_empty(), "{res:?}");
+    }
+    let asked = std::cell::Cell::new(false);
+    let ask = || {
+        asked.set(true);
+        Ok(zeroize::Zeroizing::new("correct horse battery".to_owned()))
+    };
+    env.passphrase = Some(&ask);
+    env.items = vec![".ssh/id_a".into()];
+    env.dry_run = false;
+    let res = Secret.restore(&env).unwrap_or_default();
+    assert!(asked.get(), "naming a key asks");
+    assert_eq!(res.present, 1, "only the named key is checked");
+}
+
+#[test]
+fn a_dry_run_counts_identical_keys_as_present_without_the_passphrase() {
+    let (_t, home, tree) = vault_fixture();
+    let log = |_: &str, _: &str| {};
+    let mut env = Env::new(&home, &tree, &log);
+    env.dry_run = true;
+    let res = Secret.restore(&env).unwrap_or_default();
+    assert!(res.planned.is_empty(), "{:?}", res.planned);
+    assert_eq!(res.present, 2);
+    fs::write(home.join(".ssh/id_b"), "changed").ok();
+    let res = Secret.restore(&env).unwrap_or_default();
+    assert_eq!(
+        res.planned.len(),
+        2,
+        "a changed key can't be told apart without decrypting: {:?}",
+        res.planned
+    );
+}

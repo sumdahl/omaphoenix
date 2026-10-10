@@ -6,7 +6,7 @@
 | Version | 0.1.0-rc.7 |
 | Found | 2026-10-10, `restore --dry-run` right after the first clean snapshot on the reference laptop |
 | Severity | low: a misleading dry-run line; a real restore compares and writes nothing |
-| Status | open |
+| Status | fixed in 0.1.0-rc.8; test `phx_core::category::secret::tests::a_dry_run_counts_identical_keys_as_present_without_the_passphrase` |
 
 ## What happens
 
