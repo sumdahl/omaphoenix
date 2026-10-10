@@ -49,6 +49,9 @@ jobs:
       # Memory budgets (RUST.md §9, ADR-0017): release builds, as users run them.
       - run: cargo build --release -p omaphoenix -p secaudit
       - run: scripts/peak-rss
+      # Real-terminal tests at release speed: first frame < 100 ms, no
+      # terminal queries, clean exit (DESIGN.md §12).
+      - run: cargo test --release -p omaphoenix -p secaudit --test pty
 
   # The Slint desktop app lives outside the workspace (its license is
   # recorded as Q10, so cargo-deny doesn't cover it); keep it building.

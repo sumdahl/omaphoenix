@@ -176,4 +176,95 @@ mod tests {
         key(&mut st, KeyCode::Char('q'));
         assert!(st.quit);
     }
+
+    #[test]
+    fn unified_keymap_confirms_searches_and_names_every_action() {
+        use secaudit_core::store::Meta;
+        let t = tempfile::tempdir().unwrap_or_else(|e| unreachable!("{e}"));
+        let app = App {
+            home: t.path().into(),
+            repo: Repo {
+                dir: t.path().join("repo"),
+            },
+            log: &quiet,
+            passphrase: None,
+        };
+        let store = Store {
+            dir: t.path().join("audit"),
+        };
+        let mut meta = Meta {
+            mode: "quick".into(),
+            started: 1,
+            ..Meta::default()
+        };
+        let dir = store
+            .begin("20261010-010000", &meta)
+            .unwrap_or_else(|e| unreachable!("{e}"));
+        std::fs::write(
+            dir.join("findings.jsonl"),
+            concat!(
+                r#"{"sev":"fail","section":"SSH","msg":"~/.ssh perms 755","detail":"","fix":"chmod 700 ~/.ssh","hint":""}"#,
+                "\n",
+                r#"{"sev":"warn","section":"Firewall","msg":"ufw allows Anywhere","detail":"","fix":"","hint":"scope it"}"#,
+                "\n",
+            ),
+        )
+        .unwrap_or_else(|e| unreachable!("{e}"));
+        store
+            .finish(&dir, &mut meta)
+            .unwrap_or_else(|e| unreachable!("{e}"));
+        let mut st = State::with_store(&app, store);
+
+        key(&mut st, KeyCode::Char('3'));
+        key(&mut st, KeyCode::Char('x'));
+        assert!(st.suspend.is_none(), "x never runs a fix without asking");
+        assert!(screen(&st, 100, 24).contains("Run this fix in the terminal?"));
+        key(&mut st, KeyCode::Char('n'));
+        assert!(
+            st.confirm.is_none() && st.suspend.is_none(),
+            "anything but y cancels"
+        );
+        key(&mut st, KeyCode::Char('x'));
+        key(&mut st, KeyCode::Char('y'));
+        assert!(
+            matches!(st.suspend, Some(super::Suspend::Fix(_))),
+            "y runs it"
+        );
+        st.suspend = None;
+
+        key(&mut st, KeyCode::Char('/'));
+        for c in "ufw".chars() {
+            key(&mut st, KeyCode::Char(c));
+        }
+        key(&mut st, KeyCode::Enter);
+        assert_eq!(st.audit_items().len(), 1, "/ filters the audit list");
+        key(&mut st, KeyCode::Esc);
+        assert_eq!(st.audit_items().len(), 2, "esc clears the search");
+
+        key(&mut st, KeyCode::Char('?'));
+        let s = screen(&st, 100, 30);
+        assert!(
+            s.contains("Keys: Audit") && s.contains("rescan"),
+            "? lists this screen's keys:\n{s}"
+        );
+        key(&mut st, KeyCode::Esc);
+        assert!(!st.help);
+
+        st.on_key(KeyEvent::new(KeyCode::Char('k'), KeyModifiers::CONTROL));
+        assert!(
+            screen(&st, 100, 30).contains("Take snapshot"),
+            "palette lists actions"
+        );
+        for c in "timeline".chars() {
+            key(&mut st, KeyCode::Char(c));
+        }
+        key(&mut st, KeyCode::Enter);
+        assert_eq!(st.section, Section::Timeline, "palette runs Go to Timeline");
+
+        key(&mut st, KeyCode::Char('u'));
+        assert!(
+            st.suspend.is_none(),
+            "nothing to undo before setup, and never without asking"
+        );
+    }
 }

@@ -91,7 +91,15 @@ pub struct State<'a> {
     // Timeline
     pub snaps: Vec<Snapshot>,
     pub snap_sel: usize,
-    pub confirm_restore: Option<String>,
+    /// A question in the footer and what `y` does (restore, fix, undo).
+    pub confirm: Option<(String, Suspend)>,
+    /// `?`: the keys for this screen.
+    pub help: bool,
+    /// `/`: filter text for the current list, and whether keys type into it.
+    pub search: String,
+    pub searching: bool,
+    /// `:` or `⌃k`: the command palette's query and highlighted row.
+    pub palette: Option<(String, usize)>,
     pub output: Vec<String>,
     pub output_title: String,
 
@@ -143,7 +151,11 @@ impl<'a> State<'a> {
             jobs: std::collections::BTreeSet::new(),
             snaps: app.repo.list().unwrap_or_default(),
             snap_sel: 0,
-            confirm_restore: None,
+            confirm: None,
+            help: false,
+            search: String::new(),
+            searching: false,
+            palette: None,
             output: Vec::new(),
             output_title: String::new(),
             timer: schedule::status(),
@@ -334,14 +346,57 @@ impl<'a> State<'a> {
             self.quit = true;
             return;
         }
-        if let Some(id) = self.confirm_restore.take() {
+        if let Some((_, work)) = self.confirm.take() {
             if key.code == KeyCode::Char('y') {
-                self.suspend = Some(Suspend::Cli(vec!["restore".into(), "--at".into(), id]));
+                self.suspend = Some(work);
             }
             return;
         }
+        if let Some((q, sel)) = self.palette.take() {
+            self.palette_key(q, sel, key);
+            return;
+        }
+        if self.searching {
+            self.search_key(key);
+            return;
+        }
+        if self.help {
+            self.help = false;
+            if matches!(key.code, KeyCode::Esc | KeyCode::Char('?')) {
+                return;
+            }
+        }
+        let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
         let was_armed = std::mem::take(&mut self.quit_armed);
         match key.code {
+            KeyCode::Char('?') => {
+                self.help = true;
+                return;
+            }
+            KeyCode::Char(':') => {
+                self.palette = Some((String::new(), 0));
+                return;
+            }
+            KeyCode::Char('k') if ctrl => {
+                self.palette = Some((String::new(), 0));
+                return;
+            }
+            KeyCode::Char('/') => {
+                if matches!(self.section, Section::Timeline | Section::Audit) {
+                    self.searching = true;
+                } else {
+                    self.notify("/ searches the Timeline and Audit lists");
+                }
+                return;
+            }
+            KeyCode::Char('u') => {
+                self.ask_undo();
+                return;
+            }
+            KeyCode::Esc if !self.search.is_empty() => {
+                self.search.clear();
+                return;
+            }
             KeyCode::Char('q') => {
                 if self.dirty && !was_armed {
                     self.quit_armed = true;
@@ -386,7 +441,28 @@ impl<'a> State<'a> {
         }
     }
 
+    /// Typing into the `/` filter.
+    fn search_key(&mut self, key: KeyEvent) {
+        match key.code {
+            KeyCode::Enter => self.searching = false,
+            KeyCode::Esc => {
+                self.searching = false;
+                self.search.clear();
+            }
+            KeyCode::Backspace => {
+                self.search.pop();
+            }
+            KeyCode::Char(c) => self.search.push(c),
+            _ => {}
+        }
+        self.snap_sel = 0;
+        self.audit_sel = 0;
+    }
+
     fn switch(&mut self, s: Section) {
+        if s != self.section {
+            self.search.clear();
+        }
         self.section = s;
         if s == Section::Backup && self.choices.is_none() {
             self.load_choices();
@@ -446,8 +522,33 @@ impl<'a> State<'a> {
         self.run_captured("Snapshot", &["snapshot"]);
     }
 
+    /// Snapshots matching `/`.
+    pub fn snap_view(&self) -> Vec<&Snapshot> {
+        let q = self.search.to_lowercase();
+        self.snaps
+            .iter()
+            .filter(|s| {
+                q.is_empty()
+                    || format!("{} {}", s.id, s.subject)
+                        .to_lowercase()
+                        .contains(&q)
+            })
+            .collect()
+    }
+
+    fn ask_undo(&mut self) {
+        if !self.app.repo.exists() {
+            self.notify("Nothing to undo: not set up yet");
+            return;
+        }
+        self.confirm = Some((
+            "Undo the last restore? Files come back; installed packages are listed, not removed. [y/N]".into(),
+            Suspend::Cli(vec!["undo".into()]),
+        ));
+    }
+
     fn timeline_key(&mut self, key: KeyEvent) {
-        let n = self.snaps.len();
+        let n = self.snap_view().len();
         match key.code {
             KeyCode::Down | KeyCode::Char('j') => {
                 self.snap_sel = (self.snap_sel + 1).min(n.saturating_sub(1));
@@ -455,7 +556,7 @@ impl<'a> State<'a> {
             KeyCode::Up | KeyCode::Char('k') => self.snap_sel = self.snap_sel.saturating_sub(1),
             KeyCode::Char('s') => self.take_snapshot(),
             KeyCode::Enter | KeyCode::Char('p') => {
-                if let Some(s) = self.snaps.get(self.snap_sel) {
+                if let Some(s) = self.snap_view().get(self.snap_sel).copied() {
                     let id = s.id.clone();
                     self.run_captured(
                         &format!("Preview of {id}"),
@@ -464,7 +565,14 @@ impl<'a> State<'a> {
                 }
             }
             KeyCode::Char('r') => {
-                self.confirm_restore = self.snaps.get(self.snap_sel).map(|s| s.id.clone());
+                if let Some(id) = self.snap_view().get(self.snap_sel).map(|s| s.id.clone()) {
+                    self.confirm = Some((
+                        format!(
+                            "Restore snapshot {id} onto this machine? Replaced files are kept as .pre-restore. [y/N]"
+                        ),
+                        Suspend::Cli(vec!["restore".into(), "--at".into(), id]),
+                    ));
+                }
             }
             KeyCode::Esc => self.output.clear(),
             _ => {}
@@ -475,7 +583,21 @@ impl<'a> State<'a> {
         let Some(run) = &self.audit else {
             return Vec::new();
         };
-        let mut items: Vec<_> = run.items.iter().filter(|i| i.is_issue()).collect();
+        let q = self.search.to_lowercase();
+        let mut items: Vec<_> = run
+            .items
+            .iter()
+            .filter(|i| i.is_issue())
+            .filter(|i| {
+                q.is_empty()
+                    || format!(
+                        "{} {} {}",
+                        i.finding.msg, i.finding.section, i.finding.detail
+                    )
+                    .to_lowercase()
+                    .contains(&q)
+            })
+            .collect();
         items.sort_by_key(|i| {
             (
                 i.accepted,
@@ -489,7 +611,8 @@ impl<'a> State<'a> {
     fn audit_key(&mut self, key: KeyEvent) {
         let n = self.audit_items().len();
         match key.code {
-            KeyCode::Char('s' | 'r') => self.run_audit(),
+            // DESIGN.md §7.1: s scans, R rescans; r means restore elsewhere.
+            KeyCode::Char('s' | 'R') => self.run_audit(),
             KeyCode::Down | KeyCode::Char('j') => {
                 self.audit_sel = (self.audit_sel + 1).min(n.saturating_sub(1));
             }
@@ -502,7 +625,13 @@ impl<'a> State<'a> {
                     .map(|i| i.finding.fix.clone())
                     .filter(|f| !f.is_empty());
                 match fix {
-                    Some(fix) => self.suspend = Some(Suspend::Fix(fix)),
+                    // Fixes always confirm (DESIGN.md §7.1, AGENTS.md).
+                    Some(fix) => {
+                        self.confirm = Some((
+                            format!("Run this fix in the terminal?  $ {fix}  [y/N]"),
+                            Suspend::Fix(fix),
+                        ));
+                    }
                     None => self.notify("No automatic fix for this finding; see its advice"),
                 }
             }
@@ -679,6 +808,94 @@ impl<'a> State<'a> {
                 self.suspend = Some(Suspend::Cli(vec!["init".into()]));
             }
             _ => {}
+        }
+    }
+}
+
+/// Command palette entries: every action by name (DESIGN.md §7.1).
+pub const ACTIONS: [&str; 16] = [
+    "Take snapshot",
+    "Scan (quick audit)",
+    "Preview selected snapshot",
+    "Restore selected snapshot",
+    "Undo last restore",
+    "Save backup selection",
+    "Turn automatic snapshots on/off",
+    "Set up encrypted secrets",
+    "Open the Security Audit app",
+    "Go to Pulse",
+    "Go to Timeline",
+    "Go to Audit",
+    "Go to Backup",
+    "Go to Migrate",
+    "Go to Settings",
+    "Keys",
+];
+
+impl State<'_> {
+    /// Actions matching the palette query (subsequence, any case).
+    pub fn actions(q: &str) -> Vec<&'static str> {
+        let q = q.to_lowercase();
+        ACTIONS
+            .iter()
+            .copied()
+            .filter(|a| {
+                let mut it = a.to_lowercase().chars().collect::<Vec<_>>().into_iter();
+                q.chars().all(|c| it.any(|x| x == c))
+            })
+            .collect()
+    }
+
+    fn palette_key(&mut self, mut q: String, mut sel: usize, key: KeyEvent) {
+        let n = Self::actions(&q).len();
+        match key.code {
+            KeyCode::Esc => return,
+            KeyCode::Down => sel = (sel + 1).min(n.saturating_sub(1)),
+            KeyCode::Up => sel = sel.saturating_sub(1),
+            KeyCode::Backspace => {
+                q.pop();
+                sel = 0;
+            }
+            KeyCode::Enter => {
+                if let Some(a) = Self::actions(&q).get(sel).copied() {
+                    self.act(a);
+                }
+                return;
+            }
+            KeyCode::Char(c) => {
+                q.push(c);
+                sel = 0;
+            }
+            _ => {}
+        }
+        self.palette = Some((q, sel));
+    }
+
+    /// Does a palette action through the same paths as its key.
+    fn act(&mut self, a: &str) {
+        let press = |st: &mut Self, s: Section, c: KeyCode| {
+            st.switch(s);
+            st.on_key(KeyEvent::new(c, KeyModifiers::NONE));
+        };
+        match a {
+            "Take snapshot" => self.take_snapshot(),
+            "Scan (quick audit)" => press(self, Section::Audit, KeyCode::Char('s')),
+            "Preview selected snapshot" => press(self, Section::Timeline, KeyCode::Enter),
+            "Restore selected snapshot" => press(self, Section::Timeline, KeyCode::Char('r')),
+            "Undo last restore" => self.ask_undo(),
+            "Save backup selection" => press(self, Section::Backup, KeyCode::Char('w')),
+            "Turn automatic snapshots on/off" => press(self, Section::Settings, KeyCode::Char('t')),
+            "Set up encrypted secrets" => press(self, Section::Settings, KeyCode::Char('e')),
+            "Open the Security Audit app" => self.suspend = Some(Suspend::SecauditTui),
+            "Keys" => self.help = true,
+            other => {
+                if let Some(s) = Section::ALL
+                    .iter()
+                    .find(|s| other == format!("Go to {}", s.label()))
+                {
+                    self.switch(*s);
+                }
+            }
         }
     }
 }

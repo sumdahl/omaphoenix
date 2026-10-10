@@ -8,6 +8,8 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph, Wrap};
 use secaudit_core::Severity;
 
+use ratatui::widgets::Clear;
+
 use super::state::{MIGRATE_STEPS, Section, State};
 
 fn ago(iso: &str) -> String {
@@ -55,9 +57,9 @@ pub fn draw(f: &mut Frame, st: &State<'_>) {
     }
 
     let hint = match st.section {
-        Section::Pulse => "enter primary action · s snapshot · d re-check · 1-6 sections · q quit",
-        Section::Timeline => "↑↓ move · enter preview · r restore · s snapshot · 1-6 · q quit",
-        Section::Audit => "s scan · ↑↓ move · a accept · x run fix · o full audit app · 1-6 · q",
+        Section::Pulse => "enter primary action · s snapshot · d re-check · 1-6 sections · ? keys",
+        Section::Timeline => "↑↓ move · enter preview · r restore · s snapshot · / search · ? keys",
+        Section::Audit => "s scan · ↑↓ move · a accept · x run fix · / search · ? keys",
         Section::Backup if st.in_items => {
             "↑↓ move · space tick · a all/none · esc back · w save · q quit"
         }
@@ -65,13 +67,22 @@ pub fn draw(f: &mut Frame, st: &State<'_>) {
         Section::Migrate => "↑↓ step · enter do it · R start over · 1-6 sections · q quit",
         Section::Settings => "t timer on/off · e set up encrypted secrets · 1-6 sections · q quit",
     };
-    let line = match (&st.toast, &st.confirm_restore) {
-        (_, Some(id)) => Line::from(Span::styled(
-            format!(
-                "Restore snapshot {id} onto this machine? Replaced files are kept as .pre-restore. [y/N]"
+    let line = match (&st.toast, &st.confirm) {
+        (_, Some((question, _))) => {
+            Line::from(Span::styled(question.clone(), t.bold().fg(t.yellow)))
+        }
+        _ if st.searching || !st.search.is_empty() => Line::from(vec![
+            Span::styled("/ ", t.bold().fg(t.accent)),
+            Span::raw(st.search.clone()),
+            Span::styled(
+                if st.searching {
+                    "▏  enter keep · esc clear"
+                } else {
+                    "   esc clears the search"
+                },
+                t.fg(t.muted),
             ),
-            t.bold().fg(t.yellow),
-        )),
+        ]),
         (Some((msg, _)), None) => Line::from(Span::styled(msg.clone(), t.fg(t.accent))),
         _ => match st.busy_label() {
             Some(b) => Line::from(vec![
@@ -82,6 +93,132 @@ pub fn draw(f: &mut Frame, st: &State<'_>) {
         },
     };
     f.render_widget(Paragraph::new(line), foot);
+    if st.help {
+        keys_overlay(f, st, body);
+    }
+    if let Some((q, sel)) = &st.palette {
+        palette_overlay(f, st, body, q, *sel);
+    }
+}
+
+/// A centred box over the body.
+fn overlay(area: Rect, w: u16, h: u16) -> Rect {
+    let w = w.min(area.width);
+    let h = h.min(area.height);
+    Rect {
+        x: area.x + (area.width - w) / 2,
+        y: area.y + (area.height - h) / 2,
+        width: w,
+        height: h,
+    }
+}
+
+/// `?`: every key for this screen (DESIGN.md §7.1).
+fn keys_overlay(f: &mut Frame, st: &State<'_>, body: Rect) {
+    let t = &st.theme;
+    let here: &[(&str, &str)] = match st.section {
+        Section::Pulse => &[
+            ("enter", "the primary action"),
+            ("s", "snapshot now"),
+            ("d", "re-check backups"),
+        ],
+        Section::Timeline => &[
+            ("↑↓ jk", "move"),
+            ("enter p", "preview"),
+            ("r", "restore (asks first)"),
+            ("s", "snapshot now"),
+            ("/", "search"),
+            ("esc", "close output"),
+        ],
+        Section::Audit => &[
+            ("s", "scan"),
+            ("R", "rescan"),
+            ("↑↓ jk", "move"),
+            ("a", "accept risk / undo"),
+            ("x", "run fix (asks first)"),
+            ("o", "full Security Audit app"),
+            ("/", "search"),
+        ],
+        Section::Backup => &[
+            ("↑↓ jk", "move"),
+            ("enter → l", "open category"),
+            ("esc ← h", "back"),
+            ("space", "tick / all"),
+            ("a", "all or none"),
+            ("w", "save selection"),
+        ],
+        Section::Migrate => &[("↑↓ jk", "step"), ("enter", "do it"), ("R", "start over")],
+        Section::Settings => &[
+            ("t", "timer on/off"),
+            ("e", "encrypted secrets"),
+            ("i", "set up snapshots"),
+        ],
+    };
+    let global: [(&str, &str); 6] = [
+        ("1-6 tab", "sections"),
+        (": ⌃k", "command palette"),
+        ("u", "undo last restore"),
+        ("?", "this list"),
+        ("esc", "back / close"),
+        ("q", "quit"),
+    ];
+    let mut lines = vec![Line::from(Span::styled(
+        format!(" Keys: {}", st.section.label()),
+        t.bold(),
+    ))];
+    for (k, d) in here.iter().chain(global.iter()) {
+        lines.push(Line::from(vec![
+            Span::styled(format!(" {k:>10} "), t.bold().fg(t.accent)),
+            Span::raw((*d).to_owned()),
+        ]));
+    }
+    let r = overlay(body, 46, u16::try_from(lines.len() + 2).unwrap_or(20));
+    f.render_widget(Clear, r);
+    f.render_widget(
+        Paragraph::new(lines).block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_style(t.fg(t.accent)),
+        ),
+        r,
+    );
+}
+
+/// `:` / `⌃k`: every action by name.
+fn palette_overlay(f: &mut Frame, st: &State<'_>, body: Rect, q: &str, sel: usize) {
+    let t = &st.theme;
+    let actions = State::actions(q);
+    let mut lines = vec![
+        Line::from(vec![
+            Span::styled(" : ", t.bold().fg(t.accent)),
+            Span::raw(format!("{q}▏")),
+        ]),
+        Line::from(""),
+    ];
+    for (i, a) in actions.iter().enumerate() {
+        let style = if i == sel {
+            t.selected()
+        } else {
+            ratatui::style::Style::new()
+        };
+        lines.push(Line::from(Span::styled(format!(" {a} "), style)));
+    }
+    if actions.is_empty() {
+        lines.push(Line::from(Span::styled(
+            " no matching action",
+            t.fg(t.muted),
+        )));
+    }
+    let r = overlay(body, 50, u16::try_from(lines.len() + 2).unwrap_or(20));
+    f.render_widget(Clear, r);
+    f.render_widget(
+        Paragraph::new(lines).block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_style(t.fg(t.accent)),
+        ),
+        r,
+    );
 }
 
 fn heading(st: &State<'_>, text: &str) -> Line<'static> {
@@ -185,7 +322,16 @@ fn timeline(f: &mut Frame, st: &State<'_>, area: Rect) {
     } else {
         [area, Rect::default()]
     };
-    if st.snaps.is_empty() {
+    let snaps = st.snap_view();
+    if snaps.is_empty() && !st.search.is_empty() {
+        f.render_widget(
+            Paragraph::new(Span::styled(
+                "No snapshot matches the search.",
+                t.fg(t.muted),
+            )),
+            list_area,
+        );
+    } else if snaps.is_empty() {
         f.render_widget(
             Paragraph::new(Span::styled(
                 "No snapshots yet. Press s to take the first one.",
@@ -194,8 +340,7 @@ fn timeline(f: &mut Frame, st: &State<'_>, area: Rect) {
             list_area,
         );
     } else {
-        let items: Vec<ListItem> = st
-            .snaps
+        let items: Vec<ListItem> = snaps
             .iter()
             .map(|s| {
                 ListItem::new(Line::from(vec![
