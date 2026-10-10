@@ -59,6 +59,8 @@ These are enforced by `[workspace.lints]`. Never silence one to get green; fix t
 
 ## Verification (all must pass before a commit)
 
+`scripts/check` runs all of it in order (`--quick`: fmt, clippy and tests). The steps:
+
 ```sh
 cargo fmt --all                                         # run last, after any edit
 cargo clippy --workspace --all-targets -- -D warnings   # zero warnings

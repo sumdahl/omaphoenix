@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Every check a commit must pass (AGENTS.md "Verification"): format, lints, tests,
+# both desktop apps, dependencies, memory budgets, and parity with the originals.
+#   scripts/check          all of it (~10 min)
+#   scripts/check --quick  format, lints and workspace tests only (~2 min)
+set -uo pipefail
+cd "$(dirname "$0")/.."
+log=$(mktemp)
+trap 'rm -f "$log"' EXIT
+failed=0
+step() {
+  local name=$1
+  shift
+  printf '%-20s' "$name"
+  if "$@" >"$log" 2>&1; then
+    echo ok
+  else
+    echo FAILED
+    tail -30 "$log"
+    failed=$((failed + 1))
+  fi
+}
+step fmt cargo fmt --all --check
+step clippy cargo clippy --workspace --all-targets -- -D warnings
+step tests cargo test --workspace
+if [[ ${1:-} != --quick ]]; then
+  step pty-release cargo test --release -p omaphoenix -p secaudit --test pty
+  step omaphoenix-gui bash -c 'cd apps/omaphoenix-gui && cargo fmt --check && cargo clippy --locked --all-targets -- -D warnings && cargo test --locked'
+  step secaudit-gui bash -c 'cd apps/secaudit-gui && cargo fmt --check && cargo clippy --locked --all-targets -- -D warnings && cargo test --locked'
+  step deny cargo deny check
+  step release-build cargo build --release -p omaphoenix -p secaudit
+  step memory scripts/peak-rss
+  step secaudit-parity scripts/secaudit-parity
+  step omaphoenix-parity scripts/omaphoenix-parity
+fi
+echo
+if ((failed)); then
+  echo "$failed check(s) failed"
+  exit 1
+fi
+echo "all checks passed"
