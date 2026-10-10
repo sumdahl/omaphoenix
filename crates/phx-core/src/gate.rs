@@ -1,8 +1,4 @@
-//! Audit before backup (docs/04, ADR-0011/12): before a snapshot, the gate
-//! sections of the Security Audit run in-process as the user. A failing
-//! finding leaves exactly the files and units it names out of the snapshot;
-//! a warning is captured and recorded. Machine-level findings (no target)
-//! can't be excluded and are only counted. Accepted risks are skipped.
+//! Audit before backup: failing findings leave the files and units they name out of the snapshot.
 
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
@@ -39,8 +35,7 @@ pub fn enabled() -> bool {
     std::env::var("OMAPHOENIX_AUDIT").map_or(true, |v| v != "off")
 }
 
-/// The snapshot item a file belongs to, as `category:id`; `None` for paths
-/// no snapshot captures (report-only, per docs/04).
+/// The snapshot item a file belongs to, as `category:id`; `None` when nothing captures it.
 #[must_use]
 pub fn item_for(home: &Path, path: &Path) -> Option<String> {
     if let Ok(rel) = path.strip_prefix(home) {
@@ -180,8 +175,7 @@ mod tests {
     }
 }
 
-/// The audit after a restore compared with the one recorded in the restored
-/// snapshot (docs/04, restore side).
+/// The audit after a restore compared with the one the restored snapshot recorded.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Reaudit {
     /// Gate score the snapshot recorded.

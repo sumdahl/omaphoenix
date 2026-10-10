@@ -1,7 +1,4 @@
-//! `local`: what lives under `~/.local` rather than `~/.config`: launchers
-//! and web apps, icons, fonts, and small app state such as Omarchy's
-//! toggles. Launchers identical to the copy Omarchy or a package ships are
-//! skipped; a fresh install recreates them.
+//! `local`: launchers, icons, fonts and small app state under `~/.local`.
 
 use std::fs;
 use std::path::{Path, PathBuf};

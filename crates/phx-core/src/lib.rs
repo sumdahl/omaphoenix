@@ -1,6 +1,4 @@
-//! OmaPhoenix engine: detects what makes an Omarchy machine yours, captures
-//! the selected items into a git-backed snapshot store, and restores them.
-//! No UI: front ends pass a log function and render the results.
+//! OmaPhoenix engine: detect, capture and restore an Omarchy setup through a git-backed store.
 
 pub mod app;
 pub mod category;

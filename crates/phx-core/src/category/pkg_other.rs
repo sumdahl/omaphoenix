@@ -1,6 +1,4 @@
-//! `pkg-other`: tools installed through language package managers (mise,
-//! npm, cargo, uv), reinstalled through the same managers, one at a time
-//! under the watchdog so one crawling download is deferred alone.
+//! `pkg-other`: tools from language package managers, reinstalled one at a time.
 
 use std::collections::BTreeMap;
 
@@ -120,8 +118,7 @@ fn detect_other(home: &std::path::Path) -> Vec<OtherPkg> {
     out
 }
 
-/// The command installing one tool through its own manager, via mise when
-/// the manager itself is mise-managed and not yet on a fresh PATH.
+/// The install command for one tool, via mise when its manager isn't on a fresh PATH yet.
 fn install_args(o: &OtherPkg) -> Result<Vec<String>, String> {
     let argv: Vec<String> = match o.manager.as_str() {
         "mise" => {
