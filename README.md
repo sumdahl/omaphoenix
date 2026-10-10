@@ -29,12 +29,16 @@
 | `secaudit-ui` | Exact port of Manish's gum/Bash front end, gum built in | `secaudit` |
 | `secaudit-gui` | Security Audit desktop app (Slint): scan, review, accept, fix, history; optional at install | `secaudit-core` |
 
+**Nothing is backed up until you choose what.** `init` opens the Backup screen; both apps open on it until a choice is saved, and anything found later is marked new and asked about before a snapshot. Snapshots are automatic on a schedule you pick, or manual only.
+
 OmaPhoenix gives a choice of **terminal or desktop app**: both launchers ("OmaPhoenix (Terminal)" and "OmaPhoenix") appear in the app menu, and Security Audit likewise has "Security Audit" (terminal) and "Security Audit (Desktop)", and `omaphoenix tui` / `omaphoenix gui` open them directly.
 
 ```sh
 cargo build --release -p omaphoenix -p secaudit   # target/release/{omaphoenix,secaudit,secaudit-tui,secaudit-ui}
 omaphoenix tui                                    # terminal app (bare `omaphoenix` too); or init, snapshot, list, restore, …
 omaphoenix gui                                    # desktop app (needs omaphoenix-gui beside it)
+omaphoenix select                                 # choose what is backed up (--all keeps everything detected)
+omaphoenix timer on 1h                            # automatic snapshots (15m, 30m, 1h, 6h, daily); timer off = manual only
 secaudit                                          # report
 secaudit-tui                                      # Security Audit terminal app (Textual port)
 secaudit-ui                                       # Security Audit menus (gum port)

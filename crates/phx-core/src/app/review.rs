@@ -80,7 +80,7 @@ impl App<'_> {
         }
         if !self.has_chosen() {
             return Some(
-                "you haven't chosen what to back up yet; everything detected is included. Open omaphoenix → Backup".into(),
+                "you haven't chosen what to back up yet; everything detected is included. Run: omaphoenix select".into(),
             );
         }
         let manifest: Manifest = read_json(&self.repo.dir.join("manifest.json"))
@@ -94,7 +94,7 @@ impl App<'_> {
             .filter(|k| !seen.contains(k))
             .count();
         (new > 0).then(|| {
-            format!("{new} new item(s) are being backed up that you haven't reviewed. Open omaphoenix → Backup")
+            format!("{new} new item(s) are being backed up that you haven't reviewed. Run: omaphoenix select")
         })
     }
 }

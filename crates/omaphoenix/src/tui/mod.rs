@@ -13,14 +13,19 @@ use phx_core::App;
 use ratatui::DefaultTerminal;
 use ratatui::crossterm::event::{self, Event, KeyEventKind};
 
+pub use state::Section;
 use state::{State, Suspend};
 
 /// At most 30 redraws a second.
 const FRAME: Duration = Duration::from_millis(33);
 
-pub fn run(app: &App<'_>) -> io::Result<()> {
+/// Runs the TUI, optionally opening on `section`.
+pub fn run(app: &App<'_>, section: Option<Section>) -> io::Result<()> {
     let mut st = State::new(app);
     st.start();
+    if let Some(s) = section {
+        st.section = s;
+    }
     let mut term = ratatui::init();
     let result = event_loop(&mut term, &mut st);
     ratatui::restore();

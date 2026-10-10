@@ -1,6 +1,9 @@
+use std::io::{self, IsTerminal};
+
 use phx_core::{App, sys};
 
 use crate::out::say;
+use crate::tui::{self, Section};
 
 pub fn run(app: &App<'_>, mut remote: String, github: &str) -> Result<(), String> {
     // Checked before `gh repo create`, which would otherwise leave an orphan repo.
@@ -32,6 +35,10 @@ pub fn run(app: &App<'_>, mut remote: String, github: &str) -> Result<(), String
     if !remote.is_empty() {
         say(&format!("remote      {remote}"));
     }
-    say("next: omaphoenix snapshot");
+    if io::stdin().is_terminal() && io::stdout().is_terminal() {
+        say("next: choose what to back up (opening Backup; w saves, q quits)");
+        return tui::run(app, Some(Section::Backup)).map_err(|e| e.to_string());
+    }
+    say("next: omaphoenix select, to choose what to back up");
     Ok(())
 }

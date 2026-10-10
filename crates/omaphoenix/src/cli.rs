@@ -23,6 +23,12 @@ pub enum Cmd {
         #[arg(long, default_value = "")]
         github: String,
     },
+    /// Choose what snapshots capture (opens the Backup screen)
+    Select {
+        /// Keep everything detected, without asking (scripts)
+        #[arg(long)]
+        all: bool,
+    },
     /// Capture the current setup; commits only if something changed
     Snapshot,
     /// Show the snapshot timeline

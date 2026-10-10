@@ -11,6 +11,7 @@ mod init;
 mod reaudit;
 mod restore;
 mod secrets;
+mod select;
 mod snapshot;
 mod timer;
 mod undo;
@@ -28,10 +29,11 @@ pub fn run(cli: Cli) -> Result<(), String> {
             let _ = Cli::command().print_help();
             return Ok(());
         }
-        return tui::run(&app).map_err(|e| e.to_string());
+        return tui::run(&app, None).map_err(|e| e.to_string());
     };
     match cmd {
-        Cmd::Tui => tui::run(&app).map_err(|e| e.to_string()),
+        Cmd::Tui => tui::run(&app, None).map_err(|e| e.to_string()),
+        Cmd::Select { all } => select::run(&app, all),
         Cmd::Gui => gui::open(),
         Cmd::Init { remote, github } => init::run(&app, remote, &github),
         Cmd::Snapshot => snapshot::run(&app),
