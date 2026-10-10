@@ -15,6 +15,7 @@ How the Rust port of the Go OmaPhoenix is checked, where it deliberately differs
 - **Contracts:** `tests/fixtures/go` pins selection and manifest behaviour (#3).
 
 ## Deliberate differences from Go
+- **Spotify `*.bnk` state blobs are junk** (2026-10-10). Spotify rewrites them as it runs, so with the timer on, five of the first eight snapshots on the reference machine were commits of `ad-state-storage.bnk` alone. Spotify's `prefs` are still captured.
 
 | Area | Go | Rust | Why |
 |---|---|---|---|

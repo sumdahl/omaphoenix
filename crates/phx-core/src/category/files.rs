@@ -36,6 +36,9 @@ pub const JUNK: &[&str] = &[
     "logs",
     "event-log-metadata",
     "telemetry",
+    // Spotify's state blobs (ad state, offline keys): rewritten as it runs,
+    // so every timer snapshot became a new commit. Its prefs stay captured.
+    "*.bnk",
     "*.omarchy-upgrade-to-*",
     "*.pre-restore.*",
     ".DS_Store",
@@ -221,13 +224,45 @@ pub fn exists(path: &Path) -> bool {
     fs::symlink_metadata(path).is_ok()
 }
 
-/// Copies a file, creating parents, with `perm`.
+thread_local! {
+    /// While a snapshot captures: (the repo, where its previous files were
+    /// moved). `copy_file` takes an unchanged file back from there instead
+    /// of copying it again, so a snapshot writes only what changed.
+    static REUSE: std::cell::RefCell<Option<(std::path::PathBuf, std::path::PathBuf)>> =
+        const { std::cell::RefCell::new(None) };
+}
+
+/// Turns reuse on for a capture into `repo` from `prev` (or off with `None`).
+pub fn set_reuse(dirs: Option<(std::path::PathBuf, std::path::PathBuf)>) {
+    REUSE.with(|r| *r.borrow_mut() = dirs);
+}
+
+/// The previous snapshot's copy of `dst`, if it still matches `src`: same
+/// size and modified time (copies keep the source's mtime), so nothing is read.
+fn reusable(src: &Path, dst: &Path) -> Option<std::path::PathBuf> {
+    let prev = REUSE.with(|r| {
+        let r = r.borrow();
+        let (repo, prev) = r.as_ref()?;
+        Some(prev.join(dst.strip_prefix(repo).ok()?))
+    })?;
+    let (ms, mp) = (fs::metadata(src).ok()?, fs::symlink_metadata(&prev).ok()?);
+    (mp.is_file() && ms.len() == mp.len() && ms.modified().ok()? == mp.modified().ok()?)
+        .then_some(prev)
+}
+
+/// Copies a file, creating parents, with `perm`. During a snapshot an
+/// unchanged file is moved back from the previous snapshot, not rewritten.
 ///
 /// # Errors
 /// On any I/O failure.
 pub fn copy_file(src: &Path, dst: &Path, perm: u32) -> io::Result<()> {
     if let Some(parent) = dst.parent() {
         fs::create_dir_all(parent)?;
+    }
+    if let Some(prev) = reusable(src, dst)
+        && fs::rename(&prev, dst).is_ok()
+    {
+        return fs::set_permissions(dst, fs::Permissions::from_mode(perm));
     }
     let mut input = File::open(src)?;
     let mut out = File::options()
@@ -237,6 +272,10 @@ pub fn copy_file(src: &Path, dst: &Path, perm: u32) -> io::Result<()> {
         .mode(perm)
         .open(dst)?;
     io::copy(&mut input, &mut out)?;
+    // Keep the source's mtime: next snapshot can see "unchanged" from metadata.
+    if let Ok(t) = input.metadata().and_then(|m| m.modified()) {
+        let _ = out.set_modified(t);
+    }
     // An existing file keeps its old mode through truncate; set it explicitly.
     fs::set_permissions(dst, fs::Permissions::from_mode(perm))
 }
@@ -431,6 +470,7 @@ mod tests {
             "zsh_history",
             "a.bak1",
             "f.pre-restore.2026",
+            "ad-state-storage.bnk",
         ] {
             assert!(is_junk(j), "{j}");
         }
@@ -524,6 +564,54 @@ mod tests {
     }
 
     /// A config entry can be a single file, not a directory.
+    #[test]
+    fn a_snapshot_moves_unchanged_files_back_and_copies_changed_ones() {
+        let t = tempfile::tempdir().unwrap_or_else(|e| unreachable!("{e}"));
+        let (src, repo, prev) = (
+            t.path().join("src"),
+            t.path().join("repo"),
+            t.path().join("prev"),
+        );
+        for d in [&src, &repo, &prev] {
+            fs::create_dir_all(d).unwrap_or_else(|e| unreachable!("{e}"));
+        }
+        fs::write(src.join("same"), "kept").ok();
+        fs::write(src.join("changed"), "new!").ok();
+        // The last snapshot's copies, as copy_file left them (source mtime kept).
+        super::copy_file(&src.join("same"), &prev.join("same"), 0o644)
+            .unwrap_or_else(|e| unreachable!("{e}"));
+        fs::write(prev.join("changed"), "old").ok();
+        let inode = |p: &std::path::Path| {
+            std::os::unix::fs::MetadataExt::ino(
+                &fs::metadata(p).unwrap_or_else(|e| unreachable!("{e}")),
+            )
+        };
+        let reused = inode(&prev.join("same"));
+
+        super::set_reuse(Some((repo.clone(), prev.clone())));
+        super::copy_file(&src.join("same"), &repo.join("same"), 0o644)
+            .unwrap_or_else(|e| unreachable!("{e}"));
+        super::copy_file(&src.join("changed"), &repo.join("changed"), 0o644)
+            .unwrap_or_else(|e| unreachable!("{e}"));
+        super::set_reuse(None);
+
+        assert_eq!(
+            inode(&repo.join("same")),
+            reused,
+            "unchanged: the old copy moved back, not rewritten"
+        );
+        assert!(!prev.join("same").exists());
+        assert_eq!(
+            fs::read_to_string(repo.join("changed")).unwrap_or_default(),
+            "new!",
+            "changed: copied"
+        );
+        assert!(
+            prev.join("changed").exists(),
+            "the stale copy is left behind to be dropped"
+        );
+    }
+
     #[test]
     fn copy_tree_copies_a_single_file() {
         let t = tmp();

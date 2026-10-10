@@ -214,8 +214,15 @@ impl<'a> App<'a> {
         }
         let _lock = self.repo.lock()?;
         let rules = self.rules()?;
-        // Recapture from scratch so removed items disappear. The selection
-        // and the secrets key pair are user state, not captured output.
+        // Recapture from scratch so removed items disappear, but move the
+        // previous files aside first: unchanged ones are moved back rather
+        // than copied again, so only changes are written. The selection and
+        // the secrets key pair are user state, not captured output.
+        let prev = self.repo.dir.join(".git/omaphoenix-prev");
+        if prev.exists() {
+            fs::remove_dir_all(&prev)?;
+        }
+        fs::create_dir_all(&prev)?;
         for e in fs::read_dir(&self.repo.dir)?.flatten() {
             let name = e.file_name();
             if [".git", "selection.conf", category::secret::SECRETS_DIR]
@@ -224,13 +231,40 @@ impl<'a> App<'a> {
             {
                 continue;
             }
-            let path = e.path();
-            if e.file_type()?.is_dir() {
-                fs::remove_dir_all(&path)?;
-            } else {
-                fs::remove_file(&path)?;
-            }
+            fs::rename(e.path(), prev.join(&name))?;
         }
+        category::files::set_reuse(Some((self.repo.dir.clone(), prev.clone())));
+        let captured = self.capture_into(&rules);
+        category::files::set_reuse(None);
+        // What wasn't taken back is gone from the machine.
+        let _ = fs::remove_dir_all(&prev);
+        let m = captured?;
+        write_json(&self.repo.dir.join("manifest.json"), &m)?;
+        (self.log)("step", "saving the snapshot");
+        if !self.repo.commit(&format!("snapshot {}", rfc3339_now()))? {
+            // Nothing new, but an earlier push may have failed: retry it, as
+            // the warning below promises.
+            if self.repo.unpushed()
+                && let Err(e) = self.repo.push()
+            {
+                (self.log)(
+                    "warn",
+                    &format!("push failed, snapshot kept locally and pushed next run: {e}"),
+                );
+            }
+            return Ok(None);
+        }
+        if let Err(e) = self.repo.push() {
+            (self.log)(
+                "warn",
+                &format!("push failed, snapshot kept locally and pushed next run: {e}"),
+            );
+        }
+        Ok(Some(self.repo.resolve("")?))
+    }
+
+    /// Audits, then captures every category into the (emptied) repo tree.
+    fn capture_into(&self, rules: &phx_contract::selection::Rules) -> Result<Manifest, AppError> {
         let mut env = Env::new(&self.home, &self.repo.dir, self.log);
         let mut m = Self::manifest_for_machine();
         if crate::gate::enabled() {
@@ -263,28 +297,7 @@ impl<'a> App<'a> {
             );
             m.items.insert(c.name().to_owned(), picked);
         }
-        write_json(&self.repo.dir.join("manifest.json"), &m)?;
-        (self.log)("step", "saving the snapshot");
-        if !self.repo.commit(&format!("snapshot {}", rfc3339_now()))? {
-            // Nothing new, but an earlier push may have failed: retry it, as
-            // the warning below promises.
-            if self.repo.unpushed()
-                && let Err(e) = self.repo.push()
-            {
-                (self.log)(
-                    "warn",
-                    &format!("push failed, snapshot kept locally and pushed next run: {e}"),
-                );
-            }
-            return Ok(None);
-        }
-        if let Err(e) = self.repo.push() {
-            (self.log)(
-                "warn",
-                &format!("push failed, snapshot kept locally and pushed next run: {e}"),
-            );
-        }
-        Ok(Some(self.repo.resolve("")?))
+        Ok(m)
     }
 
     /// Applies a snapshot in category order and reports every stage. Never
