@@ -121,3 +121,21 @@ fn lock_is_exclusive() {
     });
     assert!(relocked, "released on drop");
 }
+
+#[test]
+fn taking_the_lock_clears_git_locks_left_by_a_crash() {
+    let (_t, r) = repo();
+    fs::write(r.dir.join("a"), "1").ok();
+    assert!(r.commit("one").unwrap_or(false));
+    let stale = r.dir.join(".git/index.lock");
+    fs::write(&stale, "").ok();
+    fs::write(r.dir.join("a"), "2").ok();
+    assert!(
+        r.commit("blocked").is_err(),
+        "git refuses while index.lock exists"
+    );
+    let lock = r.lock().unwrap_or_else(|e| unreachable!("{e}"));
+    assert_eq!(lock.cleared, std::slice::from_ref(&stale));
+    assert!(!stale.exists());
+    assert!(r.commit("two").unwrap_or(false), "snapshots work again");
+}

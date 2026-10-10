@@ -6,7 +6,7 @@
 | Version | 0.1.0-rc.7 |
 | Found | 2026-10-10, reviewing what a power cut does (code review, not yet seen happen) |
 | Severity | medium: no snapshot is lost, but backups stop until someone removes a file by hand |
-| Status | open |
+| Status | fixed in 0.1.0-rc.8; test `phx_core::store::tests::taking_the_lock_clears_git_locks_left_by_a_crash` |
 
 ## What happens
 

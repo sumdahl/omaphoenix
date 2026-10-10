@@ -56,7 +56,11 @@ pub struct Snapshot {
 
 /// The repo lock; released on drop.
 #[derive(Debug)]
-pub struct Lock(#[allow(dead_code, reason = "held for its lock")] File);
+pub struct Lock {
+    _file: File,
+    /// Git lock files left by an interrupted run, removed when the lock was taken.
+    pub cleared: Vec<PathBuf>,
+}
 
 impl Repo {
     fn git(&self, args: &[&str]) -> Result<String, CmdError> {
@@ -121,10 +125,32 @@ impl Repo {
             .write(true)
             .open(self.dir.join(".git/omaphoenix.lock"))?;
         match f.try_lock() {
-            Ok(()) => Ok(Lock(f)),
+            Ok(()) => Ok(Lock {
+                _file: f,
+                cleared: self.clear_stale_git_locks(),
+            }),
             Err(fs::TryLockError::WouldBlock) => Err(StoreError::Locked),
             Err(fs::TryLockError::Error(e)) => Err(e.into()),
         }
+    }
+}
+
+impl Repo {
+    // Only OmaPhoenix writes this repo, and it holds the repo lock, so a git lock now is a crash's leftover.
+    fn clear_stale_git_locks(&self) -> Vec<PathBuf> {
+        let git = self.dir.join(".git");
+        let heads = fs::read_dir(git.join("refs/heads"))
+            .into_iter()
+            .flatten()
+            .flatten()
+            .map(|e| e.path())
+            .filter(|p| p.extension().is_some_and(|x| x == "lock"));
+        ["index.lock", "HEAD.lock", "packed-refs.lock", "config.lock"]
+            .iter()
+            .map(|n| git.join(n))
+            .chain(heads)
+            .filter(|p| p.is_file() && fs::remove_file(p).is_ok())
+            .collect()
     }
 }
 

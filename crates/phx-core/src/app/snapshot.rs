@@ -34,7 +34,13 @@ impl App<'_> {
         if !self.repo.exists() {
             return Err(AppError::NotInitialised);
         }
-        let _lock = self.repo.lock()?;
+        let lock = self.repo.lock()?;
+        for f in &lock.cleared {
+            (self.log)(
+                "warn",
+                &format!("removed {}, left by an interrupted run", f.display()),
+            );
+        }
         let rules = self.rules()?;
         // Recapture from scratch; `copy_file` moves unchanged files back from `prev`.
         let prev = self.repo.dir.join(".git/omaphoenix-prev");
