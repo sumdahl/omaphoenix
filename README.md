@@ -52,7 +52,35 @@ secaudit-ui                                       # Security Audit menus (gum po
 - `scripts/omaphoenix-parity`: Go vs Rust snapshot of the real home. Result: identical tree, byte-identical manifest. It also restores across implementations, including each other's encrypted vaults.
 - `scripts/peak-rss`: every path's own memory, against RUST.md §9. All within budget; a snapshot peaks at ~9 MB.
 
-**Install** (once a release exists): `curl -fsSL https://raw.githubusercontent.com/sumdahl/omaphoenix-secaudit/<tag>/install.sh | bash`. It verifies `SHA256SUMS`, installs the static terminal binaries, asks whether to add the desktop app, and adds launchers with their icons. Options after `bash -s --`: `--gui`, `--no-gui`, `--sysctl` (Manish's kernel hardening drop-in), `--uninstall`.
+## Install
+
+**While the repo is private** (now, ADR-0022): the laptop needs `gh` logged in to an account that can see this repo. The installer then downloads the release through `gh`.
+
+```sh
+sudo pacman -S --needed github-cli
+gh auth login
+gh api repos/sumdahl/omaphoenix-secaudit/contents/install.sh -H "Accept: application/vnd.github.raw" | bash
+```
+
+**Once the repo is public:**
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/sumdahl/omaphoenix-secaudit/v0.1.0-rc.7/install.sh | bash
+```
+
+The installer verifies the download against `SHA256SUMS` and refuses on a mismatch. It installs the static terminal binaries to `~/.local/bin`, asks whether to add the desktop apps, adds launchers with their icons, and links the agent skills. Then it offers to back this machine up or restore a snapshot. Options go after `bash -s --` (or `| bash -s --` with `gh api`): `--gui`, `--no-gui`, `--sysctl` (Manish's kernel hardening drop-in), `--uninstall`. `OMAPHOENIX_VERSION=v0.1.0-rc.7` pins a release.
+
+**Restoring onto another laptop** (a reinstall, a new machine): install as above, then choose restore in the menu, or:
+
+```sh
+omaphoenix restore --from https://github.com/<you>/omaphoenix-backup.git --dry-run   # look first
+omaphoenix restore --from https://github.com/<you>/omaphoenix-backup.git             # then apply
+```
+
+It asks for the secrets passphrase if SSH keys were backed up encrypted.
+
+**On someone else's laptop:** `gh auth login` with your account gives that machine access to all your private repos, your backup included. Run `gh auth logout` afterwards, or add them as a collaborator on this repo only, never on the backup repo.
+
 
 ## The two projects
 
