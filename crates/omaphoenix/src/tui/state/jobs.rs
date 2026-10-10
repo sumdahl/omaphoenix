@@ -16,6 +16,18 @@ impl State<'_> {
             self.toast = None;
             changed = true;
         }
+        if self.last_poll.elapsed() > Duration::from_secs(2) {
+            self.last_poll = std::time::Instant::now();
+            let running = phx_core::schedule::running();
+            if running != self.timer_running {
+                self.timer_running = running;
+                if !running {
+                    self.snaps = self.app.repo.list().unwrap_or_default();
+                    self.load_doctor();
+                }
+                changed = true;
+            }
+        }
         while let Ok(msg) = self.rx.try_recv() {
             changed = true;
             match msg {
@@ -24,6 +36,7 @@ impl State<'_> {
                     self.jobs.remove("doctor");
                 }
                 Msg::Choices(Ok(c)) => {
+                    self.unreviewed = self.app.unreviewed(&c);
                     self.choices = Some(c);
                     self.jobs.remove("choices");
                 }
@@ -102,16 +115,31 @@ impl State<'_> {
                 },
                 "command" if self.output_title.starts_with("Snapshot") => {
                     let (done, total) = snapshot_progress(&self.output);
-                    format!(
-                        "snapshot {} {}%",
-                        bar(done, total),
-                        done * 100 / total.max(1)
-                    )
+                    let pct = done * 100 / total.max(1);
+                    match self.current_step() {
+                        Some(step) => format!("snapshot {} {pct}% · {step}", bar(done, total)),
+                        None => format!("snapshot {} {pct}%", bar(done, total)),
+                    }
                 }
-                _ => "running".to_owned(),
+                _ => match self.current_step() {
+                    Some(step) => format!("{} · {step}", self.output_title),
+                    None => self.output_title.clone(),
+                },
             })
             .collect();
         Some(format!("⋯ {}", names.join(", ")))
+    }
+}
+
+impl State<'_> {
+    /// The last line the running command printed, as its current step.
+    fn current_step(&self) -> Option<String> {
+        self.output
+            .iter()
+            .rev()
+            .map(|l| l.trim().trim_start_matches("▸ ").trim())
+            .find(|l| !l.is_empty())
+            .map(str::to_owned)
     }
 }
 

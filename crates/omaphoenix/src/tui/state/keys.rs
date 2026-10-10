@@ -10,10 +10,7 @@ impl State<'_> {
             self.quit = true;
             return;
         }
-        if let Some((_, work)) = self.confirm.take() {
-            if key.code == KeyCode::Char('y') {
-                self.suspend = Some(work);
-            }
+        if self.answer(key) {
             return;
         }
         if let Some((q, sel)) = self.palette.take() {
@@ -133,5 +130,26 @@ impl State<'_> {
         if s == Section::Pulse && self.findings.is_none() {
             self.load_doctor();
         }
+    }
+
+    /// A key answering an open question; true when one was open.
+    fn answer(&mut self, key: KeyEvent) -> bool {
+        if let Some((_, work)) = self.confirm.take() {
+            if key.code == KeyCode::Char('y') {
+                self.suspend = Some(work);
+            }
+            return true;
+        }
+        if self.ask_snapshot.take().is_some() {
+            match key.code {
+                KeyCode::Char('y') => self.run_snapshot(),
+                KeyCode::Char('b') => {
+                    self.open_backup("New items are marked new; tick or untick them, then press w");
+                }
+                _ => {}
+            }
+            return true;
+        }
+        false
     }
 }

@@ -62,6 +62,31 @@ impl State<'_> {
             self.notify("Not set up yet: press enter on Pulse, or run omaphoenix init");
             return;
         }
+        if !self.app.has_chosen() {
+            self.open_backup(
+                "First choose what to back up: untick what you don't want, then press w",
+            );
+            return;
+        }
+        if self.jobs.contains("choices") {
+            self.notify("Checking this machine for new items first; try again in a moment");
+            return;
+        }
+        if !self.unreviewed.is_empty() {
+            self.ask_snapshot = Some(format!(
+                "{} new item(s) you haven't reviewed would be backed up. b review them · y snapshot anyway · esc cancel",
+                self.unreviewed.len()
+            ));
+            return;
+        }
+        self.run_snapshot();
+    }
+
+    pub(super) fn run_snapshot(&mut self) {
+        if self.timer_running {
+            self.notify("The automatic snapshot is running right now; it will finish on its own");
+            return;
+        }
         self.section = Section::Timeline;
         self.run_captured("Snapshot", &["snapshot"]);
     }

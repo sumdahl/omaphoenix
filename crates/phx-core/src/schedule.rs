@@ -129,6 +129,15 @@ pub fn on(interval: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// True while the timer's snapshot is running.
+#[must_use]
+pub fn running() -> bool {
+    sys::command("systemctl")
+        .args(["--user", "is-active", "--quiet", &format!("{UNIT}.service")])
+        .status()
+        .is_ok_and(|s| s.success())
+}
+
 /// Stops automatic snapshots and removes the units and hooks.
 ///
 /// # Errors

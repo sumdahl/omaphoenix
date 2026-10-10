@@ -4,6 +4,7 @@ mod choices;
 mod journal;
 mod reaudit;
 mod restore;
+mod review;
 mod snapshot;
 
 use std::fs;
@@ -17,6 +18,7 @@ use crate::store::{Repo, StoreError};
 use crate::sys;
 
 pub use journal::{Deferred, Journal};
+pub use review::{REVIEWED, key as review_key};
 
 /// A failure of a whole operation.
 #[derive(Debug, thiserror::Error)]

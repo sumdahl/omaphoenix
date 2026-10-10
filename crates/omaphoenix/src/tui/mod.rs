@@ -267,4 +267,61 @@ mod tests {
             "nothing to undo before setup, and never without asking"
         );
     }
+
+    #[test]
+    fn nothing_is_backed_up_until_the_user_chooses_and_new_items_are_asked_about() {
+        use phx_contract::selection::Choice;
+        let t = tempfile::tempdir().unwrap_or_else(|e| unreachable!("{e}"));
+        std::fs::create_dir_all(t.path().join("repo/.git")).unwrap_or_else(|e| unreachable!("{e}"));
+        let app = App {
+            home: t.path().into(),
+            repo: Repo {
+                dir: t.path().join("repo"),
+            },
+            log: &quiet,
+            passphrase: None,
+        };
+        let mut st = State::with_store(
+            &app,
+            Store {
+                dir: t.path().join("audit"),
+            },
+        );
+        st.choices = Some(Vec::new());
+
+        key(&mut st, KeyCode::Char('2'));
+        key(&mut st, KeyCode::Char('s'));
+        assert_eq!(st.section, Section::Backup, "s first asks what to back up");
+        assert!(!st.jobs.contains("command"), "no snapshot before a choice");
+        let s = screen(&st, 100, 24);
+        assert!(s.contains("Choose what OmaPhoenix backs up"), "{s}");
+        assert!(
+            s.contains("choose what to back up (4)"),
+            "the activity line says so:\n{s}"
+        );
+
+        let theme = Choice {
+            category: "theme".into(),
+            items: vec![("nord".into(), true)],
+        };
+        app.save_choices(&[theme])
+            .unwrap_or_else(|e| unreachable!("{e}"));
+        st.unreviewed.insert("theme:rose".into());
+        key(&mut st, KeyCode::Char('2'));
+        key(&mut st, KeyCode::Char('s'));
+        assert!(
+            !st.jobs.contains("command"),
+            "new items are asked about first"
+        );
+        assert!(screen(&st, 120, 24).contains("1 new item(s) you haven't reviewed"));
+        key(&mut st, KeyCode::Char('b'));
+        assert_eq!(st.section, Section::Backup, "b opens Backup to review them");
+        key(&mut st, KeyCode::Char('2'));
+        key(&mut st, KeyCode::Char('s'));
+        key(&mut st, KeyCode::Esc);
+        assert!(
+            st.ask_snapshot.is_none() && !st.jobs.contains("command"),
+            "esc cancels"
+        );
+    }
 }

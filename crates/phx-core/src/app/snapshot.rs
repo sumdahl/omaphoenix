@@ -44,9 +44,14 @@ impl App<'_> {
         fs::create_dir_all(&prev)?;
         for e in fs::read_dir(&self.repo.dir)?.flatten() {
             let name = e.file_name();
-            if [".git", "selection.conf", category::secret::SECRETS_DIR]
-                .iter()
-                .any(|k| name == *k)
+            if [
+                ".git",
+                "selection.conf",
+                super::REVIEWED,
+                category::secret::SECRETS_DIR,
+            ]
+            .iter()
+            .any(|k| name == *k)
             {
                 continue;
             }

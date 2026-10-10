@@ -10,7 +10,7 @@ mod pulse;
 mod settings;
 mod timeline;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 use std::sync::mpsc::{self, Receiver};
 use std::time::Instant;
@@ -116,6 +116,13 @@ pub struct State<'a> {
     pub item_sel: usize,
     pub in_items: bool,
     pub dirty: bool,
+    /// Detected items the user hasn't reviewed yet, as `category:id`.
+    pub unreviewed: BTreeSet<String>,
+    /// Before a snapshot with unreviewed items: `y` snapshots, `b` opens Backup.
+    pub ask_snapshot: Option<String>,
+    /// The timer's snapshot is running, checked every couple of seconds.
+    pub timer_running: bool,
+    last_poll: Instant,
 
     pub migration: Migration,
     pub migrate_sel: usize,
@@ -167,6 +174,10 @@ impl<'a> State<'a> {
             item_sel: 0,
             in_items: false,
             dirty: false,
+            unreviewed: BTreeSet::new(),
+            ask_snapshot: None,
+            timer_running: false,
+            last_poll: Instant::now(),
             migration,
             migrate_sel: 0,
         }
@@ -181,8 +192,23 @@ impl<'a> State<'a> {
     }
 
     pub fn start(&mut self) {
-        if self.app.repo.exists() {
-            self.load_doctor();
+        if !self.app.repo.exists() {
+            return;
         }
+        self.load_doctor();
+        self.load_choices();
+        if !self.app.has_chosen() {
+            self.section = Section::Backup;
+        }
+    }
+
+    /// Opens Backup so the user can decide before anything is captured.
+    pub(super) fn open_backup(&mut self, why: &str) {
+        self.section = Section::Backup;
+        self.in_items = false;
+        if self.choices.is_none() {
+            self.load_choices();
+        }
+        self.notify(why);
     }
 }

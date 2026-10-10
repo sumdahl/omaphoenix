@@ -59,6 +59,9 @@ impl App<'_> {
         };
         if self.repo.exists() {
             self.check_snapshots(&mut add);
+            if let Some(msg) = self.review_needed() {
+                add("warn", "snapshots", msg);
+            }
         } else {
             add("risk", "snapshots", "not set up: nothing is protected. Run: omaphoenix init --github <you>/omaphoenix-backup".into());
         }

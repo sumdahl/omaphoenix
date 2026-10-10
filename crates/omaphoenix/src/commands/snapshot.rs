@@ -1,6 +1,6 @@
 use phx_core::App;
 
-use crate::out::{notify, say};
+use crate::out::{log, notify, say};
 
 pub fn run(app: &App<'_>) -> Result<(), String> {
     match app.snapshot() {
@@ -13,6 +13,9 @@ pub fn run(app: &App<'_>) -> Result<(), String> {
             }
             return Err(e.to_string());
         }
+    }
+    if let Some(msg) = app.review_needed() {
+        log("warn", &msg);
     }
     Ok(())
 }

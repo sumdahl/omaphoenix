@@ -32,6 +32,7 @@ impl State<'_> {
             match self.app.save_choices(&plain) {
                 Ok(()) => {
                     self.dirty = false;
+                    self.unreviewed.clear();
                     self.notify("✓ saved; the next snapshot captures exactly this");
                 }
                 Err(e) => self.notify(format!("save failed: {e}")),

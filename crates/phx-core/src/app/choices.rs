@@ -38,7 +38,7 @@ impl App<'_> {
         Ok(out)
     }
 
-    /// Rewrites `selection.conf` to capture exactly what is ticked.
+    /// Rewrites `selection.conf` to capture exactly what is ticked, and marks every shown item reviewed.
     ///
     /// # Errors
     /// On I/O failure.
@@ -46,6 +46,6 @@ impl App<'_> {
         let tmp = self.repo.dir.join("selection.conf.tmp");
         fs::write(&tmp, selection::build(choices))?;
         fs::rename(tmp, self.selection_file())?;
-        Ok(())
+        self.save_reviewed(choices)
     }
 }
