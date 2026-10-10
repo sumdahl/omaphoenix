@@ -21,6 +21,6 @@ What moves, how, and what is left for its owner. **When** is Q7 (#16): both owne
 ## Left for the owner
 - **Bash quirks S1–S7:** fixes proposed in `docs/patches/` (applies to `8a20e26`). After they land, the Rust port should switch to the fixed behaviour, which today it reproduces for parity.
 - **Check ids** (`secrets.credential_perms`, …) were chosen during the port. Revise before 1.0 if wanted, with a `schema` bump if fields change (ADR-0016).
-- **A desktop app:** blocked by the same decision as OmaPhoenix's (Q9 stack, Q10 Slint license).
+- **The desktop app** (`apps/secaudit-gui`) moves too; it ships Slint under its Royalty-free license (ADR-0020).
 - **Full and deep scans from the TUI** need sudo with a password, and were not tested end to end on the reference machine.
 - **The exact ports** were compared in tmux against his apps on a copy of real history (`secaudit-tui`: 14 screens, `secaudit-ui`: 6). Two Textual quirks were left out on purpose: a compact button keeping its first label's width, and the keys panel's longest lists. His `uv`, `gum` and `jq` dependencies are gone.

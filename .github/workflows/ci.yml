@@ -53,8 +53,8 @@ jobs:
       # terminal queries, clean exit (DESIGN.md §12).
       - run: cargo test --release -p omaphoenix -p secaudit --test pty
 
-  # The Slint desktop app lives outside the workspace (its license is
-  # recorded as Q10, so cargo-deny doesn't cover it); keep it building.
+  # The Slint desktop apps live outside the workspace (ADR-0020: the
+  # workspace's cargo-deny policy stays strict); keep them building.
   gui:
     runs-on: ubuntu-24.04
     steps:
@@ -67,9 +67,14 @@ jobs:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: apps/omaphoenix-gui
-      - run: cargo fmt --check --manifest-path apps/omaphoenix-gui/Cargo.toml
-      - run: cargo clippy --locked --manifest-path apps/omaphoenix-gui/Cargo.toml -- -D warnings
+          workspaces: |
+            apps/omaphoenix-gui
+            apps/secaudit-gui
+      - run: |
+          for app in omaphoenix-gui secaudit-gui; do
+            cargo fmt --check --manifest-path apps/$app/Cargo.toml
+            cargo clippy --locked --manifest-path apps/$app/Cargo.toml -- -D warnings
+          done
 
   msrv:
     runs-on: ubuntu-24.04

@@ -899,8 +899,14 @@ fn main() -> Result<(), slint::PlatformError> {
                 .and_then(|i| slint::Model::row_data(&app.get_findings(), i))
                 .map(|f| f.fix.to_string());
             if let Some(fix) = fix.filter(|f| !f.is_empty()) {
-                in_terminal(&app, &fix, |app| {
-                    app.set_toast("Fix ran in the terminal; scan again to confirm".into());
+                // Fixes always confirm (AGENTS.md): the terminal shows the
+                // command and runs it only on y.
+                let script = format!(
+                    "echo; echo '  $ '{q}; echo; read -rp '  Run this fix now? [y/N] ' a; [[ $a == [yY]* ]] && bash -c {q}",
+                    q = sq(&fix)
+                );
+                in_terminal(&app, &script, |app| {
+                    app.set_toast("Scan again to confirm the fix worked".into());
                 });
             }
         }

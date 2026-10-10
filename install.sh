@@ -2,14 +2,15 @@
 # OmaPhoenix and Security Audit installer (the Rust versions).
 #
 #   curl -fsSL https://raw.githubusercontent.com/sumdahl/omaphoenix-secaudit/<tag>/install.sh | bash
-#   ... | bash -s -- --gui         also install the desktop app (asked otherwise)
+#   ... | bash -s -- --gui         also install the desktop apps (asked otherwise)
 #   ... | bash -s -- --no-gui      terminal apps only
 #   ... | bash -s -- --sysctl      also apply the kernel hardening drop-in (sudo)
 #   ... | bash -s -- --uninstall   remove the commands, launchers and icons
 #
 # Downloads a release, verifies it against SHA256SUMS, installs `omaphoenix`
 # (CLI and terminal app), `secaudit`, `secaudit-tui` and `secaudit-ui` to
-# ~/.local/bin, optionally the `omaphoenix-gui` desktop app, adds launcher
+# ~/.local/bin, optionally the `omaphoenix-gui` and `secaudit-gui` desktop
+# apps, adds launcher
 # entries with their icons, then offers to back this machine up or restore a
 # snapshot. The terminal binaries are static; the desktop app uses the
 # system's graphics libraries. Everything lives in main(), so a download cut
@@ -19,7 +20,7 @@
 #   OMAPHOENIX_VERSION   release tag to install (default: latest)
 #   OMAPHOENIX_BIN_DIR   install directory (default: ~/.local/bin)
 #   OMAPHOENIX_BASE_URL  release download base, for mirrors and tests
-#   OMAPHOENIX_GUI       1 or 0: install the desktop app without asking
+#   OMAPHOENIX_GUI       1 or 0: install the desktop apps without asking
 #   OMAPHOENIX_NO_MENU   set to skip the backup/restore menu
 
 say() { printf '\033[1m%s\033[0m\n' "$*"; }
@@ -90,7 +91,7 @@ main() {
       gui=1
       if { exec 4</dev/tty; } 2>/dev/null; then
         local reply=''
-        read -r -p "Install the OmaPhoenix desktop app too? The terminal app is always installed. [Y/n] " reply <&4 || true
+        read -r -p "Install the desktop apps (OmaPhoenix, Security Audit) too? The terminal apps are always installed. [Y/n] " reply <&4 || true
         [[ $reply == [nN]* ]] && gui=0
         exec 4<&-
       fi
@@ -98,13 +99,15 @@ main() {
   fi
   if [[ $gui == 1 ]]; then
     if [[ $arch != amd64 ]]; then
-      echo "  note: the desktop app is built for amd64 only; use 'omaphoenix tui'"
+      echo "  note: the desktop apps are built for amd64 only; use 'omaphoenix tui' and 'secaudit-tui'"
     else
-      local gui_asset="omaphoenix-gui_linux_${arch}.tar.gz"
-      fetch "$gui_asset" "$tmp" "$repo" "$version"
-      tar -xzf "$tmp/$gui_asset" -C "$tmp" omaphoenix-gui
-      install -m 0755 "$tmp/omaphoenix-gui" "$bin_dir/omaphoenix-gui"
-      say "✓ installed omaphoenix-gui → $bin_dir/omaphoenix-gui"
+      local g
+      for g in omaphoenix-gui secaudit-gui; do
+        fetch "${g}_linux_${arch}.tar.gz" "$tmp" "$repo" "$version"
+        tar -xzf "$tmp/${g}_linux_${arch}.tar.gz" -C "$tmp" "$g"
+        install -m 0755 "$tmp/$g" "$bin_dir/$g"
+        say "✓ installed $g → $bin_dir/$g"
+      done
     fi
   fi
 
@@ -125,7 +128,9 @@ main() {
   ((${#missing[@]})) && echo "  note: missing ${missing[*]} (some Security Audit checks need them)"
   local apps="omaphoenix tui"
   [[ -x $bin_dir/omaphoenix-gui ]] && apps+=" · omaphoenix gui"
-  echo "  apps: $apps · secaudit-tui · secaudit-ui"
+  apps+=" · secaudit-tui · secaudit-ui"
+  [[ -x $bin_dir/secaudit-gui ]] && apps+=" · secaudit-gui"
+  echo "  apps: $apps"
 
   [[ -n ${OMAPHOENIX_NO_MENU:-} ]] && return
   # curl | bash leaves stdin as the pipe; questions go to the terminal.
@@ -168,8 +173,9 @@ launchers() {
   mkdir -p "$apps" "$icons"
   install -m 0644 "$share/icons/omaphoenix.svg" "$share/icons/secaudit.svg" "$icons/"
   local entry launch terminal id title
-  for entry in secaudit omaphoenix-tui omaphoenix; do
+  for entry in secaudit secaudit-gui omaphoenix-tui omaphoenix; do
     [[ $entry == omaphoenix && ! -x $bin_dir/omaphoenix-gui ]] && continue
+    [[ $entry == secaudit-gui && ! -x $bin_dir/secaudit-gui ]] && continue
     launch='' terminal=true
     if command -v uwsm-app >/dev/null && command -v xdg-terminal-exec >/dev/null; then
       id=org.secaudit.tui title="Security Audit"
@@ -190,13 +196,13 @@ launchers() {
 uninstall() {
   local bin_dir=${1:?} data_dir=${2:?} b f
   if [[ -x $bin_dir/omaphoenix ]]; then "$bin_dir/omaphoenix" timer off >/dev/null 2>&1 || true; fi
-  for b in omaphoenix omaphoenix-gui secaudit secaudit-tui secaudit-ui; do
+  for b in omaphoenix omaphoenix-gui secaudit secaudit-tui secaudit-ui secaudit-gui; do
     if [[ -e ${bin_dir:?}/$b ]]; then
       rm -f -- "${bin_dir:?}/$b"
       say "removed $bin_dir/$b"
     fi
   done
-  for f in applications/secaudit.desktop applications/omaphoenix.desktop applications/omaphoenix-tui.desktop \
+  for f in applications/secaudit.desktop applications/secaudit-gui.desktop applications/omaphoenix.desktop applications/omaphoenix-tui.desktop \
     icons/hicolor/scalable/apps/omaphoenix.svg icons/hicolor/scalable/apps/secaudit.svg; do
     if [[ -e ${data_dir:?}/$f ]]; then
       rm -f -- "${data_dir:?}/$f"

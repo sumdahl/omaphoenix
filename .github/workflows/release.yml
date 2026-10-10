@@ -42,7 +42,7 @@ jobs:
           name: dist-${{ matrix.arch }}
           path: dist/*.tar.gz
 
-  # The desktop app (Slint): glibc, amd64. It links fontconfig and loads
+  # The desktop apps (Slint, ADR-0019/0020): glibc, amd64. It links fontconfig and loads
   # Wayland/X11 at run time; install.sh offers it as an option.
   gui:
     runs-on: ubuntu-24.04
@@ -52,10 +52,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libfontconfig1-dev libxkbcommon-dev
       - uses: dtolnay/rust-toolchain@1.95.0
-      - run: cargo build --locked --release --manifest-path apps/omaphoenix-gui/Cargo.toml
       - run: |
           mkdir -p dist
-          tar -czf dist/omaphoenix-gui_linux_amd64.tar.gz -C apps/omaphoenix-gui/target/release omaphoenix-gui
+          for app in omaphoenix-gui secaudit-gui; do
+            cargo build --locked --release --manifest-path apps/$app/Cargo.toml
+            tar -czf dist/${app}_linux_amd64.tar.gz -C apps/$app/target/release $app
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: dist-gui

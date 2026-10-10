@@ -4,7 +4,7 @@
 // Components below the structs are reused from the measured spike
 // (spikes/slint-desktop): accessible buttons, the score ring.
 
-import { ListView, AboutSlint } from "std-widgets.slint";
+import { ListView, ScrollView, AboutSlint } from "std-widgets.slint";
 
 export global Theme {
     in-out property <color> surface-base: #1e1e2e;
@@ -130,7 +130,7 @@ component Fact inherits HorizontalLayout {
     in property <string> label;
     spacing: 8px;
     Rectangle { width: 8px; height: 8px; border-radius: 4px; background: marker; y: (parent.height - 8px) / 2; }
-    Text { text: label; color: Theme.text-primary; }
+    Text { text: label; color: Theme.text-primary; overflow: elide; min-width: 40px; horizontal-stretch: 1; }
 }
 
 component Card inherits Rectangle {
@@ -165,6 +165,51 @@ component SevTag inherits Rectangle {
         color: accepted ? Theme.text-muted : (sev == "fail" ? Theme.state-risk : Theme.state-attention);
         horizontal-alignment: center;
         vertical-alignment: center;
+    }
+}
+
+component ProtectionCard inherits Card {
+    in property <bool> set-up;
+    in property <string> last-snapshot;
+    in property <bool> timer-on;
+    in property <int> doctor-risks;
+    min-width: 280px;
+    preferred-width: 360px;
+    VerticalLayout {
+        padding: 16px; spacing: 12px; alignment: start;
+        Text { text: "Protection"; font-size: 15px; font-weight: 600; color: Theme.text-primary; }
+        Fact { marker: root.set-up ? Theme.state-fine : Theme.state-risk; label: root.last-snapshot; }
+        Fact { marker: root.timer-on ? Theme.state-fine : Theme.state-attention; label: root.timer-on ? "Automatic snapshots on" : "Automatic snapshots off"; }
+        Fact {
+            marker: root.doctor-risks == 0 ? Theme.state-fine : (root.doctor-risks < 0 ? Theme.text-muted : Theme.state-risk);
+            label: root.doctor-risks < 0 ? "Checking what a reinstall would lose…" : (root.doctor-risks == 0 ? "Nothing would be lost in a reinstall" : root.doctor-risks + " thing(s) would be lost in a reinstall");
+        }
+    }
+}
+
+component HealthCard inherits Card {
+    in property <bool> audited;
+    in property <float> ring-value;
+    in property <int> score;
+    in property <int> fails;
+    in property <int> warns;
+    in property <int> accepted;
+    min-width: 300px;
+    preferred-width: 380px;
+    VerticalLayout {
+        padding: 16px; spacing: 12px; alignment: start;
+        Text { text: "Health"; font-size: 15px; font-weight: 600; color: Theme.text-primary; }
+        if root.audited : HorizontalLayout {
+            spacing: 24px; alignment: start;
+            ScoreRing { value: root.ring-value; score: root.score; }
+            VerticalLayout {
+                spacing: 8px; alignment: center;
+                Fact { marker: Theme.state-risk; label: root.fails + " fail"; }
+                Fact { marker: Theme.state-attention; label: root.warns + " worth a look"; }
+                Fact { marker: Theme.text-muted; label: root.accepted + " accepted"; }
+            }
+        }
+        if !root.audited : Muted { text: "No audit yet. Snapshots audit themselves; run one to see the whole picture."; }
     }
 }
 
@@ -275,7 +320,7 @@ export component App inherits Window {
                         padding: 12px; padding-top: 16px; spacing: 4px; alignment: start;
                         HorizontalLayout {
                             padding-left: 8px; padding-bottom: 12px; spacing: 8px;
-                            Rectangle { width: 10px; height: 14px; border-radius: 5px; background: Theme.accent; y: 2px; }
+                            Image { source: @image-url("../../../share/icons/omaphoenix.svg"); width: 22px; height: 22px; accessible-role: none; }
                             Text { text: "OmaPhoenix"; font-size: 15px; font-weight: 600; color: Theme.text-primary; }
                         }
                         Button { label: "Pulse"; key: "1"; active: root.section == 0; clicked => { root.go(0); } }
@@ -290,44 +335,18 @@ export component App inherits Window {
                 // 1 Pulse
                 VerticalLayout {
                     visible: root.section == 0;
-                    width: root.section == 0 ? self.preferred-width : 0px;
+                    horizontal-stretch: root.section == 0 ? 1 : 0; min-width: 0px; max-width: root.section == 0 ? 100000px : 0px;
                     padding: 32px; spacing: 24px; alignment: start;
                     VerticalLayout {
                         spacing: 6px;
                         Heading { text: root.headline; }
                         Muted { text: root.subline; }
                     }
-                    HorizontalLayout {
-                        spacing: 24px; alignment: start;
-                        Card {
-                            VerticalLayout {
-                                padding: 16px; spacing: 12px;
-                                Text { text: "Protection"; font-size: 15px; font-weight: 600; color: Theme.text-primary; }
-                                Fact { marker: root.set-up ? Theme.state-fine : Theme.state-risk; label: root.last-snapshot; }
-                                Fact { marker: root.timer-on ? Theme.state-fine : Theme.state-attention; label: root.timer-on ? "Automatic snapshots on" : "Automatic snapshots off"; }
-                                Fact {
-                                    marker: root.doctor-risks == 0 ? Theme.state-fine : (root.doctor-risks < 0 ? Theme.text-muted : Theme.state-risk);
-                                    label: root.doctor-risks < 0 ? "Checking what a reinstall would lose…" : (root.doctor-risks == 0 ? "Nothing would be lost in a reinstall" : root.doctor-risks + " thing(s) would be lost in a reinstall");
-                                }
-                            }
-                        }
-                        Card {
-                            VerticalLayout {
-                                padding: 16px; spacing: 12px;
-                                Text { text: "Health"; font-size: 15px; font-weight: 600; color: Theme.text-primary; }
-                                if root.audited : HorizontalLayout {
-                                    spacing: 24px; alignment: start;
-                                    ScoreRing { value: root.ring-value; score: root.score; }
-                                    VerticalLayout {
-                                        spacing: 8px; alignment: center;
-                                        Fact { marker: Theme.state-risk; label: root.fails + " fail"; }
-                                        Fact { marker: Theme.state-attention; label: root.warns + " worth a look"; }
-                                        Fact { marker: Theme.text-muted; label: root.accepted + " accepted"; }
-                                    }
-                                }
-                                if !root.audited : Muted { text: "No audit yet. Snapshots audit themselves; run one to see the whole picture."; }
-                            }
-                        }
+                    // Stacked: fits any window width without clipping.
+                    VerticalLayout {
+                        spacing: 16px;
+                        ProtectionCard { set-up: root.set-up; last-snapshot: root.last-snapshot; timer-on: root.timer-on; doctor-risks: root.doctor-risks; }
+                        HealthCard { audited: root.audited; ring-value: root.ring-value; score: root.score; fails: root.fails; warns: root.warns; accepted: root.accepted; }
                     }
                     HorizontalLayout {
                         alignment: start;
@@ -338,7 +357,7 @@ export component App inherits Window {
                 // 2 Timeline
                 VerticalLayout {
                     visible: root.section == 1;
-                    width: root.section == 1 ? self.preferred-width : 0px;
+                    horizontal-stretch: root.section == 1 ? 1 : 0; min-width: 0px; max-width: root.section == 1 ? 100000px : 0px;
                     padding: 32px; spacing: 16px;
                     HorizontalLayout {
                         Heading { text: "Timeline"; }
@@ -375,7 +394,7 @@ export component App inherits Window {
                 // 3 Audit
                 VerticalLayout {
                     visible: root.section == 2;
-                    width: root.section == 2 ? self.preferred-width : 0px;
+                    horizontal-stretch: root.section == 2 ? 1 : 0; min-width: 0px; max-width: root.section == 2 ? 100000px : 0px;
                     padding: 32px; spacing: 16px;
                     HorizontalLayout {
                         spacing: 16px;
@@ -390,7 +409,7 @@ export component App inherits Window {
                         vertical-stretch: 1;
                         spacing: 16px;
                         ListView {
-                            width: 50%;
+                            width: 48%;
                             for f[i] in root.findings : Rectangle {
                                 height: 36px;
                                 background: i == root.finding-sel ? Theme.selection : transparent;
@@ -406,19 +425,25 @@ export component App inherits Window {
                             }
                         }
                         if root.findings.length > 0 : Card {
-                            horizontal-stretch: 1;
+                            width: 48%;
+                            // Long details scroll inside the card, wrapped to its width.
+                            audit-scroll := ScrollView {
+                                width: parent.width; height: parent.height;
                             VerticalLayout {
+                                width: audit-scroll.visible-width;
                                 padding: 16px; spacing: 10px; alignment: start;
                                 Muted { text: root.findings[root.finding-sel].section; }
                                 Text { text: root.findings[root.finding-sel].title; font-size: 15px; font-weight: 600; color: Theme.text-primary; wrap: word-wrap; }
-                                if root.findings[root.finding-sel].detail != "" : Text { text: root.findings[root.finding-sel].detail; color: Theme.text-secondary; wrap: word-wrap; }
-                                if root.findings[root.finding-sel].fix != "" : Text { text: "$ " + root.findings[root.finding-sel].fix; color: Theme.accent; wrap: word-wrap; }
+                                if root.findings[root.finding-sel].detail != "" : Text { text: root.findings[root.finding-sel].detail; color: Theme.text-secondary; wrap: char-wrap; }
+                                if root.findings[root.finding-sel].fix != "" : Text { text: "$ " + root.findings[root.finding-sel].fix; color: Theme.accent; wrap: char-wrap; }
                                 if root.findings[root.finding-sel].hint != "" : Muted { text: root.findings[root.finding-sel].hint; }
-                                HorizontalLayout {
-                                    spacing: 8px; alignment: start;
+                                // Stacked: side by side they'd be wider than a narrow card.
+                                VerticalLayout {
+                                    spacing: 6px; alignment: start;
                                     Button { label: root.findings[root.finding-sel].accepted ? "Move back to risks" : "Accept risk"; clicked => { root.toggle-accept(root.finding-sel); } }
                                     if root.findings[root.finding-sel].fix != "" : Button { label: "Run fix in a terminal"; clicked => { root.run-fix(root.finding-sel); } }
                                 }
+                            }
                             }
                         }
                     }
@@ -427,7 +452,7 @@ export component App inherits Window {
                 // 4 Backup
                 VerticalLayout {
                     visible: root.section == 3;
-                    width: root.section == 3 ? self.preferred-width : 0px;
+                    horizontal-stretch: root.section == 3 ? 1 : 0; min-width: 0px; max-width: root.section == 3 ? 100000px : 0px;
                     padding: 32px; spacing: 16px;
                     HorizontalLayout {
                         Heading { text: "Backup"; }
@@ -480,7 +505,7 @@ export component App inherits Window {
                 // 5 Migrate
                 VerticalLayout {
                     visible: root.section == 4;
-                    width: root.section == 4 ? self.preferred-width : 0px;
+                    horizontal-stretch: root.section == 4 ? 1 : 0; min-width: 0px; max-width: root.section == 4 ? 100000px : 0px;
                     padding: 32px; spacing: 16px; alignment: start;
                     Heading { text: "Migrate to a new machine"; }
                     Muted { text: "Audit → clean → snapshot → restore → re-audit. Quit any time; progress is kept."; }
@@ -501,7 +526,7 @@ export component App inherits Window {
                 // 6 Settings
                 VerticalLayout {
                     visible: root.section == 5;
-                    width: root.section == 5 ? self.preferred-width : 0px;
+                    horizontal-stretch: root.section == 5 ? 1 : 0; min-width: 0px; max-width: root.section == 5 ? 100000px : 0px;
                     padding: 32px; spacing: 16px; alignment: start;
                     Heading { text: "Settings"; }
                     Card {
@@ -537,7 +562,8 @@ export component App inherits Window {
                         }
                     }
                     // Slint Royalty-free license attribution (docs/07, Q10).
-                    AboutSlint { }
+                    // The required attribution (ADR-0020), at a modest size.
+                    HorizontalLayout { alignment: start; AboutSlint { width: 180px; height: 80px; } }
                 }
             }
 

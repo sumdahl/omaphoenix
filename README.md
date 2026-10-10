@@ -27,8 +27,9 @@
 | `secaudit` | Security Audit's engine: the Bash engine's 13 sections, same messages | `secaudit-core` (→ Manish) |
 | `secaudit-tui` | Exact port of Manish's Python Textual app: same screens, keys, layout and colours | `secaudit` |
 | `secaudit-ui` | Exact port of Manish's gum/Bash front end, gum built in | `secaudit` |
+| `secaudit-gui` | Security Audit desktop app (Slint): scan, review, accept, fix, history; optional at install | `secaudit-core` |
 
-OmaPhoenix gives a choice of **terminal or desktop app**: both launchers ("OmaPhoenix (Terminal)" and "OmaPhoenix") appear in the app menu, and `omaphoenix tui` / `omaphoenix gui` open them directly.
+OmaPhoenix gives a choice of **terminal or desktop app**: both launchers ("OmaPhoenix (Terminal)" and "OmaPhoenix") appear in the app menu, and Security Audit likewise has "Security Audit" (terminal) and "Security Audit (Desktop)", and `omaphoenix tui` / `omaphoenix gui` open them directly.
 
 ```sh
 cargo build --release -p omaphoenix -p secaudit   # target/release/{omaphoenix,secaudit,secaudit-tui,secaudit-ui}
@@ -37,7 +38,7 @@ omaphoenix gui                                    # desktop app (needs omaphoeni
 secaudit                                          # report
 secaudit-tui                                      # Security Audit terminal app (Textual port)
 secaudit-ui                                       # Security Audit menus (gum port)
-(cd apps/omaphoenix-gui && cargo run --release)   # desktop app from source
+(cd apps/omaphoenix-gui && cargo run --release)   # desktop apps from source (also apps/secaudit-gui)
 ```
 
 **How we know it matches the old versions** (run them yourself):

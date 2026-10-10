@@ -12,6 +12,7 @@ secaudit --report FILE       # plain-text copy of the report
 secaudit --home DIR          # audit another home (e.g. a restored one)
 secaudit-tui [--scan MODE]   # the terminal app: scan, review, accept risks, run fixes, history
 secaudit-ui [--scan MODE] [--last]   # the menu front end
+secaudit-gui                 # the desktop app (apps/secaudit-gui, optional at install)
 ```
 
 `secaudit tui` opens the same terminal app. Both front ends run the `secaudit` engine beside them, or `$SECAUDIT_ENGINE`.
@@ -19,6 +20,7 @@ secaudit-ui [--scan MODE] [--last]   # the menu front end
 ## The same apps, in Rust
 - **`secaudit-tui`** is the Textual app ported screen by screen: the same layout at every width (trend box, sidebar, side-by-side detail at 150 columns), keys and enabled/disabled rules, messages, toasts, command palette (`ctrl+p`), keys panel (`?`) and mouse clicks. Textual's widgets are drawn the way Textual draws them (Digits, Sparkline, scrolling Tabs, the tall Input, DataTable, eighth-cell scrollbars). Compared in tmux against the Python app on the same history: 14 screens at 80×24, 120×36 and 160×45 are identical in text, and colours match to within one unit.
 - **`secaudit-ui`** is the gum script ported line for line, with `gum choose`/`gum confirm` built in, drawn as gum 2 draws them, in the theme's `GUM_*` colours, with the same colour-profile detection. No gum or jq needed. Six screens compared against the script are identical in text; five are byte-identical, escape codes included.
+- **`secaudit-gui`** (`apps/secaudit-gui`, Slint) is the desktop app on the same history: score, tabs, search, accept risk, copy and run fixes (the terminal asks first), quick scans in the background, full and deep scans with sudo in a terminal window, history and export. 59 MB idle.
 - Known differences, both Textual quirks rather than design: a compact button keeps the width of its first label until the next resize, and the keys panel lists slightly fewer rows below the fold.
 
 ## Compatible with the Bash version
