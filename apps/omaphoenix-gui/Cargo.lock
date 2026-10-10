@@ -3980,7 +3980,7 @@ dependencies = [
 
 [[package]]
 name = "phx-contract"
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -3989,7 +3989,7 @@ dependencies = [
 
 [[package]]
 name = "phx-core"
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.2"
 dependencies = [
  "age",
  "phx-contract",
@@ -4664,7 +4664,7 @@ dependencies = [
 
 [[package]]
 name = "secaudit-core"
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.2"
 dependencies = [
  "regex",
  "serde",
