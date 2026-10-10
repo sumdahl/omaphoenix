@@ -23,7 +23,11 @@ The item is `local:state/omaphoenix`, which is `~/.local/state/omaphoenix`, OmaP
 - `notified.json`: when it last notified.
 - `migrate.json`: progress in the Migrate section.
 
+- `last-restore*.json` and `undo-trash/`: undo's records, and the files a restore created and an undo moved aside.
+
 All of it is specific to this machine, and it is recaptured whenever the cache changes.
+
+The undo trash can hold files a restore decrypted, such as SSH keys restored onto a machine and then undone. The `local` capture still runs the secret scan (`files/scan.rs` matches `BEGIN … PRIVATE KEY`, with a test). So those are skipped today, but only because the scan catches them. Skipping the folder removes the reliance.
 
 ## Reproduce
 
