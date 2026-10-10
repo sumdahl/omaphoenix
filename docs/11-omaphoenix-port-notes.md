@@ -25,7 +25,9 @@ How the Rust port of the Go OmaPhoenix is checked, where it deliberately differs
 | Undo journal | kept across a no-op restore since Go 2a0345a (K2) | same | was a Go bug, now fixed in both |
 | `notified.json` time | RFC 3339 string | Unix seconds; an old file re-notifies once | no date parsing without a dependency |
 | Audit before backup | none | gate on by default (docs/04); `OMAPHOENIX_AUDIT=off` | the joint product |
-| Gate's filesystem walk | n/a | "Filesystem permissions" reused for a day (`$XDG_STATE_HOME/omaphoenix/gate-daily.json`); `reaudit` always fresh | it was ~11 of 17 s CPU in every timer run |
+| Gate's slow sections | n/a | "Filesystem permissions" and "Packages & updates" reused for a day (`$XDG_STATE_HOME/omaphoenix/gate-daily.json`); `reaudit` always fresh | ~12 of 17 s CPU in every timer run; package findings name no files, so they never change what is left out |
+| Theme and plugin repos | inspected per step | inspected once per snapshot, 4 threads | ~1,000 git processes per snapshot before |
+| Global npm packages | `npm ls -g` | read from the global `node_modules` (`npm ls` as fallback) | `npm ls` was a 125 MB Node process |
 | Choosing what to back up | `selection.conf` defaults to everything | nothing is decided for the user: the apps open on Backup until a choice is saved; items found later are asked about (`reviewed.txt` in the repo) | the owner wants full control |
 | Timer | `timer on <interval>` | same, plus manual-only / interval choice in both apps; the unit always runs the CLI | the app's toggle pointed the unit at omaphoenix-gui |
 

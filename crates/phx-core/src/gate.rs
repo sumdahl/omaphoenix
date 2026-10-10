@@ -18,7 +18,7 @@ const GATE_SECTIONS: &[&str] = &[
     "Users & authentication",
 ];
 
-/// Walks the whole filesystem (~11 s), and permissions change rarely: run at most daily.
+/// Run at most daily: a whole-filesystem walk (~11 s), and package checks whose findings name no files.
 const DAILY_SECTIONS: &[&str] = &["Filesystem permissions", "Packages & updates"];
 
 const DAY: u64 = 24 * 60 * 60;
