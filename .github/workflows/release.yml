@@ -42,6 +42,7 @@ jobs:
     needs: build
     runs-on: ubuntu-24.04
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           pattern: dist-*
@@ -56,6 +57,8 @@ jobs:
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: dist/*.tar.gz
-      - run: gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --generate-notes --verify-tag
+      # install.sh rides along: on a private repo the raw URL needs auth,
+      # while `gh release download` works for anyone with access.
+      - run: gh release create "$GITHUB_REF_NAME" dist/* install.sh --repo "$GITHUB_REPOSITORY" --generate-notes --verify-tag
         env:
           GH_TOKEN: ${{ github.token }}
