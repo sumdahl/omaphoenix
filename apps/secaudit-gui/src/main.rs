@@ -1020,7 +1020,10 @@ fn poll_ai(app: &App) {
     show_ai(app);
 }
 
-#[allow(clippy::too_many_lines, reason = "one callback per UI action, wired in one place")]
+#[allow(
+    clippy::too_many_lines,
+    reason = "one callback per UI action, wired in one place"
+)]
 fn main() -> Result<(), slint::PlatformError> {
     let app = App::new()?;
     slint::set_xdg_app_id("secaudit-gui")?;
