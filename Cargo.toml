@@ -6,7 +6,7 @@ members = ["crates/*"]
 exclude = ["spikes", "apps"]
 
 [workspace.package]
-version = "0.1.0-rc.5"
+version = "0.1.0-rc.6"
 edition = "2024"
 # 1.88: patched `time` (RUSTSEC) and `plist`/`quick-xml` need it; holding an
 # older MSRV pinned vulnerable versions. 1.89: `File::try_lock` (the snapshot
