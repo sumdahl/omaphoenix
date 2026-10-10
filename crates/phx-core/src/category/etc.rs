@@ -1,6 +1,4 @@
-//! `etc`: system configuration the user changed: package config files
-//! pacman reports as modified, and files no package owns in the drop-in
-//! directories. Restore goes through sudo one file at a time.
+//! `etc`: modified package configs and unowned drop-ins, restored through sudo.
 
 use std::collections::BTreeSet;
 use std::fs;
@@ -19,8 +17,7 @@ use crate::sys;
 /// `etc`.
 pub struct Etc;
 
-/// Drop-in directories scanned for files no package owns. Looking
-/// everywhere in /etc would sweep up generated state.
+/// Drop-in dirs scanned for unowned files; all of /etc would sweep up generated state.
 const DROP_INS: &[&str] = &[
     "systemd/system",
     "systemd/user",
@@ -42,8 +39,7 @@ const DROP_INS: &[&str] = &[
     "sudoers.d",
 ];
 
-/// Machine identity, disks, boot and accounts: restoring them onto another
-/// machine breaks booting or logins.
+/// Machine identity, disks, boot and accounts: restoring them elsewhere breaks boot or logins.
 const NEVER: &[&str] = &[
     "fstab",
     "crypttab",
@@ -112,8 +108,7 @@ impl Category for Etc {
                 items.push(Item::new(p, why));
             }
         };
-        // ponytail: pacman -Qii prints every package's backup list (~1 MB);
-        // streamed line by line it stays small. Fine until it isn't.
+        // ponytail: pacman -Qii is ~1 MB, streamed line by line; fine until it isn't.
         for line in sys::output(None, &["pacman", "-Qii"])?.lines() {
             let line = line.trim();
             let line = line.strip_prefix("Backup Files    : ").unwrap_or(line);

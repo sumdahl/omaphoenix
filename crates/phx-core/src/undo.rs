@@ -1,7 +1,4 @@
-//! `undo`: reverses the last restore, newest change first, without ever
-//! discarding work: created files go to an undo trash, replaced files get
-//! their previous version back, and a file edited after the restore stays.
-//! Packages are listed, not removed: uninstalling can take shared deps.
+//! `undo`: reverses the last restore newest-first without discarding work; packages are only listed.
 
 use std::collections::BTreeMap;
 use std::fs;

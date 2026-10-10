@@ -1,6 +1,4 @@
-//! `bin`: hand-written scripts from the user's executable directories.
-//! Compiled binaries and symlinks belong to whatever installed them, so they
-//! are listed, not copied: restore reports them as "reinstall manually".
+//! `bin`: user scripts; compiled binaries and symlinks are listed, not copied.
 
 use std::fmt::Write as _;
 use std::fs;
@@ -17,8 +15,7 @@ use crate::sys;
 /// `bin`.
 pub struct Bin;
 
-/// User-writable script dirs relative to `$HOME`, plus `/usr/local/bin`
-/// (restored through sudo).
+/// User script dirs relative to `$HOME`, plus `/usr/local/bin` (restored through sudo).
 const DIRS: &[&str] = &[".local/bin", "bin", "/usr/local/bin"];
 
 const MAX_SCRIPT: u64 = 1 << 20;

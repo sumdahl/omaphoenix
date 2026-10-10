@@ -1,7 +1,4 @@
-//! Snapshots on a systemd user timer: no daemon, catches up after sleep
-//! (`Persistent=true`), idle priority so a snapshot never competes with the
-//! desktop. Plus Omarchy hooks: snapshot after `omarchy update`, health
-//! check at login.
+//! Snapshots on a systemd user timer, plus Omarchy update and login hooks.
 
 use std::fs;
 use std::path::{Path, PathBuf};

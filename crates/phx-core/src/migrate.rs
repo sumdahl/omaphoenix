@@ -1,6 +1,4 @@
-//! The Migrate wizard (DESIGN.md §4): audit → clean → snapshot → restore on
-//! the new machine → re-audit. Progress is saved, so quitting halfway and
-//! coming back later is normal. Shared by the TUI and the desktop app.
+//! The Migrate wizard: audit, clean, snapshot, restore, re-audit, with saved progress.
 
 use std::path::Path;
 

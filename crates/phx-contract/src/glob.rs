@@ -1,12 +1,6 @@
-//! A port of Go's `path.Match`, which `selection.conf` patterns use.
-//!
-//! Ported rather than taken from a glob crate because the rules must match
-//! exactly what Go matched: `*` and `?` stop at `/`, `\` escapes, `[^…]`
-//! negates, and a malformed pattern matches nothing. Proven against Go's own
-//! answers in `tests/fixtures/go/selection/path-match.json`.
+//! A port of Go's `path.Match`; parity with Go matters more than a glob crate's semantics.
 
-/// Reports whether `name` matches `pattern`. `None` means the pattern is
-/// malformed (Go's `ErrBadPattern`).
+/// Whether `name` matches `pattern`; `None` for a malformed pattern (Go's `ErrBadPattern`).
 #[must_use]
 pub fn path_match(pattern: &str, name: &str) -> Option<bool> {
     let mut pattern = pattern.as_bytes();
@@ -73,8 +67,7 @@ fn scan_chunk(mut pattern: &[u8]) -> (bool, &[u8], &[u8]) {
     (star, chunk, rest)
 }
 
-/// Matches `chunk` (no `*`) against the start of `s`. Returns the unmatched
-/// rest and whether it matched; `None` for a malformed chunk.
+/// Matches `chunk` against the start of `s`: (rest, matched), `None` when malformed.
 fn match_chunk<'a>(mut chunk: &[u8], mut s: &'a [u8]) -> Option<(&'a [u8], bool)> {
     let mut failed = false;
     while let Some(&c) = chunk.first() {
@@ -148,8 +141,7 @@ fn match_chunk<'a>(mut chunk: &[u8], mut s: &'a [u8]) -> Option<(&'a [u8], bool)
     Some(if failed { (&[][..], false) } else { (s, true) })
 }
 
-/// One possibly escaped character inside `[…]`. `None` if malformed, or if
-/// nothing follows it (the class is unterminated).
+/// One possibly escaped character inside `[…]`; `None` if malformed or unterminated.
 fn get_esc(mut chunk: &[u8]) -> Option<(char, &[u8])> {
     match chunk.first() {
         None | Some(b'-' | b']') => return None,
@@ -170,8 +162,7 @@ fn get_esc(mut chunk: &[u8]) -> Option<(char, &[u8])> {
     Some((r, rest))
 }
 
-/// Decodes the first UTF-8 character, like Go's `utf8.DecodeRune`:
-/// invalid bytes give U+FFFD with length 1.
+/// The first UTF-8 character like Go's `utf8.DecodeRune`: invalid bytes give U+FFFD, length 1.
 fn decode(s: &[u8]) -> (char, usize) {
     for n in 1..=s.len().min(4) {
         if let Some(c) = s
@@ -215,8 +206,7 @@ mod tests {
                 } else {
                     Some(c.r#match)
                 };
-                // Go may report a match and an error together; only the
-                // match matters to callers.
+                // Go may report a match and an error together; only the match matters.
                 got.unwrap_or(false) != c.r#match || (want.is_none() && got.is_some())
             })
             .map(|c| {

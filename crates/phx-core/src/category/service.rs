@@ -1,6 +1,4 @@
-//! `service`: enabled systemd units, system-wide and for the user. Restore
-//! enables the missing ones after `etc` and `config` brought their unit
-//! files back. Units are enabled, not started: a reboot or re-login follows.
+//! `service`: enabled systemd units, enabled (not started) on restore.
 
 use phx_contract::Item;
 

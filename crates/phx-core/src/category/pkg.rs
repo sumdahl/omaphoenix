@@ -1,5 +1,4 @@
-//! `pkg-repo` and `pkg-aur`: explicitly installed packages, restored with
-//! Omarchy's own installers (`omarchy-pkg-add`, `omarchy-pkg-aur-add`).
+//! `pkg-repo` and `pkg-aur`: explicit packages, restored with Omarchy's own installers.
 
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
@@ -51,8 +50,7 @@ impl Pkg {
     }
 }
 
-/// Whether every repo pacman.conf configures has a sync database. A fresh
-/// install keeps the ISO's offline.db while core, extra and the rest have none.
+/// Whether every configured repo has a sync database (a fresh install has only offline.db).
 fn db_synced() -> bool {
     match sys::lines(None, &["pacman-conf", "--repo-list"]) {
         Ok(repos) if !repos.is_empty() => repos
@@ -97,9 +95,7 @@ impl Category for Pkg {
             Err(e) => return Err(e.into()),
         };
         let have: BTreeSet<String> = sys::lines(None, &["pacman", "-Qq"])?.into_iter().collect();
-        // A fresh Omarchy install has no sync databases, so every -Si would
-        // fail. Update first through `omarchy-update -y`: Omarchy's hook
-        // refuses a direct -Syu, and its path handles keyring and migrations.
+        // No sync databases yet: update via `omarchy-update -y`, since Omarchy refuses a direct -Syu.
         let mut synced = db_synced();
         if !synced && self.repo {
             let update: &[&str] = if sys::has("omarchy-update") {
@@ -147,8 +143,7 @@ impl Category for Pkg {
                 .push(format!("{} not found — is this Omarchy?", self.installer));
             return Ok(res);
         }
-        // One batch is fast. If it fails or crawls, go one by one: a renamed
-        // package then fails alone, a crawling download is deferred alone.
+        // Batch first; on failure go one by one so a bad package fails or defers alone.
         let mut batch = Outcome::default();
         let mut argv = vec![self.installer];
         argv.extend(missing.iter().copied());
