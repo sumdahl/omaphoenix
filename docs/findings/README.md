@@ -11,5 +11,6 @@ Bugs and surprises found while testing or using the products, one file each. A f
 | [F-001](F-001-vanished-item-flagged-new.md) | An item that disappeared before you saved is reported as new | OmaPhoenix | low | open |
 | [F-002](F-002-own-state-dir-captured.md) | OmaPhoenix backs up its own state folder | OmaPhoenix | low | open |
 | [F-003](F-003-dry-run-plans-decrypting-identical-keys.md) | A dry run says it would decrypt keys that are already identical | OmaPhoenix | low | open |
+| [F-004](F-004-stale-git-lock-after-power-loss.md) | After a power cut during a snapshot, every later snapshot can fail | OmaPhoenix | medium | open |
 
 **Severity:** `high` loses or leaks data, or breaks a restore. `medium` is wrong behaviour with no data at risk. `low` is a wrong message or a cosmetic problem.
