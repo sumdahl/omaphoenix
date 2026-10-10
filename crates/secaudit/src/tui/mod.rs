@@ -5,7 +5,7 @@
 mod app;
 mod scan;
 mod theme;
-mod times;
+pub(crate) mod times;
 mod view;
 mod widgets;
 

@@ -2,3 +2,4 @@
 //! `secaudit-tui` and `secaudit-ui` binaries.
 
 pub mod tui;
+pub mod ui;
