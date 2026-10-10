@@ -1,9 +1,13 @@
 //! What a snapshot captures, per category and item.
 
+use std::collections::BTreeSet;
+
 use phx_contract::selection::Choice;
 use phx_core::App as Engine;
+use phx_core::app::review_key;
 use slint::{ComponentHandle, SharedString};
 
+use crate::activity;
 use crate::run::background;
 use crate::state::{Shared, model, quiet, ui_engine, ui_state};
 use crate::ui::{App, CatRow, ItemRow};
@@ -17,7 +21,7 @@ pub(crate) fn refresh_backup(app: &App, state: &Shared) {
                 name: c.category.as_str().into(),
                 selected: i32::try_from(c.items.iter().filter(|(_, on)| *on).count()).unwrap_or(0),
                 total: i32::try_from(c.items.len()).unwrap_or(0),
-                note: SharedString::new(),
+                note: new_note(&s.unreviewed, c),
             })
             .collect(),
     ));
@@ -32,13 +36,31 @@ pub(crate) fn refresh_backup(app: &App, state: &Shared) {
                     id: id.as_str().into(),
                     on: *on,
                     note: note.as_str().into(),
+                    new: s.unreviewed.contains(&review_key(&c.category, id)),
                 })
                 .collect()
         });
     app.set_items(model(items));
 }
 
+fn new_note(unreviewed: &BTreeSet<String>, c: &Choice) -> SharedString {
+    let n = c
+        .items
+        .iter()
+        .filter(|(id, _)| unreviewed.contains(&review_key(&c.category, id)))
+        .count();
+    if n == 0 {
+        SharedString::new()
+    } else {
+        format!("● {n} new").into()
+    }
+}
+
 pub(crate) fn load_choices(app: &App) {
+    if !ui_state().borrow_mut().jobs.insert("choices") {
+        return;
+    }
+    activity::refresh(app);
     background(
         app,
         || {
@@ -49,10 +71,20 @@ pub(crate) fn load_choices(app: &App) {
         |app, r| match r {
             Ok(c) => {
                 let state = ui_state();
-                state.borrow_mut().choices = c;
+                {
+                    let mut s = state.borrow_mut();
+                    s.unreviewed = ui_engine().unreviewed(&c);
+                    s.choices = c;
+                    s.jobs.remove("choices");
+                }
                 refresh_backup(app, &state);
+                activity::refresh(app);
             }
-            Err(e) => app.set_toast(e.into()),
+            Err(e) => {
+                ui_state().borrow_mut().jobs.remove("choices");
+                activity::refresh(app);
+                app.set_toast(e.into());
+            }
         },
     );
 }
@@ -117,6 +149,9 @@ pub(crate) fn wire(app: &App) {
                 .collect();
             match ui_engine().save_choices(&plain) {
                 Ok(()) => {
+                    state.borrow_mut().unreviewed.clear();
+                    refresh_backup(&app, &state);
+                    activity::refresh(&app);
                     app.set_backup_dirty(false);
                     app.set_toast("Saved: the next snapshot captures exactly this".into());
                 }

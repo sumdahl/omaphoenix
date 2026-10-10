@@ -1,7 +1,7 @@
 //! UI-thread state shared by every section.
 
 use std::cell::RefCell;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 use std::rc::Rc;
 
@@ -23,6 +23,11 @@ pub(crate) struct Model {
     pub(crate) accepted: BTreeMap<String, Accepted>,
     pub(crate) migration: Migration,
     pub(crate) preview: String,
+    /// Detected items the user hasn't reviewed, as `category:id`.
+    pub(crate) unreviewed: BTreeSet<String>,
+    /// Background loads in flight, for the status line: `choices`, `doctor`.
+    pub(crate) jobs: BTreeSet<&'static str>,
+    pub(crate) timer_running: bool,
 }
 
 pub(crate) type Shared = Rc<RefCell<Model>>;

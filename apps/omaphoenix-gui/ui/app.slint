@@ -27,7 +27,7 @@ export struct Snap { id: string, when: string, note: string }
 export struct PreviewRow { category: string, count: int, detail: string }
 export struct AuditRow { sev: string, title: string, section: string, detail: string, fix: string, hint: string, accepted: bool }
 export struct CatRow { name: string, selected: int, total: int, note: string }
-export struct ItemRow { id: string, on: bool, note: string }
+export struct ItemRow { id: string, on: bool, note: string, new: bool }
 export struct StepRow { title: string, done: bool, explain: string }
 
 component KeyHint inherits Rectangle {
@@ -264,6 +264,12 @@ export component App inherits Window {
     in property <string> toast;
     in property <string> busy;
     in property <float> progress: -1;
+    // What is happening when nothing runs, and what needs the user.
+    in property <string> activity;
+    in property <bool> needs-choice;
+    in property <int> new-count;
+    // Before a snapshot: how many unreviewed items it would capture.
+    in-out property <int> ask-new: 0;
 
     // Pulse
     in property <string> headline;
@@ -304,6 +310,8 @@ export component App inherits Window {
 
     // Settings
     in property <string> timer-status;
+    // Automatic snapshot interval ("15m" … "daily"), empty for manual only.
+    in property <string> interval;
     in property <string> repo-dir;
     in property <string> remote;
     in property <bool> secrets-ready;
@@ -324,13 +332,20 @@ export component App inherits Window {
     callback toggle-item(int);
     callback save-backup();
     callback migrate-step(int);
-    callback toggle-timer();
+    callback set-interval(string);
     callback setup-secrets();
     callback set-up-repo();
+    callback snapshot-anyway();
+    callback review-new();
+    callback cancel-ask();
 
     forward-focus: keys;
     keys := FocusScope {
         key-pressed(e) => {
+            if (root.ask-new > 0) {
+                if (e.text == Key.Escape) { root.cancel-ask(); return accept; }
+                return reject;
+            }
             if (root.sheet-visible) {
                 if (e.text == Key.Escape) { root.close-preview(); return accept; }
                 return reject;
@@ -363,7 +378,7 @@ export component App inherits Window {
                         Button { label: "Pulse"; key: "1"; active: root.section == 0; clicked => { root.go(0); } }
                         Button { label: "Timeline"; key: "2"; active: root.section == 1; clicked => { root.go(1); } }
                         Button { label: "Audit"; key: "3"; active: root.section == 2; clicked => { root.go(2); } }
-                        Button { label: "Backup"; key: "4"; active: root.section == 3; clicked => { root.go(3); } }
+                        Button { label: root.needs-choice || root.new-count > 0 ? "Backup ●" : "Backup"; key: "4"; active: root.section == 3; clicked => { root.go(3); } }
                         Button { label: "Migrate"; key: "5"; active: root.section == 4; clicked => { root.go(4); } }
                         Button { label: "Settings"; key: "6"; active: root.section == 5; clicked => { root.go(5); } }
                     }
@@ -496,7 +511,16 @@ export component App inherits Window {
                         Rectangle { horizontal-stretch: 1; }
                         Button { label: "Save"; primary: true; enabled: root.backup-dirty; clicked => { root.save-backup(); } }
                     }
-                    Muted { text: "What snapshots capture. New items in a ticked category are included automatically."; }
+                    Text {
+                        text: root.needs-choice
+                            ? "Choose what OmaPhoenix backs up. Everything found is ticked; untick what you don't want, then Save. Nothing is decided for you."
+                            : root.new-count > 0
+                                ? root.new-count + " new item(s) found since your last review, marked ● new. Tick or untick them, then Save."
+                                : "What snapshots capture. You're asked about anything new before it's backed up.";
+                        wrap: word-wrap;
+                        font-weight: root.needs-choice || root.new-count > 0 ? 600 : 400;
+                        color: root.needs-choice || root.new-count > 0 ? Theme.state-attention : Theme.text-muted;
+                    }
                     if root.cats.length == 0 : Muted { text: "Detecting what is on this machine…"; }
                     HorizontalLayout {
                         vertical-stretch: 1;
@@ -519,6 +543,7 @@ export component App inherits Window {
                                     }
                                     Text { text: c.name; width: 90px; vertical-alignment: center; color: Theme.text-primary; }
                                     Text { text: c.selected + " of " + c.total; vertical-alignment: center; color: Theme.text-secondary; }
+                                    Text { text: c.note; vertical-alignment: center; font-weight: 600; color: Theme.state-attention; }
                                 }
                                 TouchArea { x: 40px; clicked => { root.select-cat(i); } }
                             }
@@ -532,6 +557,7 @@ export component App inherits Window {
                                 accessible-label: it.id;
                                 Text { text: it.on ? "[x]" : "[ ]"; vertical-alignment: center; color: Theme.accent; }
                                 Text { text: it.id; vertical-alignment: center; color: Theme.text-primary; overflow: elide; }
+                                if it.new : Text { text: "● new"; vertical-alignment: center; font-weight: 600; color: Theme.state-attention; }
                                 Text { text: it.note; vertical-alignment: center; color: Theme.text-muted; }
                                 TouchArea { clicked => { root.toggle-item(i); } }
                             }
@@ -571,7 +597,16 @@ export component App inherits Window {
                             padding: 16px; spacing: 8px;
                             Text { text: "Schedule"; font-weight: 600; color: Theme.text-primary; }
                             Muted { text: root.timer-status; }
-                            HorizontalLayout { alignment: start; Button { label: root.timer-on ? "Turn automatic snapshots off" : "Snapshot every 30 minutes"; clicked => { root.toggle-timer(); } } }
+                            HorizontalLayout {
+                                alignment: start; spacing: 6px;
+                                Button { label: "Manual"; active: root.interval == ""; clicked => { root.set-interval(""); } }
+                                Button { label: "15 min"; active: root.interval == "15m"; clicked => { root.set-interval("15m"); } }
+                                Button { label: "30 min"; active: root.interval == "30m"; clicked => { root.set-interval("30m"); } }
+                                Button { label: "1 hour"; active: root.interval == "1h"; clicked => { root.set-interval("1h"); } }
+                                Button { label: "6 hours"; active: root.interval == "6h"; clicked => { root.set-interval("6h"); } }
+                                Button { label: "Daily"; active: root.interval == "daily"; clicked => { root.set-interval("daily"); } }
+                            }
+                            Muted { text: "Manual: nothing runs in the background; take a snapshot whenever you want."; }
                         }
                     }
                     Card {
@@ -612,10 +647,34 @@ export component App inherits Window {
                 background: Theme.surface-sunken;
                 Text {
                     x: 16px;
-                    text: root.toast != "" ? root.toast : root.busy;
-                    color: root.toast != "" ? Theme.accent : Theme.text-muted;
+                    text: root.toast != "" ? root.toast : root.busy != "" ? root.busy : root.activity;
+                    color: root.toast != "" ? Theme.accent : root.busy != "" ? Theme.text-secondary : Theme.text-muted;
                     vertical-alignment: center;
                     accessible-role: text;
+                }
+            }
+        }
+
+        // Asked before a snapshot that would capture unreviewed items.
+        if root.ask-new > 0 : Rectangle {
+            background: #00000080;
+            TouchArea { clicked => { root.cancel-ask(); } }
+            Rectangle {
+                width: Math.min(520px, parent.width - 32px);
+                height: 190px;
+                border-radius: 12px;
+                background: Theme.surface-raised;
+                VerticalLayout {
+                    padding: 24px; spacing: 12px;
+                    Text { text: root.ask-new + " new item(s) you haven't reviewed"; font-size: 15px; font-weight: 600; color: Theme.text-primary; }
+                    Text { text: "They were found since you last chose what to back up. Review them first, or include them in this snapshot."; wrap: word-wrap; color: Theme.text-secondary; }
+                    Rectangle { vertical-stretch: 1; }
+                    HorizontalLayout {
+                        alignment: end; spacing: 8px;
+                        Button { label: "Cancel"; clicked => { root.cancel-ask(); } }
+                        Button { label: "Snapshot anyway"; clicked => { root.snapshot-anyway(); } }
+                        Button { label: "Review them"; primary: true; clicked => { root.review-new(); } }
+                    }
                 }
             }
         }

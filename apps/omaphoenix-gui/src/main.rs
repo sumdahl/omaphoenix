@@ -1,5 +1,6 @@
 //! OmaPhoenix desktop app (Slint) on the same engine as the CLI and TUI.
 
+mod activity;
 mod audit;
 mod backup;
 mod migrate;
@@ -69,6 +70,15 @@ fn main() -> Result<(), slint::PlatformError> {
     if ui_engine().repo.exists() {
         pulse::load_doctor(&app);
     }
+
+    let _activity_watch = activity::watch(&app);
+    if ui_engine().repo.exists() {
+        backup::load_choices(&app);
+        if !ui_engine().has_chosen() {
+            app.set_section(3);
+        }
+    }
+    activity::refresh(&app);
 
     nav::wire(&app);
     timeline::wire(&app);

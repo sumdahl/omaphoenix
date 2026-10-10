@@ -3,6 +3,7 @@
 use phx_core::App as Engine;
 use slint::ComponentHandle;
 
+use crate::activity;
 use crate::run::background;
 use crate::state::{Shared, quiet, ui_state};
 use crate::timeline::take_snapshot;
@@ -49,6 +50,8 @@ pub(crate) fn refresh_pulse(app: &App, state: &Shared) {
 }
 
 pub(crate) fn load_doctor(app: &App) {
+    ui_state().borrow_mut().jobs.insert("doctor");
+    activity::refresh(app);
     background(
         app,
         || {
@@ -59,7 +62,9 @@ pub(crate) fn load_doctor(app: &App) {
         |app, findings| {
             let risks = findings.iter().filter(|f| f.level == "risk").count();
             app.set_doctor_risks(i32::try_from(risks).unwrap_or(0));
+            ui_state().borrow_mut().jobs.remove("doctor");
             refresh_pulse(app, &ui_state());
+            activity::refresh(app);
         },
     );
 }
