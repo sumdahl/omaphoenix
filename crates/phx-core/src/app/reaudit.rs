@@ -23,7 +23,7 @@ impl App<'_> {
                 j.snapshot
             ))
         })?;
-        let now = crate::gate::run(&self.home, &|_, _| {})
+        let now = crate::gate::run(&self.home, None, &|_, _| {})
             .summary
             .unwrap_or_default();
         Ok((j.snapshot, crate::gate::compare(&before, &now)))

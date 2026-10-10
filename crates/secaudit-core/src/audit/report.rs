@@ -57,6 +57,11 @@ impl Report {
         self.findings.last_mut()
     }
 
+    /// Adds findings from another run, e.g. a cached section.
+    pub fn merge(&mut self, findings: impl IntoIterator<Item = Finding>) {
+        self.findings.extend(findings);
+    }
+
     /// The findings so far.
     #[must_use]
     pub fn findings(&self) -> &[Finding] {

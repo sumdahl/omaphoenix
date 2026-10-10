@@ -90,7 +90,7 @@ impl App<'_> {
         let mut m = Self::manifest_for_machine();
         if crate::gate::enabled() {
             (self.log)("step", "auditing this machine first (quick, read-only)");
-            let gate = crate::gate::run(&self.home, self.log);
+            let gate = crate::gate::run(&self.home, Some(&self.state_dir()), self.log);
             env.excluded = gate.excluded_paths;
             env.excluded_units = gate.excluded_units;
             m.audit = gate.summary;

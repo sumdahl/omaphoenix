@@ -18,6 +18,17 @@ const GATE_SECTIONS: &[&str] = &[
     "Users & authentication",
 ];
 
+/// Walks the whole filesystem (~11 s), and permissions change rarely: run at most daily.
+const DAILY_SECTIONS: &[&str] = &["Filesystem permissions"];
+
+const DAY: u64 = 24 * 60 * 60;
+
+#[derive(serde::Serialize, serde::Deserialize)]
+struct DailyCache {
+    at: u64,
+    findings: Vec<secaudit_core::Finding>,
+}
+
 /// What the gate decided for one snapshot.
 #[derive(Debug, Default)]
 pub struct Gate {
@@ -67,15 +78,22 @@ pub fn item_for(home: &Path, path: &Path) -> Option<String> {
 }
 
 /// Runs the gate for `home`. Never prompts and never needs root.
+///
+/// With `cache`, the expensive sections are reused from a run less than a day old.
 #[must_use]
-pub fn run(home: &Path, log: &dyn Fn(&str, &str)) -> Gate {
-    let sections: Vec<Section> = SECTIONS
-        .iter()
-        .filter(|s| GATE_SECTIONS.contains(&s.name))
-        .copied()
-        .collect();
+pub fn run(home: &Path, cache: Option<&Path>, log: &dyn Fn(&str, &str)) -> Gate {
     let ctx = Ctx::for_home(home);
-    let report = audit::run(&ctx, &sections);
+    let pick = |daily: bool| -> Vec<Section> {
+        SECTIONS
+            .iter()
+            .filter(|s| {
+                GATE_SECTIONS.contains(&s.name) && DAILY_SECTIONS.contains(&s.name) == daily
+            })
+            .copied()
+            .collect()
+    };
+    let mut report = audit::run(&ctx, &pick(false));
+    report.merge(daily_findings(&ctx, &pick(true), cache));
     let accepted = Store::from_env().accepted();
     let (score, grade) = report.score();
     let mut summary = AuditSummary::new(
@@ -136,10 +154,74 @@ pub fn run(home: &Path, log: &dyn Fn(&str, &str)) -> Gate {
     gate
 }
 
+fn daily_findings(
+    ctx: &Ctx,
+    sections: &[Section],
+    cache: Option<&Path>,
+) -> Vec<secaudit_core::Finding> {
+    let file = cache.map(|d| d.join("gate-daily.json"));
+    let now = secaudit_core::store::now();
+    if let Some(f) = &file
+        && let Ok(Some(c)) = crate::category::read_json::<DailyCache>(f)
+        && now.saturating_sub(c.at) < DAY
+    {
+        return c.findings;
+    }
+    let findings = audit::run(ctx, sections).findings().to_vec();
+    if let Some(f) = &file {
+        let _ = crate::category::write_json(
+            f,
+            &DailyCache {
+                at: now,
+                findings: findings.clone(),
+            },
+        );
+    }
+    findings
+}
+
 #[cfg(test)]
 mod tests {
     use super::item_for;
     use std::path::Path;
+
+    #[test]
+    fn the_daily_sections_are_reused_for_a_day_then_rerun() {
+        use super::{DAY, DailyCache, daily_findings};
+        use secaudit_core::Finding;
+        let dir = tempfile::tempdir().unwrap_or_else(|e| unreachable!("{e}"));
+        let ctx = secaudit_core::audit::Ctx::for_home(dir.path());
+        let cached: Finding = serde_json::from_str(
+            r#"{"sev":"warn","section":"Filesystem permissions","msg":"cached"}"#,
+        )
+        .unwrap_or_else(|e| unreachable!("{e}"));
+        let write = |at: u64| {
+            crate::category::write_json(
+                &dir.path().join("gate-daily.json"),
+                &DailyCache {
+                    at,
+                    findings: vec![cached.clone()],
+                },
+            )
+            .unwrap_or_else(|e| unreachable!("{e}"));
+        };
+        let now = secaudit_core::store::now();
+        write(now - 60);
+        assert_eq!(
+            daily_findings(&ctx, &[], Some(dir.path())),
+            std::slice::from_ref(&cached),
+            "fresh: reused"
+        );
+        write(now - DAY - 60);
+        assert!(
+            daily_findings(&ctx, &[], Some(dir.path())).is_empty(),
+            "a day old: rerun"
+        );
+        assert!(
+            daily_findings(&ctx, &[], None).is_empty(),
+            "no cache: always run"
+        );
+    }
 
     #[test]
     fn maps_paths_to_items() {
