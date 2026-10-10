@@ -27,6 +27,7 @@ How the Rust port of the Go OmaPhoenix is checked, where it deliberately differs
 | Audit before backup | none | gate on by default (docs/04); `OMAPHOENIX_AUDIT=off` | the joint product |
 | Gate's slow sections | n/a | "Filesystem permissions" and "Packages & updates" reused for a day (`$XDG_STATE_HOME/omaphoenix/gate-daily.json`); `reaudit` always fresh | ~12 of 17 s CPU in every timer run; package findings name no files, so they never change what is left out |
 | Theme and plugin repos | inspected per step | inspected once per snapshot, 4 threads | ~1,000 git processes per snapshot before |
+| Its own state folder | captured as `local:state/omaphoenix` | never captured (F-002) | machine-specific cache and undo records; `omaphoenix-parity` excludes it on the Go side |
 | Global npm packages | `npm ls -g` | read from the global `node_modules` (`npm ls` as fallback) | `npm ls` was a 125 MB Node process |
 | Choosing what to back up | `selection.conf` defaults to everything | nothing is decided for the user: the apps open on Backup until a choice is saved; items found later are asked about (`reviewed.txt` in the repo) | the owner wants full control |
 | Timer | `timer on <interval>` | same, plus manual-only / interval choice in both apps; the unit always runs the CLI | the app's toggle pointed the unit at omaphoenix-gui |

@@ -21,6 +21,8 @@ cp "$root/target/release/omaphoenix" "$work/rs"
 echo "== snapshot the real home with both (audit gate off: Go has none)"
 for impl in go rs; do
   OMAPHOENIX_REPO=$work/$impl-repo "$work/$impl" init >/dev/null
+  # Deliberate difference (docs/11, F-002): Rust never captures its own state; Go needs telling.
+  echo '!local:state/omaphoenix' >>"$work/$impl-repo/selection.conf"
   OMAPHOENIX_REPO=$work/$impl-repo OMAPHOENIX_AUDIT=off "$work/$impl" snapshot >/dev/null 2>&1
 done
 # A live machine may change between the two runs; rerun both once if so.
