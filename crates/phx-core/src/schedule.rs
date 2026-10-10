@@ -33,6 +33,20 @@ pub fn describe(interval: Option<&str>) -> &'static str {
     }
 }
 
+/// A short label for status lines: "daily", "hourly", "every 30 min", or "manual".
+#[must_use]
+pub fn label(interval: Option<&str>) -> &'static str {
+    match interval {
+        None => "manual",
+        Some("15m") => "every 15 min",
+        Some("30m") => "every 30 min",
+        Some("1h") => "hourly",
+        Some("6h") => "every 6 hours",
+        Some("daily") => "daily",
+        Some(_) => "automatic",
+    }
+}
+
 /// The timer's interval, or `None` when snapshots are manual only.
 #[must_use]
 pub fn interval() -> Option<&'static str> {
@@ -244,6 +258,16 @@ pub fn status() -> String {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn every_interval_has_a_short_label() {
+        assert_eq!(super::label(Some("daily")), "daily");
+        assert_eq!(super::label(Some("1h")), "hourly");
+        assert_eq!(super::label(None), "manual");
+        for c in super::CHOICES {
+            assert_ne!(super::label(Some(c)), "automatic", "{c} needs a label");
+        }
+    }
+
     #[test]
     fn units_like_go() {
         let (svc, tmr) = super::units("/usr/bin/omaphoenix", "30m").unwrap_or_default();

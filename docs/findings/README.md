@@ -13,7 +13,7 @@ Bugs and surprises found while testing or using the products, one file each. A f
 | [F-003](F-003-dry-run-plans-decrypting-identical-keys.md) | A dry run says it would decrypt keys that are already identical | OmaPhoenix | low | fixed in rc.8 |
 | [F-004](F-004-stale-git-lock-after-power-loss.md) | After a power cut during a snapshot, every later snapshot can fail | OmaPhoenix | medium | fixed in rc.8 |
 | [F-005](F-005-item-restore-asks-for-passphrase.md) | Restoring one item asks for the secrets passphrase anyway | OmaPhoenix | medium | fixed in rc.8 |
-| [F-006](F-006-stale-wording-in-status-and-backup.md) | Wording slips: "automatic every daily", stale hints in Backup and Settings | OmaPhoenix | low | open |
+| [F-006](F-006-stale-wording-in-status-and-backup.md) | Wording slips: "automatic every daily", stale hints in Backup and Settings | OmaPhoenix | low | fixed in rc.8 |
 | [F-007](F-007-timeline-says-only-the-time.md) | The timeline says when each snapshot was taken, not what changed | OmaPhoenix | low | open |
 | [F-008](F-008-doctor-says-keys-not-backed-up.md) | `doctor` says the SSH keys aren't backed up after saving in Backup | OmaPhoenix | medium | fixed in rc.8 |
 | [F-010](F-010-list-before-setup-says-no-such-file.md) | `omaphoenix list` before setup says "No such file or directory" | OmaPhoenix | low | open |

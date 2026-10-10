@@ -72,7 +72,7 @@ pub(super) fn settings(f: &mut Frame, st: &State<'_>, area: Rect) {
         Line::from(format!("  {}", schedule::describe(st.interval))),
         interval_choices(st),
         Line::from(Span::styled(
-            "  t switches to the next choice. Manual: press s whenever you want a snapshot.",
+            "  t switches to the next choice. Manual: take one with s on Pulse or Timeline.",
             t.fg(t.muted),
         )),
         Line::from(""),

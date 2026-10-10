@@ -47,7 +47,11 @@ pub(super) fn backup(f: &mut Frame, st: &State<'_>, area: Rect) {
                 }
                 if c.category == "secret" {
                     spans.push(Span::styled(
-                        "  encrypted; 6 Settings → e first",
+                        if phx_core::category::secret::secrets_ready(&st.app.repo.dir) {
+                            "  encrypted"
+                        } else {
+                            "  encrypted; 6 Settings → e first"
+                        },
                         t.fg(t.muted),
                     ));
                 }

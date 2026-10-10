@@ -38,7 +38,10 @@ pub(crate) fn refresh(app: &App) {
         parts.push(if interval.is_empty() {
             "manual snapshots".to_owned()
         } else {
-            format!("automatic every {interval}")
+            format!(
+                "automatic, {}",
+                phx_core::schedule::label(Some(interval.as_str()))
+            )
         });
         parts.join(" · ")
     };

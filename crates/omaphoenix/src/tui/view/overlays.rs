@@ -55,7 +55,7 @@ pub(super) fn keys_overlay(f: &mut Frame, st: &State<'_>, body: Rect) {
         ],
         Section::Migrate => &[("↑↓ jk", "step"), ("enter", "do it"), ("R", "start over")],
         Section::Settings => &[
-            ("t", "timer on/off"),
+            ("t", "next schedule"),
             ("e", "encrypted secrets"),
             ("i", "set up snapshots"),
         ],

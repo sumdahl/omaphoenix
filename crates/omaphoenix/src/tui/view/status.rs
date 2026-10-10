@@ -47,7 +47,7 @@ pub(super) fn line(st: &State<'_>) -> Line<'static> {
     }
     let schedule = st.interval.map_or_else(
         || "manual snapshots".to_owned(),
-        |i| format!("automatic every {i}"),
+        |i| format!("automatic, {}", phx_core::schedule::label(Some(i))),
     );
     spans.push(Span::styled(format!(" · {schedule}"), t.fg(t.muted)));
     Line::from(spans)
@@ -93,6 +93,6 @@ fn hint(st: &State<'_>) -> &'static str {
         }
         Section::Backup => "↑↓ move · enter open · space all/none · w save · 1-6 · q quit",
         Section::Migrate => "↑↓ step · enter do it · R start over · 1-6 sections · q quit",
-        Section::Settings => "t timer on/off · e set up encrypted secrets · 1-6 sections · q quit",
+        Section::Settings => "t next schedule · e set up encrypted secrets · 1-6 sections · q quit",
     }
 }

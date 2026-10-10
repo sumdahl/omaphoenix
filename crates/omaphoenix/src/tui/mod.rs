@@ -329,4 +329,50 @@ mod tests {
             "esc cancels"
         );
     }
+
+    #[test]
+    fn status_and_backup_wording_match_the_setup() {
+        use phx_contract::selection::Choice;
+        let t = tempfile::tempdir().unwrap_or_else(|e| unreachable!("{e}"));
+        let repo = t.path().join("repo");
+        std::fs::create_dir_all(repo.join(".git")).unwrap_or_else(|e| unreachable!("{e}"));
+        let app = App {
+            home: t.path().into(),
+            repo: Repo { dir: repo.clone() },
+            log: &quiet,
+            passphrase: None,
+        };
+        let mut st = State::with_store(
+            &app,
+            Store {
+                dir: t.path().join("audit"),
+            },
+        );
+        st.interval = Some("daily");
+        st.choices = Some(vec![(
+            Choice {
+                category: "secret".into(),
+                items: vec![(".ssh/id_a".into(), true)],
+            },
+            vec![String::new()],
+        )]);
+        st.section = Section::Backup;
+        let before = screen(&st, 120, 24);
+        assert!(
+            before.contains("automatic, daily") && !before.contains("every daily"),
+            "{before}"
+        );
+        assert!(
+            before.contains("Settings → e first"),
+            "before setup, the hint shows:\n{before}"
+        );
+        std::fs::create_dir_all(repo.join("secrets")).unwrap_or_else(|e| unreachable!("{e}"));
+        std::fs::write(repo.join("secrets/recipient.txt"), "age1x")
+            .unwrap_or_else(|e| unreachable!("{e}"));
+        let after = screen(&st, 120, 24);
+        assert!(
+            !after.contains("Settings → e first"),
+            "after setup, it doesn't:\n{after}"
+        );
+    }
 }
