@@ -41,12 +41,30 @@ fn run(ctx: &Ctx, r: &mut Report) {
             .and_then(|l| l.split(": ").nth(1))
             .unwrap_or_default()
             .to_owned();
-        if sb.contains("enabled") {
-            r.ok("boot.secure_boot", format!("Secure Boot: {sb}"));
+        // bootctl prints e.g. "disabled (unknown)" or "enabled (user)": state, then firmware mode
+        // sed -n 's/.*(\(.*\)).*/\1/p': the text inside the last parentheses' outermost pair.
+        let mode = match (sb.find('('), sb.rfind(')')) {
+            (Some(open), Some(close)) if open < close => {
+                sb.get(open + 1..close).unwrap_or_default()
+            }
+            _ => "",
+        };
+        if sb.starts_with("enabled") {
+            let shown = if mode.is_empty() {
+                String::new()
+            } else {
+                format!(" ({mode} mode)")
+            };
+            r.ok("boot.secure_boot", format!("Secure Boot is enabled{shown}"));
         } else if sb.is_empty() {
             r.skip("boot.secure_boot", "Secure Boot state unknown");
         } else {
-            r.warn("boot.secure_boot", format!("Secure Boot: {sb} (evil-maid/bootkit protection is weaker)"))
+            let msg = if mode == "setup" {
+                "Secure Boot is off; firmware is in Setup Mode, ready for your own keys"
+            } else {
+                "Secure Boot is off, so a tampered bootloader or kernel would still boot"
+            };
+            r.warn("boot.secure_boot", msg)
                 .hint("Enroll your own keys with sbctl and sign Limine: wiki.archlinux.org/title/Secure_Boot#sbctl");
         }
     }
@@ -185,7 +203,7 @@ mod tests {
                 (Pass, "/dev/nvme0n1p2 uses argon2id".into()),
                 (
                     Warn,
-                    "Secure Boot: disabled (setup) (evil-maid/bootkit protection is weaker)".into()
+                    "Secure Boot is off; firmware is in Setup Mode, ready for your own keys".into()
                 ),
                 (Pass, "/boot/limine.conf perms 644".into()),
                 (Pass, "Swap /dev/zram0 is zram (RAM-backed)".into()),
@@ -215,5 +233,40 @@ mod tests {
                 (Fail, "/boot/limine.conf is world-writable (666)".into()),
             ]
         );
+    }
+
+    #[test]
+    fn secure_boot_states_as_manish_words_them() {
+        for (status, want) in [
+            (
+                "enabled (user)",
+                (Pass, "Secure Boot is enabled (user mode)"),
+            ),
+            ("enabled", (Pass, "Secure Boot is enabled")),
+            (
+                "disabled (unknown)",
+                (
+                    Warn,
+                    "Secure Boot is off, so a tampered bootloader or kernel would still boot",
+                ),
+            ),
+            (
+                "disabled (setup)",
+                (
+                    Warn,
+                    "Secure Boot is off; firmware is in Setup Mode, ready for your own keys",
+                ),
+            ),
+        ] {
+            let sys = FakeSystem::new();
+            sys.bin("bootctl");
+            sys.cmd(
+                "bootctl status",
+                true,
+                &format!("System:\n     Secure Boot: {status}\n"),
+            );
+            let got = msgs(&sys.ctx(true), super::SECTION);
+            assert!(got.contains(&(want.0, want.1.into())), "{status}: {got:?}");
+        }
     }
 }

@@ -2,7 +2,9 @@
 //! same name: same screens, keys, layout, colours and messages, sharing its
 //! history in `$XDG_STATE_HOME/secaudit`.
 
+mod ai_screen;
 mod app;
+mod markdown;
 mod scan;
 mod theme;
 pub(crate) mod times;
@@ -315,5 +317,49 @@ mod tests {
         );
         key(&mut app, KeyCode::Char('q'));
         assert!(app.quit);
+    }
+
+    #[test]
+    fn ai_screen_shows_a_saved_answer_and_the_setup_dialog() {
+        use super::ai_screen::{AiSetup, AiView, Then};
+        let (_t, store) = store_with_scan();
+        let mut app = open(store);
+        let run = app.run().cloned().unwrap_or_else(|| unreachable!("a run"));
+        let f = run
+            .items
+            .first()
+            .unwrap_or_else(|| unreachable!("a finding"));
+        let prompt = crate::ai::explain_prompt(f, &run);
+        let cache = crate::ai::cache_path(&app.store.dir, &prompt);
+        std::fs::create_dir_all(cache.parent().unwrap_or_else(|| unreachable!("dir")))
+            .unwrap_or_else(|e| unreachable!("{e}"));
+        std::fs::write(&cache, "## What this means\n\nThe `~/.ssh` folder is **readable**.\n\n```bash\nchmod 700 ~/.ssh\n```\n").unwrap_or_else(|e| unreachable!("{e}"));
+        let view = AiView::open(&app.store.dir, vec![], prompt, "explain");
+        app.screen = Screen::Ai(Box::new(view));
+        let s = screen(&mut app, 120, 36);
+        assert!(
+            s.contains("What this means") && s.contains("chmod 700 ~/.ssh"),
+            "saved answer rendered:\n{s}"
+        );
+        assert!(
+            s.contains("saved answer  ·  ctrl+r to ask again"),
+            "status:\n{s}"
+        );
+        assert!(
+            s.contains("esc Back  ^r Regenerate  ^o Copy answer"),
+            "footer:\n{s}"
+        );
+        key(&mut app, KeyCode::Esc);
+        assert!(matches!(app.screen, Screen::Main), "esc goes back");
+
+        app.modal = Some(Modal::AiSetup(AiSetup::new(Then::Plan)));
+        let s = screen(&mut app, 120, 36);
+        assert!(
+            s.contains("Explain findings with Claude")
+                && s.contains("Nothing is sent until you press i or I"),
+            "{s}"
+        );
+        key(&mut app, KeyCode::Esc);
+        assert!(app.modal.is_none(), "esc cancels setup");
     }
 }

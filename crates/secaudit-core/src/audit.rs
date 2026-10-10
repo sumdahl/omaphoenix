@@ -132,6 +132,19 @@ impl Ctx {
         }
     }
 
+    /// The real machine, auditing `name`'s home (`--user`, as the Bash
+    /// engine's). `None` when the user doesn't exist.
+    #[must_use]
+    pub fn for_user(name: &str) -> Option<Self> {
+        let home = passwd_home(name)?;
+        Some(Self {
+            home,
+            user: name.to_owned(),
+            is_root: effective_uid() == Some(0),
+            ..Self::for_home("")
+        })
+    }
+
     /// An audit of `home` as a normal user on the real system. For `--home` and tests.
     #[must_use]
     pub fn for_home(home: impl Into<PathBuf>) -> Self {

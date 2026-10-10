@@ -235,7 +235,11 @@ fn spawn_engine(
         c.process_group(0);
         c
     };
-    cmd.arg("--json").arg(dir.join("findings.jsonl"));
+    // Name the user explicitly so the scan checks this user's home even under sudo.
+    cmd.arg("--json")
+        .arg(dir.join("findings.jsonl"))
+        .arg("--user")
+        .arg(std::env::var("USER").unwrap_or_default());
     if mode == "deep" {
         cmd.arg("--deep");
     }

@@ -36,6 +36,9 @@ struct Cli {
     /// Audit this home instead of the invoking user's (e.g. a restored home).
     #[arg(long, value_name = "DIR")]
     home: Option<PathBuf>,
+    /// Audit NAME's home folder (default: the user who ran sudo).
+    #[arg(long, value_name = "NAME")]
+    user: Option<String>,
     #[command(subcommand)]
     command: Option<Command>,
 }
@@ -120,6 +123,12 @@ fn main() -> ExitCode {
             }
         };
     }
+    if let Some(name) = cli.user.as_deref().filter(|_| cli.home.is_none())
+        && Ctx::for_user(name).is_none()
+    {
+        let _ = writeln!(io::stderr(), "Unknown user: {name}");
+        return ExitCode::from(2);
+    }
     let code = match audit_cli(&cli) {
         Ok(failed) if failed => ExitCode::FAILURE,
         Ok(_) => ExitCode::SUCCESS,
@@ -179,7 +188,12 @@ fn create_for_user(path: &Path) -> io::Result<File> {
 
 /// Runs the audit, printing as each section finishes. Returns whether anything failed.
 fn audit_cli(cli: &Cli) -> io::Result<bool> {
-    let mut ctx = cli.home.clone().map_or_else(Ctx::from_env, Ctx::for_home);
+    let mut ctx = match (&cli.home, &cli.user) {
+        (Some(home), _) => Ctx::for_home(home.clone()),
+        // main() has already checked that the user exists.
+        (None, Some(name)) => Ctx::for_user(name).unwrap_or_else(Ctx::from_env),
+        (None, None) => Ctx::from_env(),
+    };
     ctx.deep = cli.deep;
     let st = Style::new(!cli.no_color && io::stdout().is_terminal());
     let mut out = Out {

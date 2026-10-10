@@ -454,9 +454,10 @@ fn scan(app: &App, mode: &str) {
     };
     let deep = if mode == "deep" { " --deep" } else { "" };
     let script = format!(
-        "echo; echo '  Security Audit · {mode} scan'; echo '  Reads root-only files; never changes anything. sudo is only used to look.'; echo; sudo {}{deep} --json {} 2>&1 | tee {}",
+        "echo; echo '  Security Audit · {mode} scan'; echo '  Reads root-only files; never changes anything. sudo is only used to look.'; echo; sudo {}{deep} --json {} --user {} 2>&1 | tee {}",
         sq(&engine()),
         sq(&dir.join("findings.jsonl").to_string_lossy()),
+        sq(&env::var("USER").unwrap_or_default()),
         sq(&dir.join("output.txt").to_string_lossy()),
     );
     app.set_busy(format!("{mode} scan in the terminal…").into());

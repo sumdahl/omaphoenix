@@ -69,7 +69,7 @@ pub fn blend(a: Color, b: Color, t: f32) -> Color {
 
 /// Each channel moved by `d`, as Textual's lighten/darken comes out on
 /// these near-grey shades.
-fn shade(c: Color, d: i16) -> Color {
+pub(crate) fn shade(c: Color, d: i16) -> Color {
     let (red, green, blue) = rgb(c);
     #[allow(
         clippy::cast_possible_truncation,

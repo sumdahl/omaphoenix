@@ -102,6 +102,8 @@ pub enum Modal {
     Chooser(usize),
     /// The command palette: query and highlighted row.
     Palette(String, usize),
+    /// `AISetupScreen`: one-time consent for AI explanations.
+    AiSetup(super::ai_screen::AiSetup),
 }
 
 pub enum Screen {
@@ -111,6 +113,8 @@ pub enum Screen {
     History(usize),
     /// `LogScreen`: lines, scroll offset, title date.
     Log(Vec<String>, usize, String),
+    /// `AIScreen`: Claude explains a finding or plans the scan.
+    Ai(Box<super::ai_screen::AiView>),
 }
 
 pub enum Suspend {
@@ -359,6 +363,9 @@ impl App {
         let before = self.toasts.len();
         self.toasts.retain(|t| t.until > Instant::now());
         let mut changed = before != self.toasts.len();
+        if let Screen::Ai(v) = &mut self.screen {
+            changed |= v.poll();
+        }
         if let Screen::Scan(scan) = &mut self.screen {
             changed |= scan.poll(&self.store);
             changed |= scan.running();
@@ -387,6 +394,12 @@ impl App {
 
     pub fn can_mark(&self) -> bool {
         self.current.is_some() && self.tab != Tab::Accepted
+    }
+
+    /// `check_action("explain")`: a finding that isn't a pass.
+    pub fn can_explain(&self) -> bool {
+        self.selected()
+            .is_some_and(|f| sev_name(f.finding.sev) != "pass")
     }
 
     pub fn can_copy(&self) -> bool {
@@ -423,6 +436,7 @@ impl App {
             Screen::Scan(scan) => self.scan_key(scan, key),
             Screen::History(sel) => self.history_key(sel, key),
             Screen::Log(lines, scroll, title) => self.log_key(lines, scroll, title, key),
+            Screen::Ai(v) => self.ai_key(v, key),
         }
     }
 
@@ -511,6 +525,8 @@ impl App {
             KeyCode::Char(' ') if self.can_mark() => self.toggle_mark(),
             KeyCode::Char('*') if self.can_mark() => self.mark_all(),
             KeyCode::Char('a') if self.can_accept() => self.accept(),
+            KeyCode::Char('i') if self.can_explain() => self.explain(),
+            KeyCode::Char('I') if has_run => self.with_ai(super::ai_screen::Then::Plan),
             KeyCode::Char('c') if self.can_copy() => self.copy(),
             KeyCode::Char('o') if has_run => self.open_log(),
             KeyCode::Char('e') if has_run => self.export(),
@@ -1090,8 +1106,166 @@ impl App {
 
     // -- modals ---------------------------------------------------------------
 
+    // -- AI (the original's action_explain / action_ai_plan) -----------------
+
+    fn explain(&mut self) {
+        if let Some(n) = self
+            .selected()
+            .filter(|f| sev_name(f.finding.sev) != "pass")
+            .map(|f| f.n)
+        {
+            self.with_ai(super::ai_screen::Then::Explain(n));
+        }
+    }
+
+    /// `with_ai()`: runs `then` once AI is set up, after the one-time dialog if needed.
+    fn with_ai(&mut self, then: super::ai_screen::Then) {
+        if crate::ai::ready() {
+            self.open_ai(then);
+        } else {
+            self.modal = Some(Modal::AiSetup(super::ai_screen::AiSetup::new(then)));
+        }
+    }
+
+    fn open_ai(&mut self, then: super::ai_screen::Then) {
+        use ratatui::text::Span;
+        let Some(run) = self.run() else { return };
+        let p = &self.pal;
+        let bold = |s: ratatui::style::Style| s.add_modifier(ratatui::style::Modifier::BOLD);
+        let (title, prompt, subject) = match then {
+            super::ai_screen::Then::Explain(n) => {
+                let Some(f) = run.items.iter().find(|i| i.n == n) else {
+                    return;
+                };
+                let mut b = super::widgets::badge(p, sev_name(f.finding.sev));
+                b.style = bold(b.style);
+                let title = vec![
+                    b,
+                    Span::styled("  ", bold(p.fg_(p.fg))),
+                    Span::styled(f.title().to_owned(), bold(p.fg_(p.fg))),
+                    Span::styled(format!("   {}", f.finding.section), bold(p.fg_(p.muted))),
+                ];
+                (title, crate::ai::explain_prompt(f, run), "explain")
+            }
+            super::ai_screen::Then::Plan => {
+                let c = run.counts();
+                let n = c.fail + c.warn;
+                let title = vec![
+                    Span::styled("Action plan  ", bold(p.fg_(p.fg))),
+                    Span::styled(
+                        format!(
+                            "{n} open issue{} · score {} {}",
+                            if n == 1 { "" } else { "s" },
+                            c.score(),
+                            c.grade()
+                        ),
+                        bold(p.fg_(p.muted)),
+                    ),
+                ];
+                (title, crate::ai::plan_prompt(run), "action plan")
+            }
+        };
+        let view = super::ai_screen::AiView::open(&self.store.dir, title, prompt, subject);
+        self.screen = Screen::Ai(Box::new(view));
+    }
+
+    fn setup_button(&mut self, mut setup: super::ai_screen::AiSetup, id: &str) {
+        match id {
+            "ai-yes" => {
+                if setup.enable() {
+                    self.open_ai(setup.then);
+                } else {
+                    self.modal = Some(Modal::AiSetup(setup));
+                }
+            }
+            "ai-use-api" => {
+                setup.switch("api");
+                self.modal = Some(Modal::AiSetup(setup));
+            }
+            "ai-use-cc" => {
+                setup.switch("claude-code");
+                self.modal = Some(Modal::AiSetup(setup));
+            }
+            _ => {}
+        }
+    }
+
+    fn ai_key(&mut self, mut v: Box<super::ai_screen::AiView>, key: KeyEvent) {
+        let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
+        match key.code {
+            KeyCode::Esc => {
+                v.cancel();
+                return;
+            }
+            KeyCode::Char('r') if ctrl => v.regenerate(),
+            KeyCode::Char('o') if ctrl && !v.last_answer.is_empty() => {
+                copy_to_clipboard(&v.last_answer);
+                self.notify("Answer copied", Severity::Information, 5);
+            }
+            KeyCode::Tab | KeyCode::BackTab => v.input_focus = !v.input_focus,
+            KeyCode::Enter if v.input_focus => v.submit(),
+            KeyCode::Backspace if v.input_focus && !v.busy => {
+                v.input.pop();
+            }
+            KeyCode::Char(c) if v.input_focus && !v.busy && !ctrl => v.input.push(c),
+            // With the answer focused, the app's keys work.
+            KeyCode::Char('q') if !v.input_focus => {
+                v.cancel();
+                self.quit = true;
+            }
+            KeyCode::Char('?') if !v.input_focus => self.help = !self.help,
+            KeyCode::Up => {
+                v.follow = false;
+                v.scroll = v.scroll.saturating_sub(1);
+            }
+            KeyCode::Down => v.scroll += 1,
+            KeyCode::PageUp => {
+                v.follow = false;
+                v.scroll = v.scroll.saturating_sub(usize::from(self.size.1 / 2));
+            }
+            KeyCode::PageDown => v.scroll += usize::from(self.size.1 / 2),
+            KeyCode::Home => {
+                v.follow = false;
+                v.scroll = 0;
+            }
+            KeyCode::End => v.follow = true,
+            _ => {}
+        }
+        self.screen = Screen::Ai(v);
+    }
+
     fn modal_key(&mut self, modal: Modal, key: KeyEvent) {
         match modal {
+            Modal::AiSetup(mut setup) => {
+                let on_key_field = setup.asks_key() && setup.focus == 0;
+                match key.code {
+                    KeyCode::Esc => {}
+                    KeyCode::Tab | KeyCode::Right if !on_key_field || key.code == KeyCode::Tab => {
+                        setup.focus = (setup.focus + 1) % setup.slots();
+                        self.modal = Some(Modal::AiSetup(setup));
+                    }
+                    KeyCode::BackTab | KeyCode::Left
+                        if !on_key_field || key.code == KeyCode::BackTab =>
+                    {
+                        setup.focus = (setup.focus + setup.slots() - 1) % setup.slots();
+                        self.modal = Some(Modal::AiSetup(setup));
+                    }
+                    KeyCode::Enter if on_key_field => self.setup_button(setup, "ai-yes"),
+                    KeyCode::Enter | KeyCode::Char(' ') if !on_key_field => {
+                        let id = setup.focused_button().unwrap_or("ai-no");
+                        self.setup_button(setup, id);
+                    }
+                    KeyCode::Backspace if on_key_field => {
+                        setup.key.pop();
+                        self.modal = Some(Modal::AiSetup(setup));
+                    }
+                    KeyCode::Char(c) if on_key_field => {
+                        setup.key.push(c);
+                        self.modal = Some(Modal::AiSetup(setup));
+                    }
+                    _ => self.modal = Some(Modal::AiSetup(setup)),
+                }
+            }
             Modal::Confirm(mut c) => match key.code {
                 KeyCode::Char('y') => self.confirmed(c),
                 KeyCode::Char('n') | KeyCode::Esc => {}
@@ -1183,6 +1357,16 @@ impl App {
         if self.current.is_some() {
             all.push(("Export Markdown report", "Checklist of issues with fixes"));
             all.push(("Full output", "Raw text output of this scan"));
+            all.push((
+                "AI action plan",
+                "Claude prioritizes every open issue in this scan",
+            ));
+        }
+        if self.can_explain() {
+            all.push((
+                "Explain with AI",
+                "Claude explains the selected finding and how to fix it",
+            ));
         }
         all.sort_by_key(|c| c.0);
         let q = query.to_lowercase();
@@ -1204,6 +1388,8 @@ impl App {
             "Scan history" => self.screen = Screen::History(0),
             "Export Markdown report" => self.export(),
             "Full output" => self.open_log(),
+            "AI action plan" => self.with_ai(super::ai_screen::Then::Plan),
+            "Explain with AI" => self.explain(),
             _ => {}
         }
     }
@@ -1312,6 +1498,12 @@ impl App {
             "btn-runfix" => self.run_fix(),
             "btn-copy" => self.copy(),
             "btn-accept" => self.accept(),
+            "btn-explain" => self.explain(),
+            "ai-no" | "ai-yes" | "ai-use-api" | "ai-use-cc" => {
+                if let Some(Modal::AiSetup(setup)) = self.modal.take() {
+                    self.setup_button(setup, id);
+                }
+            }
             "yes" | "no" => {
                 if let Some(Modal::Confirm(c)) = self.modal.take()
                     && id == "yes"

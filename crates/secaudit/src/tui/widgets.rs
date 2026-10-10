@@ -291,7 +291,19 @@ pub fn input(buf: &mut Buffer, p: &Pal, area: Rect, value: &str, placeholder: &s
     };
     let mut mid = vec![left.clone(), Span::styled("  ", Style::new().bg(bg))];
     if value.is_empty() {
-        let st = p.fg_(p.placeholder).bg(bg);
+        let st = p
+            .fg_(if p.color {
+                blend(Color::Rgb(255, 255, 255), bg, 0.38)
+            } else {
+                p.placeholder
+            })
+            .bg(bg);
+        // The cursor: the screen background on the text colour.
+        let cursor = if p.color {
+            Style::new().fg(p.bg).bg(p.fg)
+        } else {
+            st.add_modifier(Modifier::REVERSED)
+        };
         let text: String = placeholder
             .chars()
             .chain(std::iter::repeat(' '))
@@ -302,7 +314,7 @@ pub fn input(buf: &mut Buffer, p: &Pal, area: Rect, value: &str, placeholder: &s
             let mut chars = text.chars();
             mid.push(Span::styled(
                 chars.next().map_or(" ".into(), String::from),
-                st.add_modifier(Modifier::REVERSED),
+                cursor,
             ));
             mid.push(Span::styled(chars.collect::<String>(), st));
         } else {
@@ -324,7 +336,9 @@ pub fn input(buf: &mut Buffer, p: &Pal, area: Rect, value: &str, placeholder: &s
         // The cursor: a reversed cell after the text.
         mid.push(Span::styled(
             " ",
-            if focused {
+            if focused && p.color {
+                Style::new().fg(p.bg).bg(p.fg)
+            } else if focused {
                 st.add_modifier(Modifier::REVERSED)
             } else {
                 st
@@ -338,7 +352,9 @@ pub fn input(buf: &mut Buffer, p: &Pal, area: Rect, value: &str, placeholder: &s
     put(buf, area.x, area.y + 2, area.width, &row("▁"));
 }
 
-/// A full Textual button (3 rows: ▔ top, label, ▁ bottom).
+/// A full Textual button (3 rows: ▔ top, label, ▁ bottom), as measured:
+/// default buttons sit on `$surface`, primary/error ones on their colour
+/// with near-black text; focus reverses the label.
 pub fn button(
     buf: &mut Buffer,
     p: &Pal,
@@ -348,15 +364,26 @@ pub fn button(
     danger: bool,
     focused: bool,
 ) {
+    use super::theme::shade;
     let w = usize::from(area.width);
     let bg = if danger {
         p.red
     } else if primary {
         p.accent
     } else {
-        p.button_bg
+        p.surface
     };
-    let fg = if primary || danger { p.bg } else { p.fg };
+    let coloured = primary || danger;
+    let fg = if coloured {
+        blend(Color::Rgb(0, 0, 0), bg, 0.87)
+    } else {
+        p.fg
+    };
+    let (top, bottom) = if coloured {
+        (shade(bg, 58), shade(bg, -66))
+    } else {
+        (shade(bg, 15), shade(bg, -17))
+    };
     let mut text_style = Style::new().fg(fg).bg(bg).add_modifier(Modifier::BOLD);
     if focused {
         text_style = text_style.add_modifier(Modifier::REVERSED);
@@ -369,12 +396,7 @@ pub fn button(
         area.x,
         area.y,
         area.width,
-        &Line::from(Span::styled(
-            "▔".repeat(w),
-            Style::new()
-                .fg(blend(Color::Rgb(255, 255, 255), bg, 0.2))
-                .bg(bg),
-        )),
+        &Line::from(Span::styled("▔".repeat(w), Style::new().fg(top).bg(bg))),
     );
     put(
         buf,
@@ -388,10 +410,7 @@ pub fn button(
         area.x,
         area.y + 2,
         area.width,
-        &Line::from(Span::styled(
-            "▁".repeat(w),
-            Style::new().fg(blend(Color::Rgb(0, 0, 0), bg, 0.3)).bg(bg),
-        )),
+        &Line::from(Span::styled("▁".repeat(w), Style::new().fg(bottom).bg(bg))),
     );
 }
 
