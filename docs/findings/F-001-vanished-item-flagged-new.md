@@ -6,7 +6,7 @@
 | Version | 0.1.0-rc.7 |
 | Found | 2026-10-10, daily use on the reference laptop |
 | Severity | low: a wrong message; nothing is captured against the user's choice |
-| Status | open |
+| Status | fixed in 0.1.0-rc.8; test `phx_core::app::review::tests::an_item_that_vanished_before_the_save_is_not_reported` |
 
 ## What happens
 

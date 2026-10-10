@@ -56,10 +56,13 @@ impl App<'_> {
         let mut text = String::from(
             "# Items reviewed in omaphoenix's Backup section; new ones are asked about.\n",
         );
-        let keys: BTreeSet<String> = choices
-            .iter()
-            .flat_map(|c| c.items.iter().map(|(id, _)| key(&c.category, id)))
-            .collect();
+        // The last snapshot's items count too: one that vanished before this save was never on screen.
+        let mut keys = self.snapshot_keys();
+        keys.extend(
+            choices
+                .iter()
+                .flat_map(|c| c.items.iter().map(|(id, _)| key(&c.category, id))),
+        );
         for k in keys {
             text.push_str(&k);
             text.push('\n');
@@ -83,19 +86,27 @@ impl App<'_> {
                 "you haven't chosen what to back up yet; everything detected is included. Run: omaphoenix select".into(),
             );
         }
-        let manifest: Manifest = read_json(&self.repo.dir.join("manifest.json"))
-            .ok()
-            .flatten()?;
         let seen = self.reviewed();
-        let new = manifest
-            .items
+        let new = self
+            .snapshot_keys()
             .iter()
-            .flat_map(|(cat, items)| items.iter().map(move |i| key(cat, &i.id)))
-            .filter(|k| !seen.contains(k))
+            .filter(|k| !seen.contains(*k))
             .count();
         (new > 0).then(|| {
-            format!("{new} new item(s) are being backed up that you haven't reviewed. Run: omaphoenix select")
+            format!("{new} item(s) in the last snapshot haven't been reviewed yet. Run: omaphoenix select")
         })
+    }
+
+    /// Item keys in the last snapshot's manifest; empty before the first one.
+    fn snapshot_keys(&self) -> BTreeSet<String> {
+        let manifest: Option<Manifest> = read_json(&self.repo.dir.join("manifest.json"))
+            .ok()
+            .flatten();
+        manifest
+            .into_iter()
+            .flat_map(|m| m.items)
+            .flat_map(|(cat, items)| items.into_iter().map(move |i| key(&cat, &i.id)))
+            .collect()
     }
 }
 
@@ -138,5 +149,31 @@ mod tests {
         )];
         let new: Vec<String> = app.unreviewed(&detected).into_iter().collect();
         assert_eq!(new, ["theme:rose"]);
+    }
+
+    #[test]
+    fn an_item_that_vanished_before_the_save_is_not_reported() {
+        let home = tempfile::tempdir().unwrap_or_else(|e| unreachable!("{e}"));
+        let app = App {
+            home: home.path().to_path_buf(),
+            repo: Repo {
+                dir: home.path().to_path_buf(),
+            },
+            log: &|_, _| {},
+            passphrase: None,
+        };
+        std::fs::create_dir_all(home.path().join(".git")).unwrap_or_else(|e| unreachable!("{e}"));
+        std::fs::write(
+            home.path().join("manifest.json"),
+            r#"{"format":1,"items":{"theme":[{"id":"nord"},{"id":"gone"}]}}"#,
+        )
+        .unwrap_or_else(|e| unreachable!("{e}"));
+        let now = vec![Choice {
+            category: "theme".into(),
+            items: vec![("nord".into(), true)],
+        }];
+        app.save_choices(&now)
+            .unwrap_or_else(|e| unreachable!("{e}"));
+        assert_eq!(app.review_needed(), None);
     }
 }

@@ -17,7 +17,7 @@ secrets, items waiting for review, and the last audit.
 | `a snapshot or restore is already running (maybe the automatic one); try again when it finishes` | Another run holds the lock. Wait; don't delete lock files. |
 | `not initialised; run: omaphoenix init` | No snapshot repo yet. Ask before creating one (it may create a GitHub repo). |
 | `you haven't chosen what to back up yet …` | Send the user to `omaphoenix select`. |
-| `N new item(s) are being backed up that you haven't reviewed …` | Same: `omaphoenix select` shows them marked new. |
+| `N item(s) in the last snapshot haven't been reviewed yet …` | Same: `omaphoenix select` shows them marked new. |
 | `push failed, snapshot kept locally and pushed next run` | Network or auth. Check `gh auth status`. |
 | `… skipped: contains something shaped like a secret` | Left out on purpose. Don't force it in. |
 
