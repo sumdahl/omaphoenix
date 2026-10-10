@@ -19,7 +19,7 @@ const GATE_SECTIONS: &[&str] = &[
 ];
 
 /// Walks the whole filesystem (~11 s), and permissions change rarely: run at most daily.
-const DAILY_SECTIONS: &[&str] = &["Filesystem permissions"];
+const DAILY_SECTIONS: &[&str] = &["Filesystem permissions", "Packages & updates"];
 
 const DAY: u64 = 24 * 60 * 60;
 

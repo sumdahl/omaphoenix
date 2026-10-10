@@ -112,5 +112,12 @@ fn lock_is_exclusive() {
     assert!(held.is_ok());
     assert!(matches!(r.lock(), Err(StoreError::Locked)));
     drop(held);
-    assert!(r.lock().is_ok());
+    // A git another test forks at that moment holds the lock fd until its exec closes it.
+    let relocked = (0..50).any(|_| {
+        r.lock().is_ok() || {
+            std::thread::sleep(std::time::Duration::from_millis(10));
+            false
+        }
+    });
+    assert!(relocked, "released on drop");
 }

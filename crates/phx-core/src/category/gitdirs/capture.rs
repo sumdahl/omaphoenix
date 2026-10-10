@@ -3,7 +3,7 @@ use std::fs;
 use phx_contract::Item;
 
 use super::bundle::{bundle_name, capture_work};
-use super::{DirEntry, DirManifest, GitDirs, inspect};
+use super::{DirEntry, DirManifest, GitDirs, par_map};
 use crate::category::files::{MAX_ASSET_FILE, copy_tree};
 use crate::category::{Env, Error, write_json};
 
@@ -13,8 +13,9 @@ impl GitDirs {
         let root = self.root(&base);
         let mut m = DirManifest::default();
         let mut uses_root = false;
-        for it in items {
-            let (mut kind, mut why) = Self::classify(&base, root.as_ref(), &it.id);
+        let ids: Vec<String> = items.iter().map(|it| it.id.clone()).collect();
+        let classified = par_map(&ids, |id| Self::classify(&base, root.as_ref(), id));
+        for (it, (mut kind, mut why, state)) in items.iter().zip(classified) {
             let mut entry = DirEntry {
                 id: it.id.clone(),
                 kind: kind.into(),
@@ -22,10 +23,10 @@ impl GitDirs {
             };
             if kind == "bundle" {
                 let dir = base.join(&it.id);
-                if let Some(st) = inspect(&dir) {
+                if let Some(st) = &state {
                     let rel = format!("files/{}-bundles/{}", self.name, bundle_name(&it.id));
                     let mut r = st.git_ref.clone();
-                    match capture_work(&dir, &env.tree.join(&rel), &st, &mut r) {
+                    match capture_work(&dir, &env.tree.join(&rel), st, &mut r) {
                         Ok(()) => {
                             r.bundle = rel;
                             entry.git_ref = Some(r);
@@ -43,7 +44,7 @@ impl GitDirs {
                 }
             }
             match kind {
-                "git" => entry.git_ref = inspect(&base.join(&it.id)).map(|s| s.git_ref),
+                "git" => entry.git_ref = state.map(|s| s.git_ref),
                 "root" => uses_root = true,
                 "copy" => {
                     if !why.is_empty() {

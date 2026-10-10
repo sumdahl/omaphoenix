@@ -120,24 +120,30 @@ impl GitDirs {
         if self.root_repo { inspect(base) } else { None }
     }
 
-    fn classify(base: &Path, root: Option<&GitState>, id: &str) -> (&'static str, String) {
+    /// How `id` is captured, why, and its git state when it is its own repo.
+    fn classify(
+        base: &Path,
+        root: Option<&GitState>,
+        id: &str,
+    ) -> (&'static str, String, Option<GitState>) {
         if let Some(st) = inspect(&base.join(id)) {
-            return if st.clean() {
+            let (kind, why) = if st.clean() {
                 ("git", String::new())
             } else if st.on_remote() {
                 ("bundle", st.why())
             } else {
                 ("copy", "never pushed to its remote".into())
             };
+            return (kind, why, Some(st));
         }
         if root.is_some_and(|r| r.unpushed == 0) {
             let tracked = git(base, &["ls-files", "--", id]).unwrap_or_default();
             let status = git(base, &["status", "--porcelain", "--", id]).unwrap_or_default();
             if !tracked.is_empty() && status.is_empty() {
-                return ("root", String::new());
+                return ("root", String::new(), None);
             }
         }
-        ("copy", String::new())
+        ("copy", String::new(), None)
     }
 }
 
@@ -155,21 +161,24 @@ impl Category for GitDirs {
         };
         entries.sort_by_key(fs::DirEntry::file_name);
         let root = self.root(&base);
-        let mut items = Vec::new();
-        for e in entries {
-            let name = e.file_name().to_string_lossy().into_owned();
-            let dir = base.join(&name);
-            if name.starts_with('.')
-                || is_junk(&name)
-                || !fs::metadata(&dir).is_ok_and(|m| m.is_dir())
-                || !has_files(&dir)
-            {
-                continue; // git can't hold an empty directory: nothing to restore
-            }
-            let (kind, _) = Self::classify(&base, root.as_ref(), &name);
-            items.push(Item::new(name, kind));
-        }
-        Ok(items)
+        let names: Vec<String> = entries
+            .iter()
+            .map(|e| e.file_name().to_string_lossy().into_owned())
+            .filter(|name| {
+                let dir = base.join(name);
+                // git can't hold an empty directory: nothing to restore
+                !name.starts_with('.')
+                    && !is_junk(name)
+                    && fs::metadata(&dir).is_ok_and(|m| m.is_dir())
+                    && has_files(&dir)
+            })
+            .collect();
+        let kinds = par_map(&names, |name| Self::classify(&base, root.as_ref(), name).0);
+        Ok(names
+            .into_iter()
+            .zip(kinds)
+            .map(|(n, k)| Item::new(n, k))
+            .collect())
     }
 
     fn capture(&self, env: &Env<'_>, items: &[Item]) -> Result<(), Error> {
@@ -179,4 +188,25 @@ impl Category for GitDirs {
     fn restore(&self, env: &Env<'_>) -> Result<Outcome, Error> {
         self.restore_items(env)
     }
+}
+
+/// `f` over `ids` on up to 4 threads, in order; each item spawns several `git`s, so they overlap well.
+fn par_map<T: Send>(ids: &[String], f: impl Fn(&str) -> T + Sync) -> Vec<T> {
+    let threads = std::thread::available_parallelism()
+        .map_or(2, std::num::NonZero::get)
+        .min(4);
+    let chunk = ids.len().div_ceil(threads).max(1);
+    std::thread::scope(|s| {
+        let running: Vec<_> = ids
+            .chunks(chunk)
+            .map(|c| (c, s.spawn(|| c.iter().map(|id| f(id)).collect::<Vec<T>>())))
+            .collect();
+        running
+            .into_iter()
+            .flat_map(|(c, h)| {
+                h.join()
+                    .unwrap_or_else(|_| c.iter().map(|id| f(id)).collect())
+            })
+            .collect()
+    })
 }
