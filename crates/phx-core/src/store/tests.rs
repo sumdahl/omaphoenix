@@ -128,7 +128,10 @@ fn taking_the_lock_clears_git_locks_left_by_a_crash() {
     fs::write(r.dir.join("a"), "1").ok();
     assert!(r.commit("one").unwrap_or(false));
     let stale = r.dir.join(".git/index.lock");
-    fs::write(&stale, "").ok();
+    let crashed = fs::File::create(&stale).unwrap_or_else(|e| unreachable!("{e}"));
+    crashed
+        .set_modified(std::time::SystemTime::UNIX_EPOCH)
+        .unwrap_or_else(|e| unreachable!("{e}"));
     fs::write(r.dir.join("a"), "2").ok();
     assert!(
         r.commit("blocked").is_err(),
@@ -138,4 +141,14 @@ fn taking_the_lock_clears_git_locks_left_by_a_crash() {
     assert_eq!(lock.cleared, std::slice::from_ref(&stale));
     assert!(!stale.exists());
     assert!(r.commit("two").unwrap_or(false), "snapshots work again");
+}
+
+#[test]
+fn taking_the_lock_keeps_git_locks_from_this_boot() {
+    let (_t, r) = repo();
+    let live = r.dir.join(".git/packed-refs.lock");
+    fs::write(&live, "").ok();
+    let lock = r.lock().unwrap_or_else(|e| unreachable!("{e}"));
+    assert!(lock.cleared.is_empty(), "{:?}", lock.cleared);
+    assert!(live.exists(), "a detached git gc may still hold it");
 }

@@ -6,7 +6,7 @@
 | Version | 0.1.0-rc.7 |
 | Found | 2026-10-10, reviewing what a power cut does (code review, not yet seen happen) |
 | Severity | medium: no snapshot is lost, but backups stop until someone removes a file by hand |
-| Status | fixed in 0.1.0-rc.8; test `phx_core::store::tests::taking_the_lock_clears_git_locks_left_by_a_crash` |
+| Status | fixed in 0.1.0-rc.8; tests `phx_core::store::tests::taking_the_lock_clears_git_locks_left_by_a_crash`, `taking_the_lock_keeps_git_locks_from_this_boot` |
 
 ## What happens
 
@@ -47,8 +47,8 @@ OmaPhoenix holds its own repo lock (`Repo::lock`) for the whole snapshot, restor
 
 Check the other git lock files the same way (`HEAD.lock`, `refs/heads/*.lock`).
 
-The one risk is a user running git by hand in the snapshot repo at that exact moment, which is acceptable.
+Only a lock file older than the last boot (`btime` in `/proc/stat`) is removed. A newer one may belong to a live process: git's detached `gc --auto` can outlive the run that started it, and a user may run git by hand in the repo. A power cut always means a reboot, so this still covers the finding. When the boot time can't be read, nothing is removed.
 
-Test (phx-core, `store`): create a repo, write `.git/index.lock`, change a file, and commit through the snapshot path. Assert it succeeds and the lock is gone. Fails today.
+Test (phx-core, `store`): create a repo, write `.git/index.lock`, change a file, and commit through the snapshot path. Assert it succeeds and the lock is gone. A second test writes a lock from this boot and asserts it is kept.
 
 Related: an interrupted capture is already safe. The next run recaptures from the machine and only loses the reuse of unchanged files, as a speed-up.

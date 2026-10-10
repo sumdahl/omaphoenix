@@ -6,8 +6,9 @@ mod history;
 mod tests;
 
 use std::fs::{self, File};
-use std::io;
+use std::io::{self, BufRead, BufReader};
 use std::path::{Path, PathBuf};
+use std::time::{Duration, SystemTime};
 
 use crate::sys::{self, CmdError};
 
@@ -136,8 +137,11 @@ impl Repo {
 }
 
 impl Repo {
-    // Only OmaPhoenix writes this repo, and it holds the repo lock, so a git lock now is a crash's leftover.
+    // Only a lock from before this boot is surely a crash's: a detached `git gc` or a user's git may hold a newer one.
     fn clear_stale_git_locks(&self) -> Vec<PathBuf> {
+        let Some(boot) = boot_time() else {
+            return Vec::new();
+        };
         let git = self.dir.join(".git");
         let heads = fs::read_dir(git.join("refs/heads"))
             .into_iter()
@@ -149,9 +153,23 @@ impl Repo {
             .iter()
             .map(|n| git.join(n))
             .chain(heads)
-            .filter(|p| p.is_file() && fs::remove_file(p).is_ok())
+            .filter(|p| older_than(p, boot) && fs::remove_file(p).is_ok())
             .collect()
     }
+}
+
+/// When the machine booted, from `btime` in `/proc/stat`.
+fn boot_time() -> Option<SystemTime> {
+    let stat = BufReader::new(File::open("/proc/stat").ok()?);
+    let secs = stat
+        .lines()
+        .map_while(Result::ok)
+        .find_map(|l| l.strip_prefix("btime ")?.trim().parse().ok())?;
+    SystemTime::UNIX_EPOCH.checked_add(Duration::from_secs(secs))
+}
+
+fn older_than(path: &Path, time: SystemTime) -> bool {
+    fs::symlink_metadata(path).is_ok_and(|m| m.is_file() && m.modified().is_ok_and(|t| t < time))
 }
 
 fn create_private_dir(dir: &Path) -> io::Result<()> {
