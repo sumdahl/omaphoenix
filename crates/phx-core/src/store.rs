@@ -20,7 +20,9 @@ pub enum StoreError {
     #[error(transparent)]
     Io(#[from] io::Error),
     /// Another run holds the repo lock.
-    #[error("another omaphoenix run holds the lock")]
+    #[error(
+        "a snapshot or restore is already running (maybe the automatic one); try again when it finishes"
+    )]
     Locked,
     /// No snapshot matches.
     #[error("{0}")]

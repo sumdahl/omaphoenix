@@ -213,6 +213,42 @@ component HealthCard inherits Card {
     }
 }
 
+// What's running, with how far along (DESIGN.md: progress is always shown).
+// value 0..1; below 0 means "can't tell yet", shown as a moving bar.
+component ProgressStrip inherits Rectangle {
+    in property <string> label;
+    in property <float> value: -1;
+    height: 50px;
+    background: Theme.surface-raised;
+    accessible-role: progress-indicator;
+    accessible-label: label;
+    accessible-value: value >= 0 ? Math.round(value * 100) : 0;
+    accessible-value-minimum: 0;
+    accessible-value-maximum: 100;
+    VerticalLayout {
+        padding-left: 16px; padding-right: 16px; padding-top: 9px; padding-bottom: 9px; spacing: 7px;
+        HorizontalLayout {
+            Text { text: root.label; color: Theme.text-primary; overflow: elide; horizontal-stretch: 1; accessible-role: none; }
+            Text { text: root.value >= 0 ? Math.round(root.value * 100) + "%" : ""; color: Theme.text-muted; accessible-role: none; }
+        }
+        track := Rectangle {
+            height: 6px;
+            border-radius: 3px;
+            background: Theme.surface-sunken;
+            clip: true;
+            Rectangle {
+                y: 0;
+                height: parent.height;
+                border-radius: 3px;
+                background: Theme.accent;
+                width: root.value >= 0 ? track.width * Math.max(0.02, root.value) : track.width * 0.3;
+                x: root.value >= 0 ? 0 : (track.width * 0.7) * (0.5 + 0.5 * Math.sin(animation-tick() / 1ms * 0.2deg));
+                animate width { duration: 250ms; easing: ease-out; }
+            }
+        }
+    }
+}
+
 export component App inherits Window {
     title: "OmaPhoenix";
     icon: @image-url("../../../share/icons/omaphoenix.svg");
@@ -227,6 +263,7 @@ export component App inherits Window {
     in-out property <int> section: 0;
     in property <string> toast;
     in property <string> busy;
+    in property <float> progress: -1;
 
     // Pulse
     in property <string> headline;
@@ -350,7 +387,7 @@ export component App inherits Window {
                     }
                     HorizontalLayout {
                         alignment: start;
-                        Button { label: root.primary-label; key: "enter"; primary: true; clicked => { root.primary(); } }
+                        Button { label: root.busy != "" ? "Working…" : root.primary-label; key: "enter"; primary: true; enabled: root.busy == ""; clicked => { root.primary(); } }
                     }
                 }
 
@@ -362,7 +399,7 @@ export component App inherits Window {
                     HorizontalLayout {
                         Heading { text: "Timeline"; }
                         Rectangle { horizontal-stretch: 1; }
-                        Button { label: "Take snapshot"; key: "s"; primary: true; enabled: root.set-up; clicked => { root.take-snapshot(); } }
+                        Button { label: root.busy != "" ? "Working…" : "Take snapshot"; key: "s"; primary: true; enabled: root.set-up && root.busy == ""; clicked => { root.take-snapshot(); } }
                     }
                     if root.snaps.length == 0 : Muted { text: root.set-up ? "No snapshots yet. Take the first one." : "Not set up yet: Settings → Set up snapshots."; }
                     Rectangle {
@@ -401,7 +438,7 @@ export component App inherits Window {
                         Heading { text: "Audit"; }
                         if root.audited : Muted { text: "Score " + root.score + " · " + root.fails + " fail · " + root.warns + " warn · " + root.accepted + " accepted"; vertical-alignment: center; }
                         Rectangle { horizontal-stretch: 1; }
-                        Button { label: "Scan now"; key: "s"; primary: true; clicked => { root.scan(); } }
+                        Button { label: root.busy != "" ? "Working…" : "Scan now"; key: "s"; primary: true; enabled: root.busy == ""; clicked => { root.scan(); } }
                     }
                     if !root.audited : Muted { text: "A quick audit runs as you, without sudo, and never changes anything."; }
                     if root.audited && root.findings.length == 0 : Muted { text: "No risks. Nice."; }
@@ -566,6 +603,8 @@ export component App inherits Window {
                     HorizontalLayout { alignment: start; AboutSlint { width: 180px; height: 80px; } }
                 }
             }
+
+            if root.busy != "" : ProgressStrip { label: root.busy; value: root.progress; }
 
             // Status line: toast or what's running, in words, never colour alone.
             Rectangle {

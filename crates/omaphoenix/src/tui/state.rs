@@ -54,6 +54,8 @@ pub enum Msg {
     Doctor(Vec<Finding>),
     Choices(Result<Vec<(Choice, Vec<String>)>, String>),
     Audited(Result<PathBuf, String>),
+    /// The audit started a section: (done, total, section).
+    AuditProgress(usize, usize, String),
     /// A line of a child command's output, for the output pane.
     Line(String),
     /// The child command finished; `true` on success.
@@ -123,6 +125,8 @@ pub struct State<'a> {
     // Migrate
     pub migration: Migration,
     pub migrate_sel: usize,
+    /// The running audit's position, for its progress bar.
+    pub audit_progress: Option<(usize, usize, String)>,
 }
 
 fn quiet(_: &str, _: &str) {}
@@ -156,6 +160,7 @@ impl<'a> State<'a> {
             search: String::new(),
             searching: false,
             palette: None,
+            audit_progress: None,
             output: Vec::new(),
             output_title: String::new(),
             timer: schedule::status(),
@@ -204,8 +209,12 @@ impl<'a> State<'a> {
                     self.jobs.remove("choices");
                     self.notify(e);
                 }
+                Msg::AuditProgress(done, total, section) => {
+                    self.audit_progress = Some((done, total, section));
+                }
                 Msg::Audited(r) => {
                     self.jobs.remove("audit");
+                    self.audit_progress = None;
                     match r {
                         Ok(dir) => {
                             self.audit = self
@@ -264,6 +273,8 @@ impl<'a> State<'a> {
         };
         let child = Command::new(exe)
             .args(args)
+            // The TUI shows the result; no desktop notification on top.
+            .env("OMAPHOENIX_NO_NOTIFY", "1")
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -335,8 +346,12 @@ impl<'a> State<'a> {
         }
         let tx = self.tx.clone();
         let store = self.audit_store.clone();
+        self.audit_progress = Some((0, secaudit_core::checks::SECTIONS.len(), String::new()));
         std::thread::spawn(move || {
-            let r = audit_now(&store);
+            let progress = tx.clone();
+            let r = audit_now(&store, |done, total, section| {
+                let _ = progress.send(Msg::AuditProgress(done, total, section.to_owned()));
+            });
             let _ = tx.send(Msg::Audited(r));
         });
     }
@@ -901,16 +916,17 @@ impl State<'_> {
 }
 
 /// Runs the quick audit and stores it like a Security Audit scan.
-fn audit_now(store: &Store) -> Result<PathBuf, String> {
+fn audit_now(store: &Store, progress: impl FnMut(usize, usize, &str)) -> Result<PathBuf, String> {
     let ctx = secaudit_core::audit::Ctx::from_env();
     let host = std::fs::read_to_string("/proc/sys/kernel/hostname").unwrap_or_default();
     let kernel = std::fs::read_to_string("/proc/sys/kernel/osrelease").unwrap_or_default();
     store
-        .record_quick_scan(
+        .record_quick_scan_with(
             &ctx,
             host.trim(),
             kernel.trim(),
             &phx_core::category::stamp(),
+            progress,
         )
         .map_err(|e| e.to_string())
 }
@@ -921,16 +937,55 @@ impl State<'_> {
         if self.jobs.is_empty() {
             return None;
         }
-        let names: Vec<&str> = self
+        let names: Vec<String> = self
             .jobs
             .iter()
             .map(|j| match *j {
-                "doctor" => "checking backups",
-                "choices" => "detecting items",
-                "audit" => "auditing",
-                _ => "running",
+                "doctor" => "checking backups".to_owned(),
+                "choices" => "detecting items".to_owned(),
+                "audit" => match &self.audit_progress {
+                    Some((done, total, section)) if !section.is_empty() => {
+                        format!(
+                            "auditing {} {section} ({}/{total})",
+                            bar(*done, *total),
+                            done + 1
+                        )
+                    }
+                    _ => "auditing".to_owned(),
+                },
+                "command" if self.output_title.starts_with("Snapshot") => {
+                    let (done, total) = snapshot_progress(&self.output);
+                    format!(
+                        "snapshot {} {}%",
+                        bar(done, total),
+                        done * 100 / total.max(1)
+                    )
+                }
+                _ => "running".to_owned(),
             })
             .collect();
         Some(format!("⋯ {}", names.join(", ")))
     }
+}
+
+/// A ten-cell bar: ▰ done, ▱ to go.
+fn bar(done: usize, total: usize) -> String {
+    let filled = (done * 10).checked_div(total).unwrap_or(0).min(10);
+    format!("{}{}", "▰".repeat(filled), "▱".repeat(10 - filled))
+}
+
+/// How far a snapshot is, from its output: the audit and each category
+/// report one finished step; saving is the last.
+fn snapshot_progress(output: &[String]) -> (usize, usize) {
+    const STEPS: usize = 13;
+    let done = output
+        .iter()
+        .filter(|l| {
+            let t = l.trim_start();
+            t.contains(" captured (")
+                || (t.starts_with("audit ") && t.contains(" score "))
+                || t.contains("saving the snapshot")
+        })
+        .count();
+    (done.min(STEPS), STEPS)
 }

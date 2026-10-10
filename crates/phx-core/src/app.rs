@@ -234,6 +234,8 @@ impl<'a> App<'a> {
         let mut env = Env::new(&self.home, &self.repo.dir, self.log);
         let mut m = Self::manifest_for_machine();
         if crate::gate::enabled() {
+            // The slowest silent step: say so, so nobody wonders.
+            (self.log)("step", "auditing this machine first (quick, read-only)");
             let gate = crate::gate::run(&self.home, self.log);
             env.excluded = gate.excluded_paths;
             env.excluded_units = gate.excluded_units;
@@ -262,6 +264,7 @@ impl<'a> App<'a> {
             m.items.insert(c.name().to_owned(), picked);
         }
         write_json(&self.repo.dir.join("manifest.json"), &m)?;
+        (self.log)("step", "saving the snapshot");
         if !self.repo.commit(&format!("snapshot {}", rfc3339_now()))? {
             // Nothing new, but an earlier push may have failed: retry it, as
             // the warning below promises.

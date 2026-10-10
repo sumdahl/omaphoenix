@@ -460,12 +460,34 @@ fn scan(app: &App, mode: &str) {
         .to_owned();
     if mode == "quick" {
         app.set_busy("Scanning…".into());
+        app.set_progress(0.0);
         let weak = app.as_weak();
         thread::spawn(move || {
-            let result = store.record_quick_scan(&Ctx::from_env(), &host(), &kernel, &stamp());
+            let progress_to = weak.clone();
+            let result = store.record_quick_scan_with(
+                &Ctx::from_env(),
+                &host(),
+                &kernel,
+                &stamp(),
+                |done, total, section| {
+                    let (w, label) = (
+                        progress_to.clone(),
+                        format!("Scanning: {section}  ({}/{total})", done + 1),
+                    );
+                    #[allow(clippy::cast_precision_loss, reason = "a dozen sections")]
+                    let frac = done as f32 / total as f32;
+                    let _ = slint::invoke_from_event_loop(move || {
+                        if let Some(app) = w.upgrade() {
+                            app.set_busy(label.into());
+                            app.set_progress(frac);
+                        }
+                    });
+                },
+            );
             let _ = slint::invoke_from_event_loop(move || {
                 let Some(app) = weak.upgrade() else { return };
                 app.set_busy(SharedString::new());
+                app.set_progress(-1.0);
                 match result {
                     Ok(_) => scan_done(&app),
                     Err(e) => toast(&app, format!("Scan failed: {e}")),
@@ -495,15 +517,62 @@ fn scan(app: &App, mode: &str) {
         sq(&env::var("USER").unwrap_or_default()),
         sq(&dir.join("output.txt").to_string_lossy()),
     );
-    app.set_busy(format!("{mode} scan in the terminal…").into());
+    app.set_busy(format!("{mode} scan: waiting for sudo in the terminal…").into());
+    app.set_progress(-1.0);
+    follow_output(app.as_weak(), dir.join("output.txt"), mode.clone());
     in_terminal(app, &script, move |app| {
         app.set_busy(SharedString::new());
+        app.set_progress(-1.0);
         if fs::metadata(dir.join("findings.jsonl")).map_or(0, |m| m.len()) == 0 {
             let _ = fs::remove_dir_all(&dir);
             return toast(app, "Scan cancelled or failed; nothing was saved");
         }
         let _ = store.finish(&dir, &mut meta);
         scan_done(app);
+    });
+}
+
+/// Follows a scan running in the terminal through the report it tees to
+/// `output.txt`: each `== Section ==` header moves the progress strip.
+fn follow_output(weak: Weak<App>, output: PathBuf, mode: String) {
+    let total = secaudit_core::checks::SECTIONS.len();
+    thread::spawn(move || {
+        let mut seen = 0;
+        loop {
+            thread::sleep(Duration::from_millis(500));
+            let text = fs::read_to_string(&output).unwrap_or_default();
+            let sections: Vec<&str> = text
+                .lines()
+                .filter_map(|l| l.strip_prefix("== ").and_then(|l| l.strip_suffix(" ==")))
+                .filter(|s| *s != "Summary")
+                .collect();
+            let finished = text.lines().any(|l| l == "== Summary ==");
+            if sections.len() != seen || finished {
+                seen = sections.len();
+                let current = sections
+                    .last()
+                    .map_or_else(String::new, |s| (*s).to_owned());
+                let (w, mode) = (weak.clone(), mode.clone());
+                #[allow(clippy::cast_precision_loss, reason = "a dozen sections")]
+                let frac = seen.saturating_sub(1) as f32 / total as f32;
+                let label = format!("{mode} scan: {current}  ({seen}/{total})");
+                let alive = slint::invoke_from_event_loop(move || {
+                    if let Some(app) = w.upgrade()
+                        && !app.get_busy().is_empty()
+                    {
+                        app.set_busy(label.into());
+                        app.set_progress(frac);
+                    }
+                });
+                if alive.is_err() || finished {
+                    return;
+                }
+            }
+            // Stop when the scan's folder is gone (cancelled) or the app went idle.
+            if !output.parent().is_some_and(Path::exists) {
+                return;
+            }
+        }
     });
 }
 

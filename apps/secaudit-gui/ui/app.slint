@@ -154,6 +154,42 @@ component SevTag inherits Rectangle {
     }
 }
 
+// What's running, with how far along (DESIGN.md: progress is always shown).
+// value 0..1; below 0 means "can't tell yet", shown as a moving bar.
+component ProgressStrip inherits Rectangle {
+    in property <string> label;
+    in property <float> value: -1;
+    height: 50px;
+    background: Theme.surface-raised;
+    accessible-role: progress-indicator;
+    accessible-label: label;
+    accessible-value: value >= 0 ? Math.round(value * 100) : 0;
+    accessible-value-minimum: 0;
+    accessible-value-maximum: 100;
+    VerticalLayout {
+        padding-left: 16px; padding-right: 16px; padding-top: 9px; padding-bottom: 9px; spacing: 7px;
+        HorizontalLayout {
+            Text { text: root.label; color: Theme.text-primary; overflow: elide; horizontal-stretch: 1; accessible-role: none; }
+            Text { text: root.value >= 0 ? Math.round(root.value * 100) + "%" : ""; color: Theme.text-muted; accessible-role: none; }
+        }
+        track := Rectangle {
+            height: 6px;
+            border-radius: 3px;
+            background: Theme.surface-sunken;
+            clip: true;
+            Rectangle {
+                y: 0;
+                height: parent.height;
+                border-radius: 3px;
+                background: Theme.accent;
+                width: root.value >= 0 ? track.width * Math.max(0.02, root.value) : track.width * 0.3;
+                x: root.value >= 0 ? 0 : (track.width * 0.7) * (0.5 + 0.5 * Math.sin(animation-tick() / 1ms * 0.2deg));
+                animate width { duration: 250ms; easing: ease-out; }
+            }
+        }
+    }
+}
+
 export component App inherits Window {
     title: "Security Audit";
     icon: @image-url("../../../share/icons/secaudit.svg");
@@ -180,6 +216,7 @@ export component App inherits Window {
     in property <[Row]> rows;
     in property <[Past]> history;
     in property <string> busy;
+    in property <float> progress: -1;
     in-out property <string> toast;
     in-out property <int> tab;
     in-out property <int> sel;
@@ -267,9 +304,9 @@ export component App inherits Window {
                 }
                 Rectangle { horizontal-stretch: 1; }
                 if root.busy != "" : Text { text: root.busy; color: Theme.accent; vertical-alignment: center; }
-                Button { label: "Quick scan"; key: "s"; primary: true; clicked => { root.scan("quick"); } }
-                Button { label: "Full scan"; key: "f"; clicked => { root.scan("full"); } }
-                Button { label: "Deep scan"; key: "d"; clicked => { root.scan("deep"); } }
+                Button { label: "Quick scan"; key: "s"; primary: true; enabled: root.busy == ""; clicked => { root.scan("quick"); } }
+                Button { label: "Full scan"; key: "f"; enabled: root.busy == ""; clicked => { root.scan("full"); } }
+                Button { label: "Deep scan"; key: "d"; enabled: root.busy == ""; clicked => { root.scan("deep"); } }
                 Button { label: "History"; key: "h"; active: root.show-history; enabled: root.history.length > 0; clicked => { root.show-history = !root.show-history; } }
                 Button { label: "About"; active: root.show-about; clicked => { root.show-about = !root.show-about; } }
             }
@@ -292,9 +329,9 @@ export component App inherits Window {
                         Muted { text: "Everything is read-only. A full scan uses sudo only to read root-owned files, and asks in a terminal window."; color: Theme.text-muted; }
                         HorizontalLayout {
                             spacing: 10px; alignment: start;
-                            Button { label: "Quick scan"; key: "s"; primary: true; clicked => { root.scan("quick"); } }
-                            Button { label: "Full scan"; key: "f"; clicked => { root.scan("full"); } }
-                            Button { label: "Deep scan"; key: "d"; clicked => { root.scan("deep"); } }
+                            Button { label: "Quick scan"; key: "s"; primary: true; enabled: root.busy == ""; clicked => { root.scan("quick"); } }
+                            Button { label: "Full scan"; key: "f"; enabled: root.busy == ""; clicked => { root.scan("full"); } }
+                            Button { label: "Deep scan"; key: "d"; enabled: root.busy == ""; clicked => { root.scan("deep"); } }
                         }
                     }
                 }
@@ -396,6 +433,8 @@ export component App inherits Window {
                 }
             }
         }
+
+        if root.busy != "" : ProgressStrip { label: root.busy; value: root.progress; }
 
         // Toasts and the keys, one line.
         Rectangle {

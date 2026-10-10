@@ -475,6 +475,22 @@ impl Store {
         kernel: &str,
         stamp: &str,
     ) -> std::io::Result<PathBuf> {
+        self.record_quick_scan_with(ctx, host, kernel, stamp, |_, _, _| {})
+    }
+
+    /// [`Store::record_quick_scan`], reporting each section as it starts:
+    /// `(sections done, sections in all, the one starting)`, for progress bars.
+    ///
+    /// # Errors
+    /// If the run directory or its files can't be written.
+    pub fn record_quick_scan_with(
+        &self,
+        ctx: &crate::audit::Ctx,
+        host: &str,
+        kernel: &str,
+        stamp: &str,
+        mut progress: impl FnMut(usize, usize, &str),
+    ) -> std::io::Result<PathBuf> {
         let mut meta = Meta {
             mode: "quick".into(),
             started: now(),
@@ -484,7 +500,12 @@ impl Store {
             finished: None,
         };
         let dir = self.begin(stamp, &meta)?;
-        let report = crate::audit::run(ctx, crate::checks::SECTIONS);
+        let total = crate::checks::SECTIONS.len();
+        let mut done = 0;
+        let report = crate::audit::run_with(ctx, crate::checks::SECTIONS, |p| match p {
+            crate::audit::Progress::Start(name) => progress(done, total, name),
+            crate::audit::Progress::Done(..) => done += 1,
+        });
         let mut f = std::io::BufWriter::new(fs::File::create(dir.join("findings.jsonl"))?);
         let mut summary = String::new();
         for finding in report.findings() {

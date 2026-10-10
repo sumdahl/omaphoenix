@@ -122,18 +122,22 @@ impl Spring {
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::float_cmp,
+    reason = "exact on purpose: a retarget must leave value and velocity untouched"
+)]
 mod tests {
     use super::*;
 
     #[test]
     fn retarget_keeps_velocity_no_jump() {
-        let mut s = Spring::new(0.0, REVEAL);
-        s.to(100.0, REVEAL, false);
+        let mut s = Spring::new(0.0, SHEET);
+        s.to(100.0, SHEET, false);
         for _ in 0..6 {
             s.step(1.0 / 60.0);
         }
         let (v, vel) = (s.value, s.velocity);
-        s.to(10.0, REVEAL, false);
+        s.to(10.0, SHEET, false);
         assert_eq!(s.value, v, "retarget must not move the value");
         assert_eq!(s.velocity, vel, "retarget must keep the velocity");
         let before = s.value;

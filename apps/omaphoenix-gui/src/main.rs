@@ -541,6 +541,162 @@ fn set_busy(app: &App, what: &str) {
     app.set_busy(what.into());
 }
 
+/// The snapshot's stages in the order the CLI reports them, with the words
+/// the progress strip shows while each runs.
+const SNAP_STEPS: &[(&str, &str)] = &[
+    ("audit", "Auditing this machine first (quick, read-only)…"),
+    ("pkg-repo", "Listing packages…"),
+    ("pkg-aur", "Listing AUR packages…"),
+    ("plugin", "Saving Omarchy plugins…"),
+    ("theme", "Saving themes…"),
+    ("config", "Saving config files…"),
+    ("local", "Saving local data…"),
+    ("bin", "Saving your scripts…"),
+    ("pkg-other", "Listing other package managers…"),
+    ("secret", "Encrypting secrets…"),
+    ("etc", "Saving /etc files…"),
+    ("service", "Listing services…"),
+];
+
+/// Maps a line of `omaphoenix snapshot` output to (what runs now, fraction done).
+fn snapshot_step(line: &str) -> Option<(&'static str, f32)> {
+    #[allow(clippy::cast_precision_loss, reason = "a dozen steps")]
+    let total = (SNAP_STEPS.len() + 1) as f32;
+    let t = line.trim_start();
+    if t.contains("auditing this machine first") {
+        return SNAP_STEPS.first().map(|s| (s.1, 0.0));
+    }
+    if t.contains("saving the snapshot") {
+        return Some(("Saving and pushing to GitHub…", (total - 0.5) / total));
+    }
+    let mut words = t.split_whitespace();
+    let (name, second) = (words.next()?, words.next()?);
+    let done = SNAP_STEPS.iter().position(|(n, _)| *n == name)?;
+    // "audit score …" or "<category> N captured (…)" ends that step.
+    if !(name == "audit" && second == "score" || t.contains(" captured (")) {
+        return None;
+    }
+    let next = SNAP_STEPS
+        .get(done + 1)
+        .map_or("Saving and pushing to GitHub…", |s| s.1);
+    #[allow(clippy::cast_precision_loss, reason = "a dozen steps")]
+    Some((next, (done + 1) as f32 / total))
+}
+
+/// Runs `omaphoenix snapshot`, streaming its steps into the progress strip.
+fn run_snapshot(weak: Weak<App>) {
+    use std::io::{BufRead, BufReader, Read};
+    thread::spawn(move || {
+        let spawned = sys::command(&cli())
+            // The app shows the result; no desktop notification on top.
+            .env("OMAPHOENIX_NO_NOTIFY", "1")
+            .arg("snapshot")
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn();
+        let mut child = match spawned {
+            Ok(c) => c,
+            Err(e) => {
+                let msg = format!("Snapshot failed: {e}");
+                let _ = slint::invoke_from_event_loop(move || {
+                    if let Some(app) = weak.upgrade() {
+                        set_busy(&app, "");
+                        app.set_toast(msg.into());
+                    }
+                });
+                return;
+            }
+        };
+        let mut last = String::new();
+        if let Some(out) = child.stdout.take() {
+            for line in BufReader::new(out).lines().map_while(Result::ok) {
+                if let Some((label, frac)) = snapshot_step(&line) {
+                    let w = weak.clone();
+                    let _ = slint::invoke_from_event_loop(move || {
+                        if let Some(app) = w.upgrade() {
+                            set_busy(&app, label);
+                            app.set_progress(frac);
+                        }
+                    });
+                }
+                if !line.trim().is_empty() {
+                    last = line;
+                }
+            }
+        }
+        let mut err = String::new();
+        if let Some(mut e) = child.stderr.take() {
+            let _ = e.read_to_string(&mut err);
+        }
+        let ok = child.wait().is_ok_and(|s| s.success());
+        let locked = err.contains("already running");
+        let _ = slint::invoke_from_event_loop(move || {
+            let Some(app) = weak.upgrade() else { return };
+            if locked {
+                // Another run (usually the automatic one) holds the lock:
+                // wait for it and show its result, instead of an error.
+                set_busy(
+                    &app,
+                    "An automatic snapshot is running; showing it when it finishes…",
+                );
+                app.set_progress(-1.0);
+                wait_for_other_run(app.as_weak());
+                return;
+            }
+            snapshot_finished(
+                &app,
+                if ok {
+                    Ok(last.trim().to_owned())
+                } else {
+                    Err(err.trim().lines().last().unwrap_or("it stopped").to_owned())
+                },
+            );
+        });
+    });
+}
+
+/// Polls the repo lock until the other run lets go, then refreshes.
+fn wait_for_other_run(weak: Weak<App>) {
+    thread::spawn(move || {
+        loop {
+            thread::sleep(Duration::from_secs(2));
+            if ui_engine().repo.lock().is_ok() {
+                break;
+            }
+        }
+        let _ = slint::invoke_from_event_loop(move || {
+            if let Some(app) = weak.upgrade() {
+                snapshot_finished(&app, Ok("The automatic snapshot finished".into()));
+            }
+        });
+    });
+}
+
+/// Ends a snapshot: clears the strip, shows the result, slides the new row in.
+fn snapshot_finished(app: &App, r: Result<String, String>) {
+    use slint::Model as _;
+    let (motion, timer) = (ui_motion(), ui_timer());
+    set_busy(app, "");
+    app.set_progress(-1.0);
+    let before = app.get_snaps().row_count();
+    refresh_snapshots(app, &ui_engine());
+    match r {
+        Ok(line) => app.set_toast(line.into()),
+        Err(e) => app.set_toast(format!("Snapshot failed: {e}").into()),
+    }
+    // FLIP: the new row starts one row up and settles in; the offset
+    // changes in the same frame as the insert.
+    if app.get_snaps().row_count() > before {
+        let mut m = motion.borrow_mut();
+        m.drop.set(-ROW);
+        app.set_drop(-ROW);
+        let reduced = m.reduced;
+        m.drop.to(0.0, GLIDE, reduced);
+        drop(m);
+        kick(app, &motion, &timer);
+    }
+}
+
 // ---------- main ----------
 
 #[allow(
@@ -597,45 +753,18 @@ fn main() -> Result<(), slint::PlatformError> {
         let weak = app.as_weak();
         move || {
             let Some(app) = weak.upgrade() else { return };
+            // One run at a time: a second click while one runs does nothing.
+            if !app.get_busy().is_empty() {
+                return;
+            }
             if !app.get_set_up() {
                 app.set_toast("Not set up yet: Settings → Set up snapshots".into());
                 return;
             }
-            set_busy(&app, "Taking a snapshot…");
-            background(
-                &app,
-                || {
-                    sys::command(&cli()).arg("snapshot").output().map(|o| {
-                        String::from_utf8_lossy(&o.stdout)
-                            .lines()
-                            .last()
-                            .unwrap_or_default()
-                            .to_owned()
-                    })
-                },
-                |app, r| {
-                    use slint::Model as _;
-                    let (motion, timer) = (ui_motion(), ui_timer());
-                    set_busy(app, "");
-                    let before = app.get_snaps().row_count();
-                    refresh_snapshots(app, &ui_engine());
-                    match r {
-                        Ok(line) => app.set_toast(line.into()),
-                        Err(e) => app.set_toast(format!("Snapshot failed: {e}").into()),
-                    }
-                    // FLIP: the new row starts one row up and settles in;
-                    // the offset changes in the same frame as the insert.
-                    if app.get_snaps().row_count() > before {
-                        let mut m = motion.borrow_mut();
-                        m.drop.set(-ROW);
-                        app.set_drop(-ROW);
-                        let reduced = m.reduced;
-                        m.drop.to(0.0, GLIDE, reduced);
-                        drop(m);
-                        kick(app, &motion, &timer);
-                    }
-                },
-            );
+            app.set_toast(SharedString::new());
+            app.set_progress(0.0);
+            set_busy(&app, "Starting the snapshot…");
+            run_snapshot(app.as_weak());
         }
     };
     app.on_take_snapshot(take_snapshot.clone());
@@ -797,20 +926,40 @@ fn main() -> Result<(), slint::PlatformError> {
         let weak = app.as_weak();
         move || {
             let Some(app) = weak.upgrade() else { return };
+            if !app.get_busy().is_empty() {
+                return;
+            }
+            app.set_toast(SharedString::new());
+            app.set_progress(0.0);
             set_busy(&app, "Auditing (quick, no sudo)…");
+            let progress_to = app.as_weak();
             background(
                 &app,
-                || {
+                move || {
                     let ctx = secaudit_core::audit::Ctx::from_env();
                     let host = fs::read_to_string("/proc/sys/kernel/hostname").unwrap_or_default();
                     let kernel =
                         fs::read_to_string("/proc/sys/kernel/osrelease").unwrap_or_default();
                     let store = Store::from_env();
-                    let dir = store.record_quick_scan(
+                    let dir = store.record_quick_scan_with(
                         &ctx,
                         host.trim(),
                         kernel.trim(),
                         &phx_core::category::stamp(),
+                        |done, total, section| {
+                            let (w, label) = (
+                                progress_to.clone(),
+                                format!("Auditing: {section}  ({}/{total})", done + 1),
+                            );
+                            #[allow(clippy::cast_precision_loss, reason = "a dozen sections")]
+                            let frac = done as f32 / total as f32;
+                            let _ = slint::invoke_from_event_loop(move || {
+                                if let Some(app) = w.upgrade() {
+                                    app.set_busy(label.into());
+                                    app.set_progress(frac);
+                                }
+                            });
+                        },
                     );
                     dir.map(|d| store.runs().into_iter().find(|r| r.path == d))
                         .map_err(|e| e.to_string())
@@ -818,6 +967,7 @@ fn main() -> Result<(), slint::PlatformError> {
                 |app, r| {
                     let (state, motion, timer) = (ui_state(), ui_motion(), ui_timer());
                     set_busy(app, "");
+                    app.set_progress(-1.0);
                     match r {
                         Ok(run) => {
                             {
@@ -991,17 +1141,21 @@ fn main() -> Result<(), slint::PlatformError> {
                     background(
                         &app,
                         || {
-                            sys::command(&cli()).arg("reaudit").output().map(|o| {
-                                String::from_utf8_lossy(&if o.stdout.is_empty() {
-                                    o.stderr
-                                } else {
-                                    o.stdout
+                            sys::command(&cli())
+                                .env("OMAPHOENIX_NO_NOTIFY", "1")
+                                .arg("reaudit")
+                                .output()
+                                .map(|o| {
+                                    String::from_utf8_lossy(&if o.stdout.is_empty() {
+                                        o.stderr
+                                    } else {
+                                        o.stdout
+                                    })
+                                    .lines()
+                                    .take(4)
+                                    .collect::<Vec<_>>()
+                                    .join(" · ")
                                 })
-                                .lines()
-                                .take(4)
-                                .collect::<Vec<_>>()
-                                .join(" · ")
-                            })
                         },
                         |app, r| {
                             set_busy(app, "");
@@ -1078,4 +1232,51 @@ fn main() -> Result<(), slint::PlatformError> {
     });
 
     app.run()
+}
+
+#[cfg(test)]
+mod tests {
+    /// Lines in the format `omaphoenix snapshot` prints them (from a real run).
+    #[test]
+    fn snapshot_output_moves_the_progress_strip_forward() {
+        let lines = [
+            "▸ auditing this machine first (quick, read-only)",
+            "  audit     score 90 (A): 0 item(s) left out, 31 flagged",
+            "  pkg-repo  221 captured (221 found)",
+            "  pkg-aur   14 captured (14 found)",
+            "  plugin io.github.sumdahl.geet: bundled 4 unpushed",
+            "  plugin    41 captured (41 found)",
+            "  config .config/Code skipped: browser/app profile (caches and sessions, not config)",
+            "  ! skip /home/x/.config/ngrok/ngrok.yml: contains something shaped like a secret",
+            "  service   44 captured (44 found)",
+            "▸ saving the snapshot",
+            "✓ snapshot d61abc7  2026-10-10T12:00:07+05:45",
+        ];
+        let steps: Vec<(&str, f32)> = lines
+            .iter()
+            .filter_map(|l| super::snapshot_step(l))
+            .collect();
+        let labels: Vec<&str> = steps.iter().map(|s| s.0).collect();
+        assert_eq!(
+            labels,
+            [
+                "Auditing this machine first (quick, read-only)…",
+                "Listing packages…",
+                "Listing AUR packages…",
+                "Saving Omarchy plugins…",
+                "Saving themes…",
+                "Saving and pushing to GitHub…",
+                "Saving and pushing to GitHub…",
+            ],
+            "detail lines (bundled, skipped, warnings) don't move it"
+        );
+        assert!(
+            steps.windows(2).all(|w| w[0].1 <= w[1].1),
+            "progress only goes forward: {steps:?}"
+        );
+        assert!(
+            steps.last().is_some_and(|s| s.1 > 0.9 && s.1 < 1.0),
+            "nearly done while pushing"
+        );
+    }
 }

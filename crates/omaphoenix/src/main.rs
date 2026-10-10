@@ -140,8 +140,14 @@ fn say(msg: &str) {
 
 /// A desktop notification when nobody watches the output (timer runs,
 /// update hooks), so a failure doesn't go unseen.
+/// The desktop apps set `OMAPHOENIX_NO_NOTIFY`: they show results themselves.
+/// Normal urgency with a timeout, so nothing sits on screen until dismissed;
+/// a problem that lasts is raised again by the daily login check.
 fn notify(title: &str, body: &str) {
-    if io::stdout().is_terminal() || !sys::has("notify-send") {
+    if io::stdout().is_terminal()
+        || std::env::var_os("OMAPHOENIX_NO_NOTIFY").is_some()
+        || !sys::has("notify-send")
+    {
         return;
     }
     let _ = sys::output(
@@ -149,7 +155,9 @@ fn notify(title: &str, body: &str) {
         &[
             "notify-send",
             "-u",
-            "critical",
+            "normal",
+            "-t",
+            "15000",
             "-a",
             "omaphoenix",
             title,
@@ -331,7 +339,11 @@ fn run(cli: Cli) -> Result<(), String> {
             Ok(None) => say("no changes since the last snapshot"),
             Ok(Some(s)) => say(&format!("✓ snapshot {}  {}", s.id, s.time)),
             Err(e) => {
-                notify("omaphoenix snapshot failed", &e.to_string());
+                // Another run holding the lock is doing the job: not a failure to raise.
+                let busy = e.to_string().contains("already running");
+                if !busy {
+                    notify("omaphoenix snapshot failed", &e.to_string());
+                }
                 return Err(e.to_string());
             }
         },
@@ -488,17 +500,15 @@ fn doctor_notify(app: &App<'_>) {
             alert.len() - 3
         ));
     }
-    let urgency = if alert.iter().any(|f| f.level == "risk") {
-        "critical"
-    } else {
-        "normal"
-    };
+    // Normal urgency with a timeout: shown once a day at most, never stuck on screen.
     let _ = sys::output(
         None,
         &[
             "notify-send",
             "-u",
-            urgency,
+            "normal",
+            "-t",
+            "15000",
             "-a",
             "omaphoenix",
             "Your backups need a look",

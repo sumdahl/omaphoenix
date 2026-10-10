@@ -73,7 +73,8 @@ jobs:
       - run: |
           for app in omaphoenix-gui secaudit-gui; do
             cargo fmt --check --manifest-path apps/$app/Cargo.toml
-            cargo clippy --locked --manifest-path apps/$app/Cargo.toml -- -D warnings
+            cargo clippy --locked --all-targets --manifest-path apps/$app/Cargo.toml -- -D warnings
+            cargo test --locked --manifest-path apps/$app/Cargo.toml
           done
 
   msrv:
