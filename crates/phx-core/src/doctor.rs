@@ -81,6 +81,7 @@ impl App<'_> {
             add("risk", "snapshots", "not set up: nothing is protected. Run: omaphoenix init --github <you>/omaphoenix-backup".into());
         }
         check_audit(&mut add);
+        self.check_snapshot_audit(&mut add);
         self.check_repos(&mut add);
         self.check_units(&mut add);
         self.check_secrets(&mut add);
@@ -302,6 +303,33 @@ impl App<'_> {
     }
 }
 
+impl App<'_> {
+    /// The audit the latest snapshot ran on itself. It scores only the
+    /// sections that decide what gets backed up, so it differs from a full
+    /// scan's score; both are shown, labelled.
+    fn check_snapshot_audit(&self, add: &mut dyn FnMut(&str, &str, String)) {
+        let manifest: Option<phx_contract::manifest::Manifest> =
+            read_json(&self.repo.dir.join("manifest.json"))
+                .ok()
+                .flatten();
+        let Some(a) = manifest.and_then(|m| m.audit) else {
+            return;
+        };
+        let level = if a.excluded.is_empty() { "ok" } else { "warn" };
+        add(
+            level,
+            "audit",
+            format!(
+                "last snapshot's audit (backup-relevant checks): score {} ({}), {} left out, {} flagged",
+                a.score,
+                a.grade,
+                a.excluded.len(),
+                a.warned.len()
+            ),
+        );
+    }
+}
+
 /// The last Security Audit scan, from the history both apps share.
 fn check_audit(add: &mut dyn FnMut(&str, &str, String)) {
     let Some(run) = secaudit_core::store::Store::from_env()
@@ -319,7 +347,7 @@ fn check_audit(add: &mut dyn FnMut(&str, &str, String)) {
         level,
         "audit",
         format!(
-            "last audit {age} ago: score {} ({}), {} fail, {} warn",
+            "last full audit {age} ago: score {} ({}), {} fail, {} warn",
             c.score(),
             c.grade(),
             c.fail,

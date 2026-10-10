@@ -295,6 +295,15 @@ fn run(cli: Cli) -> Result<(), String> {
         Cmd::Tui => return tui::run(&app).map_err(|e| e.to_string()),
         Cmd::Gui => return open_gui(),
         Cmd::Init { mut remote, github } => {
+            // Check first: creating the GitHub repo and then refusing would
+            // leave an empty orphan repo behind.
+            if app.repo.exists() {
+                return Err(format!(
+                    "already initialised at {}; to add a remote: git -C {} remote add origin <url>",
+                    app.repo.dir.display(),
+                    app.repo.dir.display()
+                ));
+            }
             if !github.is_empty() {
                 let url = sys::output(
                     None,

@@ -263,6 +263,16 @@ impl<'a> App<'a> {
         }
         write_json(&self.repo.dir.join("manifest.json"), &m)?;
         if !self.repo.commit(&format!("snapshot {}", rfc3339_now()))? {
+            // Nothing new, but an earlier push may have failed: retry it, as
+            // the warning below promises.
+            if self.repo.unpushed()
+                && let Err(e) = self.repo.push()
+            {
+                (self.log)(
+                    "warn",
+                    &format!("push failed, snapshot kept locally and pushed next run: {e}"),
+                );
+            }
             return Ok(None);
         }
         if let Err(e) = self.repo.push() {

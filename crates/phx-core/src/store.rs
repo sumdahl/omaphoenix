@@ -169,6 +169,20 @@ impl Repo {
         Ok(())
     }
 
+    /// Whether `main` has commits `origin` hasn't got (a push that failed
+    /// earlier, or one never made). False without a remote.
+    #[must_use]
+    pub fn unpushed(&self) -> bool {
+        if self.remote().is_empty() {
+            return false;
+        }
+        match self.git(&["rev-list", "--count", "origin/main..main"]) {
+            Ok(n) => n.trim() != "0",
+            // No origin/main yet: never pushed.
+            Err(_) => self.git(&["rev-parse", "--verify", "-q", "main"]).is_ok(),
+        }
+    }
+
     /// Snapshots, newest first.
     ///
     /// # Errors
@@ -301,6 +315,32 @@ mod tests {
         };
         r.init("").unwrap_or_else(|e| unreachable!("init: {e}"));
         (t, r)
+    }
+
+    #[test]
+    fn knows_when_commits_still_need_pushing() {
+        let t = tempfile::tempdir().unwrap_or_else(|e| unreachable!("{e}"));
+        let bare = t.path().join("remote.git");
+        let ok = std::process::Command::new("git")
+            .args(["init", "-q", "--bare", "-b", "main"])
+            .arg(&bare)
+            .status()
+            .is_ok_and(|s| s.success());
+        assert!(ok, "bare remote");
+        let r = Repo {
+            dir: t.path().join("repo"),
+        };
+        r.init(&bare.to_string_lossy())
+            .unwrap_or_else(|e| unreachable!("init: {e}"));
+        assert!(!r.unpushed(), "nothing committed yet");
+        fs::write(r.dir.join("a"), "1").ok();
+        assert!(r.commit("one").unwrap_or(false));
+        assert!(r.unpushed(), "never pushed");
+        r.push().unwrap_or_else(|e| unreachable!("push: {e}"));
+        assert!(!r.unpushed(), "in step after a push");
+        fs::write(r.dir.join("a"), "2").ok();
+        assert!(r.commit("two").unwrap_or(false));
+        assert!(r.unpushed(), "a new commit waits for the next push");
     }
 
     #[test]
