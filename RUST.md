@@ -97,10 +97,11 @@
 - **Default stack** (see docs/06): `clap`, `ratatui`/`crossterm`, `serde`/`serde_json`/`toml`, `thiserror`/`anyhow`, `tracing`, `age`, `globset`, `secrecy`/`zeroize`, `rayon`, `insta`, `proptest`, `assert_cmd`.
 
 ## 8. Documentation and API
-- **Docs:**
-  - every public item has a rustdoc comment saying what it is and *why*, and examples that compile (doctests) for core APIs
-  - module-level docs explain the module's role
-  - no comments that restate code
+- **Docs and comments:**
+  - every public item has a one-line rustdoc comment (`missing_docs` warns)
+  - module `//!` headers are one line, or none
+  - other comments only for a non-obvious *why*, one line; never restate code or narrate history
+- **Structure:** one concern per file, files under ~250 lines, `main.rs` only wires (see AGENTS.md "Clean code").
 - **Naming** follows the Rust API Guidelines: `as_`/`to_`/`into_` conventions, iterators over `Vec` returns, `impl AsRef<Path>` inputs.
 - **Versioning:**
   - semver, changelog via `git-cliff` or similar

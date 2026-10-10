@@ -1,43 +1,68 @@
-# AGENTS.md: working on the OmaPhoenix × Security Audit integration
+# AGENTS.md
 
-Read this before touching anything. It applies to Claude Code and any other coding agent.
+Rules for any coding agent (Claude Code or other) working in this repo. Read it before touching anything. [RUST.md](RUST.md) has the long form; [DESIGN.md](DESIGN.md) covers how the apps look and speak.
 
-## Orientation (do this first)
+## Orientation
 
-1. Read `README.md`, then `docs/05-roadmap.md` to find the current phase. The first task whose status isn't `done` is next.
-2. Read the decisions in `docs/adr/` (index: `docs/adr/README.md`) and the open questions in `docs/07-decisions.md`. **Never implement anything that depends on an open question.** Ask the user instead. A new decision gets a new ADR (copy `docs/adr/template.md`); accepted ADRs are never edited, only superseded.
-3. For code work, also read the target repo's own docs:
-   - OmaPhoenix: `~/personal/omaphoenix/docs/` (especially `08-implementation-notes.md`, which lists real traps) and its `CLAUDE.md`.
-   - secaudit: `~/personal/secaudit/README.md` ("Adding a check" explains its helper functions).
-
-## Standards documents (binding)
-
-- **[RUST.md](RUST.md):** how all Rust is written (forbid `unsafe`, no `unwrap`/`panic!`, pedantic clippy, `thiserror`/`anyhow`, `tracing`, `proptest`/`insta`/fuzzing, `cargo-deny`).
-- **[DESIGN.md](DESIGN.md):** how the desktop app and the TUI look, move and speak.
-- **[docs/08-slow-download-watchdog.md](docs/08-slow-download-watchdog.md):** every external install is watched, and slow or stalled ones are deferred, never blocking.
+1. `README.md`, then `docs/05-roadmap.md`. The first task whose status isn't `done` is next.
+2. Decisions live in `docs/adr/`. Open questions live in `docs/07-decisions.md`; never build on one, ask instead. A new decision gets a new ADR. Accepted ADRs are superseded, never edited.
+3. The Go OmaPhoenix (`~/personal/omaphoenix`) is frozen and is the parity reference only. Manish's Python/gum secaudit (`mnshchtri/secaudit`) is the reference for the exact ports (`docs/10`, `docs/12`).
 
 ## Hard rules
 
-- **Two owners, two repos.**
-  - OmaPhoenix belongs to Sumiran Dahal. secaudit belongs to Manish Karki.
-  - Never commit to or push `mnshchtri/secaudit` unless the user explicitly says this specific change is approved by Manish. Proposed secaudit changes go in a patch file or a branch in the local clone, and the user forwards them.
-- **Authorship on Sumiran's repos:** `Sumiran Dahal <sumirandahal46@gmail.com>`, no `Co-Authored-By` trailer. The session's work email is not for commits.
-- **OmaPhoenix stays private** until the user says otherwise. Ask before every push. Never tag a release without an explicit OK.
-- **Never print secret values.** Neither tool ever prints a token, key or `.env` value. Findings name the *file*, never its content. Keep it that way in every output, log, test fixture and doc.
-- **Real keys never leave the machine.** Tests use generated fake keys and throwaway passphrases. The OmaPhoenix VM test (`scripts/vm/`) uses a throwaway SSH key and test user.
-- **The audit is read-only.** Integration code may *read* secaudit findings and *exclude* items from a snapshot. It must never apply a secaudit fix on its own; fixes need a human confirmation, as secaudit's own TUI already does.
-- **No sudo prompts from unattended runs.** Timer snapshots run without a terminal, so they use secaudit's non-root quick pass and must never block on a password.
+- **Owners.** OmaPhoenix: Sumiran Dahal. secaudit: Manish Karki. Never push to `mnshchtri/secaudit`; fetch it read-only.
+- **Authorship:** `git -c user.email=sumirandahal46@gmail.com commit`, no `Co-Authored-By` trailer.
+- **The repo is private** (ADR-0022). Ask before pushing; never tag a release without an explicit OK.
+- **Secrets.** Never print a token, key or `.env` value: not in output, logs, errors, fixtures or docs. Name the file, never its content. Tests use generated fake keys only.
+- **The audit is read-only.** Nothing applies a fix without a human confirming it.
+- **Unattended runs never prompt.** The timer has no terminal: no sudo, no passphrase prompt, no blocking.
+- **Restores are tested in the VM or a temp `HOME`.** On the real home, only `--dry-run`.
 
-## Verification standard
+## Rust: safe and idiomatic
 
-- **Go (OmaPhoenix):** run `set -o pipefail` before any `go test … | …` chain. A pipe once hid a failing test and it got pushed.
-- **Full check:** `gofmt -l .` is empty, then `go vet ./...` and `go test -count=1 ./...` pass. Then run `scripts/smoke.sh`, which takes about 12 minutes; run it in the background.
-- **secaudit:** `bash -n bin/secaudit` and `shellcheck bin/secaudit`. Run `secaudit --json /tmp/x.jsonl` as the user, and check each line parses with `jq`.
-- **Integration behaviour** is proven by a test that plants a fake secret or fake persistence entry in a temp `HOME` and shows that the snapshot excludes or blocks it. "It compiles" is not done.
-- **Restores** are proven in the throwaway VM (`~/personal/omaphoenix/scripts/vm/vm.sh`), never on the user's real home.
+These are enforced by `[workspace.lints]`. Never silence one to get green; fix the code.
 
-## Style
+- **No `unsafe`** (`unsafe_code = "forbid"`).
+- **No panics.** No `unwrap`, `panic!`, `todo!`, `dbg!`, or indexing that can go out of bounds. Use `?`, `get()`, `let … else`, and checked or saturating arithmetic. Use `expect("why it holds")` only for a local, provable invariant.
+- **Errors carry meaning.** Library crates (`*-core`, `phx-contract`) return `thiserror` enums or `Result<_, String>` with a user-readable message. Binaries turn them into one `error: …` line and an exit code. Don't swallow errors with `let _ =` unless failure is genuinely harmless (a best-effort notification, a cleanup).
+- **Outside input is hostile.** That covers snapshot repos, manifests, JSON, tar entries, `/proc` and command output. Parse it into types at the edge, bound its size, and reject `..` and absolute paths.
+- **No shell strings.** Use `Command::new(prog).args([...])`. The one exception is running a finding's fix command, which is shell by nature: `bash -c`, only after the user confirms.
+- **Secrets in memory** go in `Zeroizing<…>`. Keep them out of `Debug`/`Display`, and an API key never goes on argv.
+- **Every external command** has a timeout or the watchdog (`docs/08`) and never blocks a UI thread.
+- **Writes are atomic:** temp file, then rename. Set permissions explicitly (`0o600` for anything sensitive).
+- **Types over strings.** Use enums for closed sets and newtypes where mixing values up is a real risk. Borrow (`&str`, `&Path`, `impl AsRef<Path>`) instead of cloning.
+- **Memory budgets in RUST.md §9 are pass/fail.** Stream files, never slurp ones of unknown size. Collect a whole tree only when you must.
+- **No new dependency** without saying what it replaces, its license and its maintenance status. `cargo deny` must stay green.
 
-- **OmaPhoenix:** match surrounding Go. Comments explain *why*. No UI code in `internal/core`.
-- **secaudit:** match its Bash helpers (`ok`/`wn`/`bad`/`info`/`skp`, `detail`, `fix`, `hint`).
-- **Docs:** short sentences, tables for facts. Update the roadmap status when a task changes state.
+## Clean code
+
+- **One concern per file.** `main.rs` only declares modules and wires: parse args, dispatch, map the result to an exit code. Commands, CLI definitions, output and prompts each get their own file (see `crates/omaphoenix/src/`).
+- **Small files.** Aim for under ~250 lines. Past that, split along a real seam into a folder module (`foo/mod.rs` plus `foo/bar.rs`) and re-export so callers don't change. Data tables and long string literals (prompts, Slint markup) may run longer.
+- **Small functions.** One job each. A `match` that dispatches calls functions; it doesn't contain them. If a function needs `#[allow(clippy::too_many_lines)]`, split it instead. `too_many_arguments` is allowed only for passing CLI flags straight through.
+- **No UI in engines.** `phx-core`, `phx-contract` and `secaudit-core` never print, prompt or draw. They take callbacks (`log`, `progress`) and return data. CLI, TUI, gum UI and GUI are thin layers over the same engine.
+- **No speculative code.** No trait with one implementation, no config for a constant, no "for later" scaffolding. Delete dead code; don't comment it out.
+- **Names say what, comments say why.** Write a comment only for a non-obvious reason (a trap, a parity quirk, a measured number), as one line. Never restate the code, narrate history, or leave banner comments. Public items get a one-line `///`, because `missing_docs` warns. Module `//!` headers are one line or none.
+- **Tests live next to the code they test** (`#[cfg(test)] mod tests`, or a sibling `tests.rs` when large). Every bug fix ships with a test that fails without it.
+- **Match the surrounding code.** Same error style, same naming, same idioms as the file you're in.
+
+## Verification (all must pass before a commit)
+
+```sh
+cargo fmt --all                                         # run last, after any edit
+cargo clippy --workspace --all-targets -- -D warnings   # zero warnings
+cargo test --workspace
+cargo test --release -p omaphoenix -p secaudit --test pty
+(cd apps/omaphoenix-gui && cargo clippy --all-targets -- -D warnings && cargo test)
+(cd apps/secaudit-gui   && cargo clippy --all-targets -- -D warnings && cargo test)
+cargo deny check
+scripts/peak-rss                                        # memory budgets
+```
+
+- **Port or engine changes:** `scripts/secaudit-parity` and `scripts/omaphoenix-parity`. TUI screen changes are compared cell by cell against the original (`docs/10`).
+- **Behaviour is proven by a test**, using a fake `HOME`, a fake secret or a fake command runner. "It compiles" is not done.
+- **Pipe safety:** use `set -o pipefail` before piping any test command, or a failure gets hidden.
+- **GUI screenshots** use a headless Hyprland output, and keys target the test window by pid. Afterwards, always `hyprctl reload` and `hyprctl output remove`.
+
+## Docs
+
+Short sentences, tables for facts. Update the roadmap status when a task changes state.
