@@ -1,16 +1,26 @@
-//! TUI state and key handling. Drawing is in `view`.
+//! State and behaviour of `secaudit-tui`, ported method by method from the
+//! Python `AuditApp` (and its screens): same keys, same enabled/disabled
+//! rules (`check_action`), same messages. Drawing is in `view`.
 
+use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{Duration, Instant};
 
-use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use secaudit_core::Severity;
-use secaudit_core::store::{Accepted, Item, Run, Store, now, sev_order};
+use ratatui::crossterm::event::{
+    KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEventKind,
+};
+use secaudit_core::store::{Accepted, Item, Run, Store, now, sev_name, sev_order};
 
 use super::scan::Scan;
-use super::theme::Theme;
+use super::theme::Pal;
+use super::times::local_time;
+
+/// Columns at which the detail pane moves beside the table.
+pub const WIDE: u16 = 150;
+/// Below this the trend box hides and the sidebar shrinks.
+pub const NARROW: u16 = 110;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Tab {
@@ -30,191 +40,378 @@ impl Tab {
         Self::All,
     ];
 
-    pub fn label(self) -> &'static str {
+    /// `in_tab()`.
+    pub fn holds(self, f: &Item) -> bool {
+        let sev = sev_name(f.finding.sev);
         match self {
-            Self::Issues => "Issues",
-            Self::Accepted => "Accepted",
-            Self::Notes => "Notes",
-            Self::Passed => "Passed",
-            Self::All => "All",
-        }
-    }
-
-    pub fn holds(self, item: &Item) -> bool {
-        match self {
-            Self::Issues => item.is_issue() && !item.accepted,
-            Self::Accepted => item.accepted,
-            Self::Notes => matches!(item.finding.sev, Severity::Info | Severity::Skip),
-            Self::Passed => item.finding.sev == Severity::Pass,
+            Self::Issues => f.is_issue() && !f.accepted,
+            Self::Accepted => f.accepted,
+            Self::Notes => sev == "info" || sev == "skip",
+            Self::Passed => sev == "pass",
             Self::All => true,
         }
     }
 }
 
-/// What a confirm screen does on yes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Focus {
+    Sections,
+    Tabs,
+    Search,
+    Table,
+    Detail,
+    /// The welcome screen's buttons: Full, Quick, Deep.
+    Welcome(usize),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Severity {
+    Information,
+    Warning,
+    Error,
+}
+
+pub struct Toast {
+    pub title: Option<String>,
+    pub body: String,
+    pub severity: Severity,
+    pub until: Instant,
+}
+
+/// What a confirm dialog does on yes.
 pub enum Action {
     RunFixes(Vec<usize>),
     DeleteRun(PathBuf),
 }
 
+/// `ConfirmScreen`.
 pub struct Confirm {
     pub title: String,
     pub code: Vec<String>,
     pub note: String,
-    pub yes: String,
+    pub ok: String,
+    pub danger: bool,
+    /// The focused button: false = Cancel (default), true = ok.
+    pub on_ok: bool,
     pub action: Action,
+}
+
+pub enum Modal {
+    Confirm(Confirm),
+    /// `ScanChooser`, with the highlighted option.
+    Chooser(usize),
+    /// The command palette: query and highlighted row.
+    Palette(String, usize),
 }
 
 pub enum Screen {
     Main,
-    Chooser,
     Scan(Box<Scan>),
-    Confirm(Confirm),
-    History { sel: usize },
-    Log { lines: Vec<String>, scroll: usize },
-    Help,
+    /// `HistoryScreen` with its cursor row.
+    History(usize),
+    /// `LogScreen`: lines, scroll offset, title date.
+    Log(Vec<String>, usize, String),
 }
 
-/// Work that needs the plain terminal; the loop leaves the TUI screen for it.
 pub enum Suspend {
     Sudo(String),
     Fixes(Vec<usize>),
 }
 
+/// Clickable regions recorded while drawing.
+#[derive(Default, Clone)]
+pub struct Hits {
+    pub tabs: Vec<(u16, u16, u16)>,
+    pub table: Option<(u16, u16, u16, usize)>,
+    pub sections: Option<(u16, u16, u16, usize)>,
+    pub search: Option<(u16, u16, u16)>,
+    pub buttons: Vec<(u16, u16, u16, &'static str)>,
+    pub options: Vec<(u16, u16, usize)>,
+    pub history: Option<(u16, u16, usize)>,
+}
+
 pub struct App {
+    pub pal: Pal,
     pub store: Store,
-    pub theme: Theme,
+    pub engine: PathBuf,
+    pub host: String,
+    pub user: String,
     pub runs: Vec<Run>,
-    pub current: Option<usize>,
+    pub current: Option<PathBuf>,
     pub accepted: BTreeMap<String, Accepted>,
     pub tab: Tab,
     pub section: Option<String>,
-    pub sections_focus: bool,
-    pub section_sel: usize,
-    pub sel: usize,
-    pub marked: BTreeSet<usize>,
+    pub section_cursor: usize,
     pub search: String,
-    pub searching: bool,
+    pub marked: BTreeSet<usize>,
+    pub row: usize,
+    pub row_offset: std::cell::Cell<usize>,
+    pub sec_offset: std::cell::Cell<usize>,
+    pub hist_offset: std::cell::Cell<usize>,
+    pub detail_scroll: usize,
+    pub focus: Focus,
     pub screen: Screen,
-    pub toast: Option<(String, Instant)>,
+    pub modal: Option<Modal>,
+    pub help: bool,
+    pub toasts: Vec<Toast>,
     pub suspend: Option<Suspend>,
     pub quit: bool,
+    pub size: (u16, u16),
+    pub hits: RefCell<Hits>,
+}
+
+/// The engine: `$SECAUDIT_ENGINE`, else `secaudit` next to this binary.
+fn engine_path() -> PathBuf {
+    std::env::var_os("SECAUDIT_ENGINE").map_or_else(
+        || {
+            std::env::current_exe()
+                .ok()
+                .and_then(|e| e.parent().map(|d| d.join("secaudit")))
+                .unwrap_or_else(|| PathBuf::from("secaudit"))
+        },
+        PathBuf::from,
+    )
+}
+
+fn hostname() -> String {
+    std::fs::read_to_string("/proc/sys/kernel/hostname")
+        .unwrap_or_default()
+        .trim()
+        .to_owned()
 }
 
 impl App {
-    pub fn new() -> Self {
-        Self::with_store(Store::from_env())
-    }
-
-    /// The app over a given history; tests use a throwaway one.
-    pub fn with_store(store: Store) -> Self {
-        store.prune_incomplete(600);
+    pub fn new(store: Store) -> Self {
         let runs = store.runs();
-        let current = (!runs.is_empty()).then_some(0);
-        Self {
+        let mut app = Self {
+            pal: Pal::load(),
             accepted: store.accepted(),
             store,
-            theme: Theme::load(),
+            engine: engine_path(),
+            host: hostname(),
+            user: std::env::var("USER").unwrap_or_default(),
             runs,
-            current,
+            current: None,
             tab: Tab::Issues,
             section: None,
-            sections_focus: false,
-            section_sel: 0,
-            sel: 0,
-            marked: BTreeSet::new(),
+            section_cursor: 0,
             search: String::new(),
-            searching: false,
+            marked: BTreeSet::new(),
+            row: 0,
+            row_offset: std::cell::Cell::new(0),
+            sec_offset: std::cell::Cell::new(0),
+            hist_offset: std::cell::Cell::new(0),
+            detail_scroll: 0,
+            focus: Focus::Table,
             screen: Screen::Main,
-            toast: None,
+            modal: None,
+            help: false,
+            toasts: Vec::new(),
             suspend: None,
             quit: false,
+            size: (80, 24),
+            hits: RefCell::new(Hits::default()),
+        };
+        if !app.engine.is_file() {
+            let msg = format!("secaudit engine not found at {}", app.engine.display());
+            app.notify_for(None, &msg, Severity::Error, 30);
         }
+        match app.runs.first().map(|r| r.path.clone()) {
+            Some(p) => app.show_run(&p),
+            None => app.focus = Focus::Welcome(0),
+        }
+        app
     }
 
     pub fn run(&self) -> Option<&Run> {
-        self.current.and_then(|i| self.runs.get(i))
+        let cur = self.current.as_ref()?;
+        self.runs.iter().find(|r| &r.path == cur)
     }
 
-    pub fn notify(&mut self, msg: impl Into<String>) {
-        self.toast = Some((msg.into(), Instant::now()));
+    pub fn notify(&mut self, body: &str, severity: Severity, secs: u64) {
+        self.notify_for(None, body, severity, secs);
     }
 
-    /// Clears an old toast and follows a running scan; true if something changed.
-    pub fn tick(&mut self) -> bool {
-        let mut changed = false;
-        if self
-            .toast
-            .as_ref()
-            .is_some_and(|(_, at)| at.elapsed() > Duration::from_secs(5))
-        {
-            self.toast = None;
-            changed = true;
+    pub fn notify_for(&mut self, title: Option<&str>, body: &str, severity: Severity, secs: u64) {
+        self.toasts.push(Toast {
+            title: title.map(str::to_owned),
+            body: body.to_owned(),
+            severity,
+            until: Instant::now() + Duration::from_secs(secs),
+        });
+    }
+
+    /// `show_run()`.
+    pub fn show_run(&mut self, path: &Path) {
+        if self.current.as_deref() != Some(path) {
+            self.marked.clear();
         }
+        self.current = Some(path.to_path_buf());
+        let sections = self.sections();
+        if self.section.as_ref().is_some_and(|s| !sections.contains(s)) {
+            self.section = None;
+        }
+        self.section_cursor = self
+            .section
+            .as_ref()
+            .and_then(|s| sections.iter().position(|x| x == s))
+            .map_or(0, |i| i + 1);
+        self.focus = Focus::Table;
+        self.clamp_row();
+    }
+
+    /// `show_empty()`.
+    fn show_empty(&mut self) {
+        self.current = None;
+        self.focus = Focus::Welcome(0);
+    }
+
+    /// Sections present in the run, in engine order, then any others.
+    pub fn sections(&self) -> Vec<String> {
+        let Some(run) = self.run() else {
+            return Vec::new();
+        };
+        let present: BTreeSet<&str> = run
+            .items
+            .iter()
+            .map(|i| i.finding.section.as_str())
+            .collect();
+        let order: Vec<&str> = secaudit_core::checks::SECTIONS
+            .iter()
+            .map(|s| s.name)
+            .collect();
+        let mut out: Vec<String> = order
+            .iter()
+            .filter(|s| present.contains(**s))
+            .map(|s| (*s).to_owned())
+            .collect();
+        out.extend(
+            present
+                .iter()
+                .filter(|s| !order.contains(s))
+                .map(|s| (*s).to_owned()),
+        );
+        out
+    }
+
+    /// `visible()`: tab, section and search applied, worst first.
+    pub fn visible(&self) -> Vec<&Item> {
+        let Some(run) = self.run() else {
+            return Vec::new();
+        };
+        let q = self.search.trim().to_lowercase();
+        let mut rows: Vec<&Item> = run
+            .items
+            .iter()
+            .filter(|f| self.tab.holds(f))
+            .filter(|f| {
+                self.section
+                    .as_ref()
+                    .is_none_or(|s| &f.finding.section == s)
+            })
+            .filter(|f| {
+                let fd = &f.finding;
+                q.is_empty()
+                    || format!(
+                        "{}\n{}\n{}\n{}\n{}",
+                        fd.msg, fd.section, fd.detail, fd.fix, fd.hint
+                    )
+                    .to_lowercase()
+                    .contains(&q)
+            })
+            .collect();
+        rows.sort_by_key(|f| (sev_order(f.finding.sev), f.n));
+        rows
+    }
+
+    pub fn selected(&self) -> Option<&Item> {
+        self.visible().get(self.row).copied()
+    }
+
+    fn clamp_row(&mut self) {
+        let n = self.visible().len();
+        self.row = self.row.min(n.saturating_sub(1));
+        self.detail_scroll = 0;
+    }
+
+    /// Keeps the same finding selected after the view changes, as
+    /// `refresh_table()` does; else the same position.
+    fn refresh(&mut self, keep: Option<usize>) {
+        if let Some(n) = keep
+            && let Some(i) = self.visible().iter().position(|f| f.n == n)
+        {
+            self.row = i;
+        }
+        self.clamp_row();
+    }
+
+    fn previous_of(&self, path: &Path) -> Option<&Run> {
+        let i = self.runs.iter().position(|r| r.path == path)?;
+        self.runs.get(i + 1)
+    }
+
+    /// The scan before `run`.
+    pub fn previous_of_run(&self, run: &Run) -> Option<&Run> {
+        self.previous_of(&run.path)
+    }
+
+    pub fn tick(&mut self) -> bool {
+        let before = self.toasts.len();
+        self.toasts.retain(|t| t.until > Instant::now());
+        let mut changed = before != self.toasts.len();
         if let Screen::Scan(scan) = &mut self.screen {
             changed |= scan.poll(&self.store);
+            changed |= scan.running();
             if scan.finished {
                 let dir = scan.dir.clone();
-                self.scan_done(&dir);
-                return true;
+                self.screen = Screen::Main;
+                self.scan_done(Some(&dir));
+                changed = true;
             }
         }
         changed
     }
 
-    /// Sections of the current run, in report order.
-    pub fn sections(&self) -> Vec<String> {
-        let mut out: Vec<String> = Vec::new();
-        for i in self.run().map(|r| r.items.as_slice()).unwrap_or_default() {
-            if !out.contains(&i.finding.section) {
-                out.push(i.finding.section.clone());
-            }
-        }
-        out
+    // -- check_action ---------------------------------------------------
+
+    pub fn can_run_fix(&self) -> bool {
+        !self.marked.is_empty()
+            || self
+                .selected()
+                .is_some_and(|f| !f.finding.fix.is_empty() && !f.accepted)
     }
 
-    /// Findings shown: tab, section filter and search applied, worst first.
-    pub fn visible(&self) -> Vec<&Item> {
-        let Some(run) = self.run() else {
-            return Vec::new();
-        };
-        let q = self.search.to_lowercase();
-        let mut items: Vec<&Item> = run
-            .items
-            .iter()
-            .filter(|i| self.tab.holds(i))
-            .filter(|i| {
-                self.section
-                    .as_ref()
-                    .is_none_or(|s| &i.finding.section == s)
-            })
-            .filter(|i| {
-                q.is_empty()
-                    || [&i.finding.msg, &i.finding.detail, &i.finding.section]
-                        .iter()
-                        .any(|t| t.to_lowercase().contains(&q))
-            })
-            .collect();
-        items.sort_by_key(|i| (sev_order(i.finding.sev), i.n));
-        items
+    pub fn can_accept(&self) -> bool {
+        self.selected().is_some_and(Item::is_issue)
     }
 
-    pub fn selected(&self) -> Option<&Item> {
-        self.visible().get(self.sel).copied()
+    pub fn can_mark(&self) -> bool {
+        self.current.is_some() && self.tab != Tab::Accepted
     }
 
-    fn clamp(&mut self) {
-        let n = self.visible().len();
-        self.sel = self.sel.min(n.saturating_sub(1));
+    pub fn can_copy(&self) -> bool {
+        self.selected()
+            .is_some_and(|f| !f.finding.fix.is_empty() || !f.finding.hint.is_empty())
     }
 
-    pub fn tab_count(&self, tab: Tab) -> usize {
-        self.run()
-            .map_or(0, |r| r.items.iter().filter(|i| tab.holds(i)).count())
-    }
+    // -- keys ---------------------------------------------------------------
 
     pub fn on_key(&mut self, key: KeyEvent) {
-        if key.modifiers.contains(KeyModifiers::CONTROL) && key.code == KeyCode::Char('c') {
+        let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
+        // Textual: ctrl+c copies, and says how to quit.
+        if ctrl && key.code == KeyCode::Char('c') {
+            self.notify("Press ctrl+q to quit the app", Severity::Information, 5);
+            return;
+        }
+        if let Some(modal) = self.modal.take() {
+            self.modal_key(modal, key);
+            return;
+        }
+        if ctrl && key.code == KeyCode::Char('p') {
+            self.modal = Some(Modal::Palette(String::new(), 0));
+            return;
+        }
+        if ctrl && key.code == KeyCode::Char('q') {
             if let Screen::Scan(scan) = &mut self.screen {
                 scan.cancel();
             }
@@ -223,143 +420,251 @@ impl App {
         }
         match std::mem::replace(&mut self.screen, Screen::Main) {
             Screen::Main => self.main_key(key),
-            Screen::Chooser => self.chooser_key(key),
             Screen::Scan(scan) => self.scan_key(scan, key),
-            Screen::Confirm(c) => self.confirm_key(c, key),
-            Screen::History { sel } => self.history_key(sel, key),
-            Screen::Log { lines, scroll } => self.log_key(lines, scroll, key),
-            Screen::Help => {}
+            Screen::History(sel) => self.history_key(sel, key),
+            Screen::Log(lines, scroll, title) => self.log_key(lines, scroll, title, key),
         }
     }
 
     fn main_key(&mut self, key: KeyEvent) {
-        if self.searching {
+        // The search box takes printable keys while focused.
+        if self.focus == Focus::Search {
             match key.code {
-                KeyCode::Esc => {
-                    self.searching = false;
-                    self.search.clear();
-                }
-                KeyCode::Enter => self.searching = false,
+                KeyCode::Enter | KeyCode::Down | KeyCode::Tab => self.focus = Focus::Table,
+                KeyCode::Esc => self.clear_search(),
+                KeyCode::BackTab => self.focus = Focus::Tabs,
                 KeyCode::Backspace => {
                     self.search.pop();
+                    self.refresh(self.selected().map(|f| f.n));
                 }
-                KeyCode::Char(c) => self.search.push(c),
+                KeyCode::Char(c) => {
+                    self.search.push(c);
+                    let keep = self.selected().map(|f| f.n);
+                    self.refresh(keep);
+                }
                 _ => {}
             }
-            self.sel = 0;
             return;
         }
+        if let Focus::Welcome(i) = self.focus {
+            match key.code {
+                KeyCode::Tab | KeyCode::Right => {
+                    self.focus = Focus::Welcome((i + 1) % 3);
+                    return;
+                }
+                KeyCode::BackTab | KeyCode::Left => {
+                    self.focus = Focus::Welcome((i + 2) % 3);
+                    return;
+                }
+                KeyCode::Enter | KeyCode::Char(' ') => {
+                    self.start_scan(["full", "quick", "deep"].get(i).copied().unwrap_or("full"));
+                    return;
+                }
+                _ => {}
+            }
+        }
+        if self.global_key(key) {
+            return;
+        }
+        match self.focus {
+            Focus::Table => self.table_key(key),
+            Focus::Sections => self.sections_key(key),
+            Focus::Tabs => match key.code {
+                KeyCode::Left => self.cycle_tab(false),
+                KeyCode::Right => self.cycle_tab(true),
+                _ => {}
+            },
+            Focus::Detail => match key.code {
+                KeyCode::Down => self.detail_scroll += 1,
+                KeyCode::Up => self.detail_scroll = self.detail_scroll.saturating_sub(1),
+                KeyCode::PageDown => self.detail_scroll += 8,
+                KeyCode::PageUp => self.detail_scroll = self.detail_scroll.saturating_sub(8),
+                KeyCode::Home => self.detail_scroll = 0,
+                _ => {}
+            },
+            _ => {}
+        }
+    }
+
+    /// App bindings (`BINDINGS`), active on the main screen.
+    fn global_key(&mut self, key: KeyEvent) -> bool {
+        let has_run = self.current.is_some();
         match key.code {
             KeyCode::Char('q') => self.quit = true,
-            KeyCode::Char('?') => self.screen = Screen::Help,
-            KeyCode::Char('s') => self.screen = Screen::Chooser,
-            KeyCode::Char('r') => {
+            KeyCode::Char('?') => self.help = !self.help,
+            KeyCode::Char('s') => self.modal = Some(Modal::Chooser(0)),
+            KeyCode::Char('r') if has_run => {
                 let mode = self
                     .run()
                     .map_or("full".to_owned(), |r| r.meta.mode.clone());
                 self.start_scan(&mode);
             }
-            KeyCode::Char('h') => {
-                self.screen = Screen::History {
-                    sel: self.current.unwrap_or(0),
-                }
-            }
-            KeyCode::Char('/') => self.searching = true,
-            KeyCode::Char(c @ '1'..='5') => {
+            KeyCode::Char('h') if !self.runs.is_empty() => self.screen = Screen::History(0),
+            KeyCode::Char('/') if has_run => self.focus = Focus::Search,
+            KeyCode::Char(c @ '1'..='5') if has_run => {
                 let i = usize::from(c as u8 - b'1');
                 if let Some(t) = Tab::ALL.get(i) {
-                    self.tab = *t;
-                    self.sel = 0;
+                    self.set_tab(*t);
                 }
             }
-            KeyCode::Tab => self.sections_focus = !self.sections_focus,
-            KeyCode::Char('[') => self.cycle_section(false),
-            KeyCode::Char(']') => self.cycle_section(true),
-            KeyCode::Down | KeyCode::Char('j') => self.move_by(1),
-            KeyCode::Up | KeyCode::Char('k') => self.move_by(-1),
-            KeyCode::PageDown => self.move_by(10),
-            KeyCode::PageUp => self.move_by(-10),
-            KeyCode::Home | KeyCode::Char('g') => self.sel = 0,
-            KeyCode::End | KeyCode::Char('G') => self.sel = self.visible().len().saturating_sub(1),
-            KeyCode::Enter if self.sections_focus => {
-                let names = self.sections();
-                self.section = self
-                    .section_sel
-                    .checked_sub(1)
-                    .and_then(|i| names.get(i).cloned());
-                self.sections_focus = false;
-                self.sel = 0;
+            KeyCode::Char('x') => self.run_fix(),
+            KeyCode::Char(' ') if self.can_mark() => self.toggle_mark(),
+            KeyCode::Char('*') if self.can_mark() => self.mark_all(),
+            KeyCode::Char('a') if self.can_accept() => self.accept(),
+            KeyCode::Char('c') if self.can_copy() => self.copy(),
+            KeyCode::Char('o') if has_run => self.open_log(),
+            KeyCode::Char('e') if has_run => self.export(),
+            KeyCode::Esc if has_run => self.clear_search(),
+            KeyCode::Tab => self.focus_next(true),
+            KeyCode::BackTab => self.focus_next(false),
+            _ => return false,
+        }
+        true
+    }
+
+    fn focus_next(&mut self, forward: bool) {
+        if self.current.is_none() {
+            return;
+        }
+        let order = [
+            Focus::Sections,
+            Focus::Tabs,
+            Focus::Search,
+            Focus::Table,
+            Focus::Detail,
+        ];
+        let i = order.iter().position(|f| *f == self.focus).unwrap_or(3);
+        let n = order.len();
+        self.focus = order
+            .get(if forward {
+                (i + 1) % n
+            } else {
+                (i + n - 1) % n
+            })
+            .copied()
+            .unwrap_or(Focus::Table);
+    }
+
+    fn table_key(&mut self, key: KeyEvent) {
+        let n = self.visible().len();
+        let page = usize::from(self.size.1 / 3).max(1);
+        let before = self.row;
+        match key.code {
+            KeyCode::Down | KeyCode::Char('j') => {
+                self.row = (self.row + 1).min(n.saturating_sub(1));
             }
-            KeyCode::Char(' ') => self.toggle_mark(),
-            KeyCode::Char('*') => self.mark_all(),
-            KeyCode::Char('x') => self.ask_fix(),
-            KeyCode::Char('a') => self.toggle_accept(),
-            KeyCode::Char('c') => self.copy_fix(),
-            KeyCode::Char('o') => self.open_log(),
-            KeyCode::Char('e') => self.export(),
-            KeyCode::Esc => {
-                self.marked.clear();
-                self.search.clear();
-                self.section = None;
+            KeyCode::Up | KeyCode::Char('k') => self.row = self.row.saturating_sub(1),
+            KeyCode::PageDown => self.row = (self.row + page).min(n.saturating_sub(1)),
+            KeyCode::PageUp => self.row = self.row.saturating_sub(page),
+            KeyCode::Home => self.row = 0,
+            KeyCode::End => self.row = n.saturating_sub(1),
+            // `row_selected`: run the fix, else focus the detail.
+            KeyCode::Enter => {
+                if self.selected().is_some_and(|f| !f.finding.fix.is_empty()) {
+                    self.run_fix();
+                } else {
+                    self.focus = Focus::Detail;
+                }
             }
             _ => {}
         }
-    }
-
-    fn move_by(&mut self, d: isize) {
-        if self.sections_focus {
-            let n = self.sections().len() + 1;
-            self.section_sel = self
-                .section_sel
-                .saturating_add_signed(d)
-                .min(n.saturating_sub(1));
-        } else {
-            let n = self.visible().len();
-            self.sel = self.sel.saturating_add_signed(d).min(n.saturating_sub(1));
+        if self.row != before {
+            self.detail_scroll = 0;
         }
     }
 
-    fn cycle_section(&mut self, forward: bool) {
-        let names = self.sections();
-        let pos = self
-            .section
-            .as_ref()
-            .and_then(|s| names.iter().position(|n| n == s))
-            .map_or(0, |p| p + 1);
-        let n = names.len() + 1;
-        let next = if forward {
-            (pos + 1) % n
-        } else {
-            (pos + n - 1) % n
-        };
-        self.section = next.checked_sub(1).and_then(|i| names.get(i).cloned());
-        self.section_sel = next;
-        self.sel = 0;
+    fn sections_key(&mut self, key: KeyEvent) {
+        let n = self.sections().len() + 1;
+        match key.code {
+            KeyCode::Down => self.section_cursor = (self.section_cursor + 1).min(n - 1),
+            KeyCode::Up => self.section_cursor = self.section_cursor.saturating_sub(1),
+            KeyCode::Enter => {
+                self.focus = Focus::Table;
+                return;
+            }
+            _ => return,
+        }
+        // `section_highlighted`: the filter follows the highlight.
+        let s = self
+            .section_cursor
+            .checked_sub(1)
+            .and_then(|i| self.sections().get(i).cloned());
+        if s != self.section {
+            self.section = s;
+            let keep = self.selected().map(|f| f.n);
+            self.refresh(keep);
+        }
     }
 
+    fn set_tab(&mut self, t: Tab) {
+        if t != self.tab {
+            let keep = self.selected().map(|f| f.n);
+            self.tab = t;
+            self.refresh(keep);
+        }
+    }
+
+    fn cycle_tab(&mut self, forward: bool) {
+        let i = Tab::ALL.iter().position(|t| *t == self.tab).unwrap_or(0);
+        let next = if forward { (i + 1) % 5 } else { (i + 4) % 5 };
+        if let Some(t) = Tab::ALL.get(next) {
+            self.set_tab(*t);
+        }
+    }
+
+    /// `action_clear_search()`.
+    fn clear_search(&mut self) {
+        if !self.marked.is_empty() && self.focus != Focus::Search {
+            self.marked.clear();
+        } else if !self.search.is_empty() {
+            self.search.clear();
+            let keep = self.selected().map(|f| f.n);
+            self.refresh(keep);
+        }
+        self.focus = Focus::Table;
+    }
+
+    /// `action_toggle_mark()`.
     fn toggle_mark(&mut self) {
-        let Some(item) = self.selected() else { return };
-        if item.finding.fix.is_empty() || item.accepted {
-            self.notify("No automatic fix for this finding");
+        let Some(f) = self.selected() else { return };
+        if f.finding.fix.is_empty() || f.accepted {
+            self.notify(
+                "Only findings with an automatic fix can be selected.",
+                Severity::Warning,
+                3,
+            );
             return;
         }
-        let n = item.n;
+        let n = f.n;
         if !self.marked.remove(&n) {
             self.marked.insert(n);
         }
-        self.move_by(1);
+        let len = self.visible().len();
+        self.row = (self.row + 1).min(len.saturating_sub(1));
     }
 
+    /// `action_mark_all()`.
     fn mark_all(&mut self) {
-        let fixable: Vec<usize> = self
+        let applied = self.run().map(Run::applied).unwrap_or_default();
+        let fixable: BTreeSet<usize> = self
             .visible()
             .iter()
-            .filter(|i| i.is_issue() && !i.accepted && !i.finding.fix.is_empty())
-            .map(|i| i.n)
+            .filter(|f| !f.finding.fix.is_empty() && !f.accepted && !applied.contains(&f.n))
+            .map(|f| f.n)
             .collect();
-        let count = fixable.len();
-        self.marked.extend(fixable);
-        self.notify(format!("{count} fixable issues selected"));
+        if fixable.is_empty() {
+            self.notify(
+                "Nothing in this view has an automatic fix.",
+                Severity::Warning,
+                3,
+            );
+            return;
+        }
+        if fixable.is_subset(&self.marked) {
+            self.marked = &self.marked - &fixable;
+        } else {
+            self.marked.extend(fixable);
+        }
     }
 
     fn fix_targets(&self) -> Vec<&Item> {
@@ -370,38 +675,43 @@ impl App {
             return run
                 .items
                 .iter()
-                .filter(|i| self.marked.contains(&i.n))
+                .filter(|f| self.marked.contains(&f.n))
                 .collect();
         }
         self.selected()
-            .filter(|i| !i.finding.fix.is_empty() && !i.accepted)
+            .filter(|f| !f.finding.fix.is_empty() && !f.accepted)
             .into_iter()
             .collect()
     }
 
-    fn ask_fix(&mut self) {
+    /// `action_run_fix()`: the confirm dialog.
+    fn run_fix(&mut self) {
         let targets = self.fix_targets();
         if targets.is_empty() {
-            self.notify("No automatic fix for this finding. See How to address.");
+            self.notify(
+                "No automatic fix for this finding. See How to address.",
+                Severity::Warning,
+                5,
+            );
             return;
         }
         let many = targets.len() > 1;
         let mut code = Vec::new();
-        for (i, t) in targets.iter().enumerate() {
+        for (i, f) in targets.iter().enumerate() {
             if many {
-                code.push(format!("{}. {}", i + 1, t.title()));
+                code.push(format!("{}. {}", i + 1, f.title()));
             }
-            code.push(format!("$ {}", t.finding.fix));
-            if many {
+            code.push(format!("$ {}", f.finding.fix));
+            if many && i + 1 < targets.len() {
                 code.push(String::new());
             }
         }
         let mut note = "Runs in this terminal. You'll see the output, then return here.".to_owned();
-        if targets.iter().any(|t| t.finding.fix.contains("sudo")) {
+        if targets.iter().any(|f| f.finding.fix.contains("sudo")) {
             note.push_str(" sudo asks for your password once.");
         }
         let applied = self.run().map(Run::applied).unwrap_or_default();
-        let again = targets.iter().filter(|t| applied.contains(&t.n)).count();
+        let again = targets.iter().filter(|f| applied.contains(&f.n)).count();
         if again > 0 {
             note = format!(
                 "{again} of these {} already applied in this scan. {note}",
@@ -411,34 +721,39 @@ impl App {
         let title = if many {
             format!("Run {} fixes?", targets.len())
         } else {
-            format!("Run this fix?  {}", targets[0].title())
+            format!(
+                "Run this fix?  {}",
+                targets.first().map_or("", |f| f.title())
+            )
         };
-        let ns = targets.iter().map(|t| t.n).collect();
-        let yes = if many {
+        let ok = if many {
             format!("Run {}", targets.len())
         } else {
             "Run".into()
         };
-        self.screen = Screen::Confirm(Confirm {
+        let ns = targets.iter().map(|f| f.n).collect();
+        self.modal = Some(Modal::Confirm(Confirm {
             title,
             code,
             note,
-            yes,
+            ok,
+            danger: false,
+            on_ok: false,
             action: Action::RunFixes(ns),
-        });
+        }));
     }
 
-    /// Runs fixes in the plain terminal; called by the loop while suspended.
+    /// Runs the fixes in the plain terminal (the loop has left the TUI).
     pub fn run_fixes(&mut self, ns: &[usize]) {
         use std::io::Write;
         let Some(run) = self.run().cloned() else {
             return;
         };
-        let targets: Vec<&Item> = run.items.iter().filter(|i| ns.contains(&i.n)).collect();
+        let targets: Vec<&Item> = run.items.iter().filter(|f| ns.contains(&f.n)).collect();
         let many = targets.len() > 1;
         let mut out = std::io::stdout();
-        let mut ok = Vec::new();
-        for (i, t) in targets.iter().enumerate() {
+        let mut results = Vec::new();
+        for (i, f) in targets.iter().enumerate() {
             let step = if many {
                 format!("[{}/{}] ", i + 1, targets.len())
             } else {
@@ -447,61 +762,81 @@ impl App {
             let _ = writeln!(
                 out,
                 "\n  \x1b[1m{step}{}\x1b[0m\n  \x1b[2m$ {}\x1b[0m",
-                t.title(),
-                t.finding.fix
+                f.title(),
+                f.finding.fix
             );
-            let status = Command::new("bash").arg("-c").arg(&t.finding.fix).status();
-            if status.as_ref().is_ok_and(std::process::ExitStatus::success) {
-                let _ = writeln!(out, "  \x1b[32m✓ done\x1b[0m");
-                ok.push(t.n);
-            } else {
-                let code = status
-                    .ok()
-                    .and_then(|s| s.code())
-                    .map_or("?".into(), |c| c.to_string());
-                let _ = writeln!(out, "  \x1b[31m✗ exit status {code}\x1b[0m");
-            }
+            let rc = Command::new("bash")
+                .arg("-c")
+                .arg(&f.finding.fix)
+                .status()
+                .ok()
+                .and_then(|s| s.code())
+                .unwrap_or(1);
+            let _ = writeln!(
+                out,
+                "{}",
+                if rc == 0 {
+                    "  \x1b[32m✓ done\x1b[0m".to_owned()
+                } else {
+                    format!("  \x1b[31m✗ exit status {rc}\x1b[0m")
+                }
+            );
+            results.push((f.n, rc));
         }
+        let ok_n = results.iter().filter(|(_, rc)| *rc == 0).count();
         let _ = write!(
             out,
-            "\n  {} of {} succeeded.\n  Press Enter to return to Security Audit… ",
-            ok.len(),
-            targets.len()
+            "\n  {ok_n} of {} succeeded.\n  Press Enter to return to Security Audit… ",
+            results.len()
         );
         let _ = out.flush();
         let mut line = String::new();
         let _ = std::io::stdin().read_line(&mut line);
-        for n in &ok {
-            let _ = run.mark_applied(*n);
-            self.marked.remove(n);
+        for (n, rc) in &results {
+            if *rc == 0 {
+                let _ = run.mark_applied(*n);
+                self.marked.remove(n);
+            }
         }
-        let failed = targets.len() - ok.len();
+        let failed = results.len() - ok_n;
         if failed > 0 {
-            self.notify(format!(
-                "{failed} fix{} failed; they stay selected.",
-                if failed == 1 { "" } else { "es" }
-            ));
+            self.notify(
+                &format!(
+                    "{failed} fix{} failed; they stay selected.",
+                    if failed == 1 { "" } else { "es" }
+                ),
+                Severity::Error,
+                5,
+            );
         } else {
-            self.notify(format!(
-                "{} fix{} applied. Press r to rescan and confirm.",
-                ok.len(),
+            let title = format!(
+                "{} fix{} applied",
+                results.len(),
                 if many { "es" } else { "" }
-            ));
+            );
+            self.notify_for(
+                Some(&title),
+                "Press r to rescan and confirm the issues are gone.",
+                Severity::Information,
+                5,
+            );
         }
     }
 
-    fn toggle_accept(&mut self) {
-        let Some(item) = self.selected() else { return };
-        if !item.is_issue() {
-            return;
-        }
-        let (n, was_accepted, key) = (item.n, item.accepted, item.accept_key());
-        let (title, section) = (item.title().to_owned(), item.finding.section.clone());
-        let msg = if was_accepted {
+    /// `action_accept()`.
+    fn accept(&mut self) {
+        let Some(f) = self.selected() else { return };
+        let (n, was, key, title, section) = (
+            f.n,
+            f.accepted,
+            f.accept_key(),
+            f.title().to_owned(),
+            f.finding.section.clone(),
+        );
+        let msg = if was {
             self.accepted.remove(&key);
             format!("Moved back to Issues: {title}")
         } else {
-            self.marked.remove(&n);
             self.accepted.insert(
                 key,
                 Accepted {
@@ -510,210 +845,511 @@ impl App {
                     at: now(),
                 },
             );
-            format!("Accepted, no longer scored: {title}. Press a again to undo.")
+            self.marked.remove(&n);
+            format!("Accepted, no longer scored: {title}")
         };
-        if let Err(e) = self.store.save_accepted(&self.accepted) {
-            self.notify(format!("Couldn't save accepted risks: {e}"));
-            return;
-        }
+        let _ = self.store.save_accepted(&self.accepted);
         for r in &mut self.runs {
             r.recount(&self.accepted);
         }
-        self.clamp();
-        self.notify(msg);
+        self.refresh(Some(n));
+        self.notify(
+            &format!("{msg}\nPress a again to undo."),
+            Severity::Information,
+            4,
+        );
     }
 
-    fn copy_fix(&mut self) {
-        let Some(text) = self.selected().map(|i| {
-            if i.finding.fix.is_empty() {
-                i.finding.msg.clone()
-            } else {
-                i.finding.fix.clone()
-            }
-        }) else {
-            return;
-        };
-        self.notify(if copy(&text) {
-            "Copied to clipboard"
+    /// `action_copy()`.
+    fn copy(&mut self) {
+        let Some(f) = self.selected() else { return };
+        let (text, is_fix) = if f.finding.fix.is_empty() {
+            (f.finding.hint.clone(), false)
         } else {
-            "No clipboard tool (wl-copy) found"
-        });
+            (f.finding.fix.clone(), true)
+        };
+        if text.is_empty() {
+            return;
+        }
+        copy_to_clipboard(&text);
+        self.notify(
+            if is_fix {
+                "Fix command copied"
+            } else {
+                "Advice copied"
+            },
+            Severity::Information,
+            5,
+        );
     }
 
     fn open_log(&mut self) {
         let Some(run) = self.run() else { return };
         let text = std::fs::read_to_string(run.path.join("output.txt"))
-            .unwrap_or_else(|_| "No output saved for this scan.".into());
-        self.screen = Screen::Log {
-            lines: text.lines().map(str::to_owned).collect(),
-            scroll: 0,
-        };
+            .unwrap_or_else(|_| "(no output saved for this scan)".into());
+        // Textual's Log splits each line again, which drops empty ones.
+        let lines = strip_ansi(&text)
+            .lines()
+            .filter(|l| !l.is_empty())
+            .map(str::to_owned)
+            .collect();
+        let title = local_time(run.meta.started, "%a %-d %b %H:%M");
+        self.screen = Screen::Log(lines, 0, title);
     }
 
+    /// `action_export()`.
     fn export(&mut self) {
         let Some(run) = self.run() else { return };
         let started = local_time(run.meta.started, "%Y-%m-%d %H:%M");
         match run.export_markdown(&started) {
             Ok(path) => {
-                let shown = path.display().to_string();
-                let copied = copy(&shown);
+                let s = path.display().to_string();
+                copy_to_clipboard(&s);
                 let home = std::env::var("HOME").unwrap_or_default();
                 let shown = if home.is_empty() {
-                    shown
+                    s
                 } else {
-                    shown.replacen(&home, "~", 1)
+                    s.replacen(&home, "~", 1)
                 };
-                self.notify(format!(
-                    "Report saved: {shown}{}",
-                    if copied { " (path copied)" } else { "" }
-                ));
+                self.notify_for(
+                    Some("Report saved"),
+                    &format!("{shown}\nPath copied to clipboard."),
+                    Severity::Information,
+                    8,
+                );
             }
-            Err(e) => self.notify(format!("Couldn't write the report: {e}")),
+            Err(e) => self.notify(&e.to_string(), Severity::Error, 8),
         }
     }
 
-    fn chooser_key(&mut self, key: KeyEvent) {
-        let mode = match key.code {
-            KeyCode::Char('q') => "quick",
-            KeyCode::Char('f') | KeyCode::Enter => "full",
-            KeyCode::Char('d') => "deep",
-            _ => return,
-        };
-        self.start_scan(mode);
-    }
+    // -- scans ----------------------------------------------------------------
 
+    /// `start_scan()`: full and deep scans need sudo first.
     pub fn start_scan(&mut self, mode: &str) {
-        if mode == "quick" {
+        if !self.engine.is_file() {
+            let msg = format!("secaudit engine not found at {}", self.engine.display());
+            self.notify(&msg, Severity::Error, 5);
+            return;
+        }
+        if mode == "quick" || super::scan::sudo_cached() {
             self.launch(mode);
         } else {
             self.suspend = Some(Suspend::Sudo(mode.to_owned()));
         }
     }
 
-    /// Starts the engine; for full and deep, after sudo was confirmed.
     pub fn launch(&mut self, mode: &str) {
-        match Scan::start(&self.store, mode) {
+        match Scan::start(&self.store, &self.engine, mode, &self.host, &self.user) {
             Ok(scan) => self.screen = Screen::Scan(Box::new(scan)),
-            Err(e) => self.notify(format!("Couldn't start the scan: {e}")),
+            Err(e) => self.notify(&e.to_string(), Severity::Error, 5),
         }
     }
 
     fn scan_key(&mut self, mut scan: Box<Scan>, key: KeyEvent) {
-        if key.code == KeyCode::Esc {
-            if scan.failed.is_none() && !scan.finished {
+        match key.code {
+            // `action_cancel`: stop the engine, dismiss with nothing.
+            KeyCode::Esc => {
                 scan.cancel();
-                self.notify("Scan cancelled");
+                self.scan_done(None);
+                return;
             }
-            return;
+            KeyCode::Char('?') => self.help = !self.help,
+            KeyCode::Char('q') => {
+                scan.cancel();
+                self.quit = true;
+            }
+            _ => {}
         }
         self.screen = Screen::Scan(scan);
     }
 
-    fn scan_done(&mut self, dir: &std::path::Path) {
-        self.screen = Screen::Main;
+    /// `scan_done()`.
+    fn scan_done(&mut self, path: Option<&Path>) {
+        let Some(path) = path else {
+            self.notify("Scan cancelled", Severity::Warning, 5);
+            return;
+        };
         self.runs = self.store.runs();
-        self.current = self.runs.iter().position(|r| r.path == dir);
-        self.section = None;
-        self.sel = 0;
-        self.marked.clear();
-        if let Some(run) = self.run() {
-            let c = run.counts();
-            let body = format!(
-                "Score {} ({}) · {} fail · {} warn",
-                c.score(),
-                c.grade(),
-                c.fail,
-                c.warn
-            );
-            let _ = Command::new("notify-send")
-                .args([
-                    "-a",
-                    "secaudit",
-                    "-i",
-                    "security-high-symbolic",
-                    "Security audit finished",
-                    &body,
-                ])
-                .stdout(std::process::Stdio::null())
-                .stderr(std::process::Stdio::null())
-                .spawn();
-            self.notify(format!("Scan finished. {body}"));
+        if !self.runs.iter().any(|r| r.path == path) {
+            return;
         }
+        self.section = None;
+        self.show_run(path);
+        let Some(run) = self.run() else { return };
+        let c = run.counts();
+        let body = format!(
+            "Score {} ({}) · {} fail · {} warn",
+            c.score(),
+            c.grade(),
+            c.fail,
+            c.warn
+        );
+        let sev = if c.fail > 0 {
+            Severity::Error
+        } else {
+            Severity::Information
+        };
+        let _ = Command::new("notify-send")
+            .args([
+                "-a",
+                "secaudit",
+                "-i",
+                "security-high-symbolic",
+                "Security audit finished",
+                &body,
+            ])
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .spawn();
+        self.notify_for(Some("Scan finished"), &body, sev, 5);
     }
 
-    fn confirm_key(&mut self, c: Confirm, key: KeyEvent) {
-        match key.code {
-            KeyCode::Char('y') | KeyCode::Enter => match c.action {
-                Action::RunFixes(ns) => self.suspend = Some(Suspend::Fixes(ns)),
-                Action::DeleteRun(path) => {
-                    let _ = std::fs::remove_dir_all(&path);
-                    self.runs = self.store.runs();
-                    self.current = (!self.runs.is_empty()).then_some(0);
-                    self.screen = Screen::History { sel: 0 };
-                    self.notify("Scan deleted");
-                }
-            },
-            KeyCode::Char('n') | KeyCode::Esc => {
-                if let Action::DeleteRun(_) = c.action {
-                    self.screen = Screen::History {
-                        sel: self.current.unwrap_or(0),
-                    };
-                }
-            }
-            _ => self.screen = Screen::Confirm(c),
-        }
-    }
+    // -- history, log -----------------------------------------------------------
 
     fn history_key(&mut self, mut sel: usize, key: KeyEvent) {
         let n = self.runs.len();
         match key.code {
-            KeyCode::Esc | KeyCode::Char('q') => return,
-            KeyCode::Down | KeyCode::Char('j') => sel = (sel + 1).min(n.saturating_sub(1)),
-            KeyCode::Up | KeyCode::Char('k') => sel = sel.saturating_sub(1),
-            KeyCode::Enter if n > 0 => {
-                self.current = Some(sel);
-                self.sel = 0;
-                self.section = None;
-                self.marked.clear();
+            KeyCode::Esc => {
+                self.history_closed(None);
+                return;
+            }
+            KeyCode::Down => sel = (sel + 1).min(n.saturating_sub(1)),
+            KeyCode::Up => sel = sel.saturating_sub(1),
+            KeyCode::PageDown => sel = (sel + 10).min(n.saturating_sub(1)),
+            KeyCode::PageUp => sel = sel.saturating_sub(10),
+            KeyCode::Home => sel = 0,
+            KeyCode::End => sel = n.saturating_sub(1),
+            KeyCode::Enter => {
+                let p = self.runs.get(sel).map(|r| r.path.clone());
+                self.history_closed(p);
                 return;
             }
             KeyCode::Delete | KeyCode::Char('d') => {
-                if let Some(run) = self.runs.get(sel) {
-                    let when = local_time(run.meta.started, "%a %-d %b %H:%M");
-                    self.screen = Screen::Confirm(Confirm {
-                        title: format!("Delete the scan from {when}?"),
+                if let Some(r) = self.runs.get(sel) {
+                    let when = local_time(r.meta.started, "%a %-d %b %H:%M");
+                    self.modal = Some(Modal::Confirm(Confirm {
+                        title: format!("Delete the {} scan from {when}?", r.meta.mode),
                         code: Vec::new(),
-                        note: "Its findings, output and report are removed. Accepted risks stay."
-                            .into(),
-                        yes: "Delete".into(),
-                        action: Action::DeleteRun(run.path.clone()),
-                    });
+                        note: String::new(),
+                        ok: "Delete".into(),
+                        danger: true,
+                        on_ok: false,
+                        action: Action::DeleteRun(r.path.clone()),
+                    }));
+                }
+            }
+            KeyCode::Char('?') => self.help = !self.help,
+            KeyCode::Char('q') => self.quit = true,
+            _ => {}
+        }
+        self.screen = Screen::History(sel);
+    }
+
+    /// `action_history.opened()`.
+    fn history_closed(&mut self, path: Option<PathBuf>) {
+        self.screen = Screen::Main;
+        self.runs = self.store.runs();
+        if let Some(p) = path
+            && self.runs.iter().any(|r| r.path == p)
+        {
+            self.section = None;
+            self.show_run(&p);
+            return;
+        }
+        if self.runs.is_empty() {
+            self.show_empty();
+        } else if let Some(cur) = self.current.clone() {
+            let p = if cur.exists() {
+                cur
+            } else {
+                self.runs
+                    .first()
+                    .map(|r| r.path.clone())
+                    .unwrap_or_default()
+            };
+            self.show_run(&p);
+        }
+    }
+
+    fn log_key(&mut self, lines: Vec<String>, mut scroll: usize, title: String, key: KeyEvent) {
+        let page = usize::from(self.size.1.saturating_sub(3)).max(1);
+        let max = lines.len().saturating_sub(page);
+        match key.code {
+            KeyCode::Esc | KeyCode::Char('q') => return,
+            KeyCode::Down => scroll += 1,
+            KeyCode::Up => scroll = scroll.saturating_sub(1),
+            KeyCode::PageDown | KeyCode::Char(' ') => scroll += page,
+            KeyCode::PageUp => scroll = scroll.saturating_sub(page),
+            KeyCode::Home => scroll = 0,
+            KeyCode::End => scroll = max,
+            KeyCode::Char('?') => self.help = !self.help,
+            _ => {}
+        }
+        self.screen = Screen::Log(lines, scroll.min(max), title);
+    }
+
+    // -- modals ---------------------------------------------------------------
+
+    fn modal_key(&mut self, modal: Modal, key: KeyEvent) {
+        match modal {
+            Modal::Confirm(mut c) => match key.code {
+                KeyCode::Char('y') => self.confirmed(c),
+                KeyCode::Char('n') | KeyCode::Esc => {}
+                KeyCode::Tab | KeyCode::BackTab | KeyCode::Left | KeyCode::Right => {
+                    c.on_ok = !c.on_ok;
+                    self.modal = Some(Modal::Confirm(c));
+                }
+                KeyCode::Enter | KeyCode::Char(' ') => {
+                    if c.on_ok {
+                        self.confirmed(c);
+                    }
+                }
+                _ => self.modal = Some(Modal::Confirm(c)),
+            },
+            Modal::Chooser(i) => match key.code {
+                KeyCode::Esc => {}
+                KeyCode::Char('f') => self.start_scan("full"),
+                KeyCode::Char('q') => self.start_scan("quick"),
+                KeyCode::Char('d') => self.start_scan("deep"),
+                KeyCode::Down => self.modal = Some(Modal::Chooser((i + 1).min(2))),
+                KeyCode::Up => self.modal = Some(Modal::Chooser(i.saturating_sub(1))),
+                KeyCode::Enter => self.start_scan(CHOOSER.get(i).map_or("full", |m| m.0)),
+                _ => self.modal = Some(Modal::Chooser(i)),
+            },
+            Modal::Palette(mut q, mut i) => {
+                let n = self.commands(&q).len();
+                match key.code {
+                    KeyCode::Esc => return,
+                    KeyCode::Down => i = (i + 1).min(n.saturating_sub(1)),
+                    KeyCode::Up => i = i.saturating_sub(1),
+                    KeyCode::Backspace => {
+                        q.pop();
+                        i = 0;
+                    }
+                    KeyCode::Enter => {
+                        if let Some(cmd) = self.commands(&q).get(i).map(|c| c.0) {
+                            self.run_command(cmd);
+                        }
+                        return;
+                    }
+                    KeyCode::Char(c) => {
+                        q.push(c);
+                        i = 0;
+                    }
+                    _ => {}
+                }
+                self.modal = Some(Modal::Palette(q, i));
+            }
+        }
+    }
+
+    fn confirmed(&mut self, c: Confirm) {
+        match c.action {
+            Action::RunFixes(ns) => self.suspend = Some(Suspend::Fixes(ns)),
+            Action::DeleteRun(path) => {
+                let _ = std::fs::remove_dir_all(&path);
+                self.runs = self.store.runs();
+                self.notify("Scan deleted", Severity::Information, 5);
+                if let Screen::History(sel) = self.screen {
+                    self.screen = Screen::History(sel.min(self.runs.len().saturating_sub(1)));
+                }
+            }
+        }
+    }
+
+    /// The palette's commands matching `query` (subsequence, any case),
+    /// sorted by name: (name, help).
+    pub fn commands(&self, query: &str) -> Vec<(&'static str, &'static str)> {
+        let mut all = vec![
+            (
+                "Deep scan",
+                "Full scan plus package integrity and whole-disk SUID",
+            ),
+            ("Full scan", "Run every check with sudo"),
+            (
+                "Keys",
+                if self.help {
+                    "Hide the keys and widget help panel"
+                } else {
+                    "Show help for the focused widget and a summary of available keys"
+                },
+            ),
+            ("Quick scan", "User-level checks without sudo"),
+            ("Quit", "Quit the application as soon as possible"),
+        ];
+        if !self.runs.is_empty() {
+            all.push(("Scan history", "Past scans, trend and changes"));
+        }
+        if self.current.is_some() {
+            all.push(("Export Markdown report", "Checklist of issues with fixes"));
+            all.push(("Full output", "Raw text output of this scan"));
+        }
+        all.sort_by_key(|c| c.0);
+        let q = query.to_lowercase();
+        all.into_iter()
+            .filter(|(name, _)| {
+                let mut it = name.to_lowercase().chars().collect::<Vec<_>>().into_iter();
+                q.chars().all(|qc| it.any(|c| c == qc))
+            })
+            .collect()
+    }
+
+    fn run_command(&mut self, cmd: &str) {
+        match cmd {
+            "Deep scan" => self.start_scan("deep"),
+            "Full scan" => self.start_scan("full"),
+            "Quick scan" => self.start_scan("quick"),
+            "Keys" => self.help = !self.help,
+            "Quit" => self.quit = true,
+            "Scan history" => self.screen = Screen::History(0),
+            "Export Markdown report" => self.export(),
+            "Full output" => self.open_log(),
+            _ => {}
+        }
+    }
+
+    // -- mouse --------------------------------------------------------------
+
+    pub fn on_mouse(&mut self, m: MouseEvent) {
+        let (x, y) = (m.column, m.row);
+        if !matches!(
+            m.kind,
+            MouseEventKind::Down(MouseButton::Left)
+                | MouseEventKind::ScrollDown
+                | MouseEventKind::ScrollUp
+        ) {
+            return;
+        }
+        let hits = self.hits.borrow().clone();
+        if let MouseEventKind::ScrollDown | MouseEventKind::ScrollUp = m.kind {
+            let down = matches!(m.kind, MouseEventKind::ScrollDown);
+            let code = if down { KeyCode::Down } else { KeyCode::Up };
+            self.on_key(KeyEvent::new(code, KeyModifiers::NONE));
+            return;
+        }
+        for (bx, by, bw, id) in &hits.buttons {
+            if y == *by && x >= *bx && x < bx + bw {
+                self.click_button(id);
+                return;
+            }
+        }
+        if let Some(Modal::Chooser(_)) = self.modal {
+            for (oy, oh, i) in &hits.options {
+                if y >= *oy && y < oy + oh {
+                    self.modal = None;
+                    self.start_scan(CHOOSER.get(*i).map_or("full", |c| c.0));
                     return;
+                }
+            }
+            return;
+        }
+        if self.modal.is_some() {
+            return;
+        }
+        if let Some((hy, hh, first)) = hits.history
+            && y >= hy
+            && y < hy + hh
+            && let Screen::History(_) = self.screen
+        {
+            self.screen = Screen::History(
+                (first + usize::from(y - hy)).min(self.runs.len().saturating_sub(1)),
+            );
+            return;
+        }
+        for (i, (tx0, tx1, ty)) in hits.tabs.iter().enumerate() {
+            if y == *ty && x >= *tx0 && x < *tx1 {
+                if let Some(t) = Tab::ALL.get(i) {
+                    self.set_tab(*t);
+                }
+                self.focus = Focus::Tabs;
+                return;
+            }
+        }
+        if let Some((sx, sy, sw)) = hits.search
+            && y >= sy
+            && y < sy + 3
+            && x >= sx
+            && x < sx + sw
+        {
+            self.focus = Focus::Search;
+            return;
+        }
+        if let Some((tx, ty, th, first)) = hits.table
+            && y >= ty
+            && y < ty + th
+            && x >= tx
+        {
+            let n = self.visible().len();
+            self.row = (first + usize::from(y - ty)).min(n.saturating_sub(1));
+            self.detail_scroll = 0;
+            self.focus = Focus::Table;
+            return;
+        }
+        if let Some((sx, sy, sh, first)) = hits.sections
+            && y >= sy
+            && y < sy + sh
+            && x >= sx
+        {
+            self.focus = Focus::Sections;
+            self.section_cursor = (first + usize::from(y - sy)).min(self.sections().len());
+            self.sections_key(KeyEvent::new(KeyCode::Null, KeyModifiers::NONE));
+            let s = self
+                .section_cursor
+                .checked_sub(1)
+                .and_then(|i| self.sections().get(i).cloned());
+            if s != self.section {
+                self.section = s;
+                self.clamp_row();
+            }
+        }
+    }
+
+    fn click_button(&mut self, id: &str) {
+        match id {
+            "btn-full" => self.start_scan("full"),
+            "btn-quick" => self.start_scan("quick"),
+            "btn-deep" => self.start_scan("deep"),
+            "btn-runfix" => self.run_fix(),
+            "btn-copy" => self.copy(),
+            "btn-accept" => self.accept(),
+            "yes" | "no" => {
+                if let Some(Modal::Confirm(c)) = self.modal.take()
+                    && id == "yes"
+                {
+                    self.confirmed(c);
                 }
             }
             _ => {}
         }
-        self.screen = Screen::History { sel };
-    }
-
-    fn log_key(&mut self, lines: Vec<String>, mut scroll: usize, key: KeyEvent) {
-        match key.code {
-            KeyCode::Esc | KeyCode::Char('q') => return,
-            KeyCode::Down | KeyCode::Char('j') => scroll += 1,
-            KeyCode::Up | KeyCode::Char('k') => scroll = scroll.saturating_sub(1),
-            KeyCode::PageDown | KeyCode::Char(' ') => scroll += 20,
-            KeyCode::PageUp => scroll = scroll.saturating_sub(20),
-            _ => {}
-        }
-        scroll = scroll.min(lines.len().saturating_sub(1));
-        self.screen = Screen::Log { lines, scroll };
     }
 }
 
-/// Copies to the Wayland clipboard; false if `wl-copy` isn't there.
-fn copy(text: &str) -> bool {
+/// `ScanChooser.MODES`.
+pub const CHOOSER: [(&str, &str, &str, &str); 3] = [
+    (
+        "full",
+        "Full scan",
+        "f",
+        "sudo · every check · about 20 seconds",
+    ),
+    (
+        "quick",
+        "Quick scan",
+        "q",
+        "no sudo · skips root-only checks · about 10 seconds",
+    ),
+    (
+        "deep",
+        "Deep scan",
+        "d",
+        "sudo · adds package integrity and whole-disk SUID · several minutes",
+    ),
+];
+
+/// `copy_to_clipboard()`: wl-copy, else OSC 52.
+fn copy_to_clipboard(text: &str) {
     use std::io::Write;
-    Command::new("wl-copy")
+    let piped = Command::new("wl-copy")
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
@@ -723,80 +1359,59 @@ fn copy(text: &str) -> bool {
             c.stdin.take()?.write_all(text.as_bytes()).ok()?;
             c.wait().ok()
         })
-        .is_some_and(|s| s.success())
-}
-
-/// The local UTC offset in seconds, asked of `date` once.
-// ponytail: one offset per session; a DST change mid-session shifts times by an hour until restart.
-fn utc_offset() -> i64 {
-    static OFFSET: std::sync::OnceLock<i64> = std::sync::OnceLock::new();
-    *OFFSET.get_or_init(|| {
-        let z = Command::new("date")
-            .arg("+%z")
-            .output()
-            .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_owned());
-        let z = z.unwrap_or_default();
-        let sign = if z.starts_with('-') { -1 } else { 1 };
-        let digits = z.trim_start_matches(['+', '-']);
-        let h: i64 = digits.get(..2).and_then(|v| v.parse().ok()).unwrap_or(0);
-        let m: i64 = digits.get(2..4).and_then(|v| v.parse().ok()).unwrap_or(0);
-        sign * (h * 3600 + m * 60)
-    })
-}
-
-const WD: [&str; 7] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MON: [&str; 12] = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-];
-
-/// Formats epoch seconds in local time. Supports `%Y %m %d %-d %H %M %a %b`.
-pub fn local_time(epoch: u64, fmt: &str) -> String {
-    let t = i64::try_from(epoch).unwrap_or(0) + utc_offset();
-    let days = t.div_euclid(86_400);
-    let secs = t.rem_euclid(86_400);
-    let (y, mo, d) = civil(days);
-    let wday = (days + 4).rem_euclid(7); // 1970-01-01 was a Thursday
-    let idx = |v: i64| usize::try_from(v).unwrap_or(0);
-    fmt.replace("%Y", &y.to_string())
-        .replace("%m", &format!("{mo:02}"))
-        .replace("%-d", &d.to_string())
-        .replace("%d", &format!("{d:02}"))
-        .replace("%H", &format!("{:02}", secs / 3600))
-        .replace("%M", &format!("{:02}", secs % 3600 / 60))
-        .replace("%a", WD.get(idx(wday)).unwrap_or(&""))
-        .replace("%b", MON.get(idx(mo - 1)).unwrap_or(&""))
-}
-
-/// (year, month, day) from days since 1970-01-01 (Howard Hinnant's algorithm).
-fn civil(days: i64) -> (i64, i64, i64) {
-    let z = days + 719_468;
-    let era = z.div_euclid(146_097);
-    let doe = z.rem_euclid(146_097);
-    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-    let mp = (5 * doy + 2) / 153;
-    let d = doy - (153 * mp + 2) / 5 + 1;
-    let m = if mp < 10 { mp + 3 } else { mp - 9 };
-    (yoe + era * 400 + i64::from(m <= 2), m, d)
-}
-
-/// "5m ago" style.
-pub fn ago(epoch: u64) -> String {
-    let s = now().saturating_sub(epoch);
-    match s {
-        0..60 => "just now".into(),
-        60..3600 => format!("{}m ago", s / 60),
-        3600..86_400 => format!("{}h ago", s / 3600),
-        _ => format!("{}d ago", s / 86_400),
+        .is_some_and(|s| s.success());
+    if !piped {
+        let b64 = base64(text.as_bytes());
+        let _ = write!(std::io::stdout(), "\x1b]52;c;{b64}\x07");
     }
+}
+
+fn base64(data: &[u8]) -> String {
+    const T: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut out = String::new();
+    for chunk in data.chunks(3) {
+        let b = [
+            chunk.first().copied().unwrap_or(0),
+            chunk.get(1).copied().unwrap_or(0),
+            chunk.get(2).copied().unwrap_or(0),
+        ];
+        let n = (u32::from(b[0]) << 16) | (u32::from(b[1]) << 8) | u32::from(b[2]);
+        for i in 0..4 {
+            if i <= chunk.len() {
+                out.push(char::from(
+                    *T.get(((n >> (18 - 6 * i)) & 63) as usize).unwrap_or(&b'='),
+                ));
+            } else {
+                out.push('=');
+            }
+        }
+    }
+    out
+}
+
+/// Removes ANSI colour codes, as the log screen does.
+pub fn strip_ansi(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut chars = s.chars();
+    while let Some(c) = chars.next() {
+        if c == '\x1b' {
+            for c in chars.by_ref() {
+                if c.is_ascii_alphabetic() {
+                    break;
+                }
+            }
+        } else {
+            out.push(c);
+        }
+    }
+    out
 }
 
 #[cfg(test)]
 mod tests {
     #[test]
-    fn civil_dates() {
-        assert_eq!(super::civil(0), (1970, 1, 1));
-        assert_eq!(super::civil(20_371), (2025, 10, 10));
-        assert_eq!(super::civil(11_016), (2000, 2, 29));
+    fn base64_matches_rfc() {
+        assert_eq!(super::base64(b"hi"), "aGk=");
+        assert_eq!(super::base64(b"abc"), "YWJj");
     }
 }

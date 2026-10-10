@@ -13,7 +13,7 @@ use secaudit_core::audit::{self, Ctx, Progress};
 use secaudit_core::checks::SECTIONS;
 use secaudit_core::{Finding, Severity};
 
-mod tui;
+use secaudit::tui;
 
 /// Read-only security audit. Never modifies the system. Run with sudo for
 /// full coverage (shadow, sudoers, root-owned configs).

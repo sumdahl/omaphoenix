@@ -1,16 +1,17 @@
-//! A scan in progress: the engine (this same binary) as a child process,
-//! writing `findings.jsonl` into a new run directory while its report lines
-//! stream back for live progress. Full and deep scans run under `sudo -n`,
-//! after the TUI has made sure sudo has the password cached.
+//! A scan in progress, as `ScanScreen`: the engine (`secaudit`, or
+//! `$SECAUDIT_ENGINE`) as a child process writing `findings.jsonl` into a new
+//! run directory while its report lines stream back for live progress. Full
+//! and deep scans run under `sudo -n`, after the TUI made sure sudo has the
+//! password cached.
 
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 use std::os::unix::process::CommandExt;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::sync::mpsc::{self, Receiver};
 use std::thread;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use secaudit_core::checks::SECTIONS;
 use secaudit_core::store::{Meta, Store, now};
@@ -42,14 +43,24 @@ pub enum RowState {
     Done,
 }
 
+/// A line of the live findings log.
+pub enum LogLine {
+    /// fail?, section, message.
+    Finding(bool, String, String),
+    /// The failure reason, in red.
+    Failure(String),
+}
+
 pub struct Scan {
     pub mode: String,
     pub dir: PathBuf,
     pub meta: Meta,
     pub started: Instant,
     pub rows: Vec<Row>,
-    pub log: Vec<(bool, String)>,
+    pub log: Vec<LogLine>,
     pub failed: Option<String>,
+    /// When the engine finished; the screen shows "Finished in" for 0.6 s.
+    pub done_at: Option<Instant>,
     pub finished: bool,
     child: Child,
     sudo: bool,
@@ -58,11 +69,13 @@ pub struct Scan {
 
 impl Scan {
     /// Starts the engine for `mode` (`quick`, `full`, `deep`).
-    pub fn start(store: &Store, mode: &str) -> std::io::Result<Self> {
-        let host = std::fs::read_to_string("/etc/hostname")
-            .unwrap_or_default()
-            .trim()
-            .to_owned();
+    pub fn start(
+        store: &Store,
+        engine: &Path,
+        mode: &str,
+        host: &str,
+        user: &str,
+    ) -> std::io::Result<Self> {
         let kernel = std::fs::read_to_string("/proc/sys/kernel/osrelease")
             .unwrap_or_default()
             .trim()
@@ -70,17 +83,17 @@ impl Scan {
         let meta = Meta {
             mode: mode.to_owned(),
             started: now(),
-            host,
-            user: std::env::var("USER").unwrap_or_default(),
+            host: host.to_owned(),
+            user: user.to_owned(),
             kernel,
             finished: None,
         };
-        let stamp = stamp();
-        let dir = store.begin(&stamp, &meta)?;
+        let dir = store.begin(&stamp(), &meta)?;
         let sudo = mode != "quick";
-        let (child, events) = spawn_engine(&dir, mode, sudo)?;
+        let (child, events) = spawn_engine(engine, &dir, mode, sudo)?;
         let rows = SECTIONS
             .iter()
+            .filter(|s| s.name != "Summary")
             .map(|s| Row {
                 name: s.name,
                 ..Row::default()
@@ -94,11 +107,17 @@ impl Scan {
             rows,
             log: Vec::new(),
             failed: None,
+            done_at: None,
             finished: false,
             child,
             sudo,
             events,
         })
+    }
+
+    /// Engine still running.
+    pub fn running(&self) -> bool {
+        self.failed.is_none() && self.done_at.is_none()
     }
 
     /// Applies engine events; returns true when something changed.
@@ -124,38 +143,49 @@ impl Scan {
                         } else {
                             r.warn += 1;
                         }
-                        self.log
-                            .push((fail, format!("{}: {}", r.name, msg.trim_end_matches(':'))));
+                        self.log.push(LogLine::Finding(
+                            fail,
+                            r.name.to_owned(),
+                            msg.trim_end_matches(':').to_owned(),
+                        ));
                     }
                 }
                 Event::Exited => self.exited(store),
             }
         }
+        if self
+            .done_at
+            .is_some_and(|t| t.elapsed() >= Duration::from_millis(600))
+            && !self.finished
+        {
+            self.finished = true;
+            changed = true;
+        }
         changed
     }
 
     fn exited(&mut self, store: &Store) {
-        let _ = self.child.wait();
+        let status = self.child.wait().ok().and_then(|s| s.code());
         let findings = self.dir.join("findings.jsonl");
         if std::fs::metadata(&findings).map_or(0, |m| m.len()) == 0 {
             let out = std::fs::read_to_string(self.dir.join("output.txt")).unwrap_or_default();
-            let tail: Vec<&str> = out
-                .lines()
-                .rev()
-                .take(3)
-                .collect::<Vec<_>>()
-                .into_iter()
-                .rev()
-                .collect();
+            let lines: Vec<&str> = out.trim().lines().collect();
+            let tail = lines
+                .get(lines.len().saturating_sub(3)..)
+                .unwrap_or_default()
+                .join("\n");
             let mut reason = if tail.is_empty() {
-                "the engine produced no findings".to_owned()
+                format!("exit status {}", status.unwrap_or(-1))
             } else {
-                tail.join("\n")
+                tail
             };
             if reason.contains("password is required") {
-                reason.push_str("\nsudo did not keep your password for this terminal. Start the scan again; if it keeps happening, run 'sudo -v' first.");
+                reason.push_str(
+                    "\nsudo did not keep your password for this terminal. Press escape and start the scan again; if it keeps happening, run 'sudo -v' in this terminal first.",
+                );
             }
             let _ = std::fs::remove_dir_all(&self.dir);
+            self.log.push(LogLine::Failure(reason.clone()));
             self.failed = Some(reason);
             return;
         }
@@ -163,17 +193,19 @@ impl Scan {
             r.state = RowState::Done;
         }
         let _ = store.finish(&self.dir, &mut self.meta);
-        self.finished = true;
+        self.done_at = Some(Instant::now());
     }
 
     /// Stops the engine and removes the partial run.
     pub fn cancel(&mut self) {
-        let pid = self.child.id().to_string();
-        // Quick scans own a process group; sudo relays SIGTERM to the root engine.
-        let target = if self.sudo { pid } else { format!("-{pid}") };
-        let _ = Command::new("kill").args(["-TERM", "--", &target]).status();
-        let _ = self.child.wait();
-        let _ = std::fs::remove_dir_all(&self.dir);
+        if self.running() {
+            let pid = self.child.id().to_string();
+            // Quick scans own a process group; sudo relays SIGTERM to the root engine.
+            let target = if self.sudo { pid } else { format!("-{pid}") };
+            let _ = Command::new("kill").args(["-TERM", "--", &target]).status();
+            let _ = self.child.wait();
+            let _ = std::fs::remove_dir_all(&self.dir);
+        }
     }
 
     /// Sections finished, for the progress bar.
@@ -188,24 +220,22 @@ impl Scan {
 /// Starts the engine writing into `dir`, and a reader thread that saves its
 /// output to `output.txt` and turns report lines into events.
 fn spawn_engine(
-    dir: &std::path::Path,
+    exe: &Path,
+    dir: &Path,
     mode: &str,
     sudo: bool,
 ) -> std::io::Result<(Child, Receiver<Event>)> {
-    let exe = std::env::current_exe()?;
     let mut cmd = if sudo {
         let mut c = Command::new("sudo");
-        c.arg("-n").arg(&exe);
+        c.arg("-n").arg(exe);
         c
     } else {
-        let mut c = Command::new(&exe);
+        let mut c = Command::new(exe);
         // Own process group, so cancel stops the whole tree.
         c.process_group(0);
         c
     };
-    cmd.arg("--no-color")
-        .arg("--json")
-        .arg(dir.join("findings.jsonl"));
+    cmd.arg("--json").arg(dir.join("findings.jsonl"));
     if mode == "deep" {
         cmd.arg("--deep");
     }
@@ -282,13 +312,7 @@ fn stamp() -> String {
 /// Makes sure sudo has a cached password, asking in the plain terminal if
 /// needed. The caller has already left the TUI screen.
 pub fn ensure_sudo(mode: &str) -> bool {
-    if Command::new("sudo")
-        .args(["-n", "true"])
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-        .is_ok_and(|s| s.success())
-    {
+    if sudo_cached() {
         return true;
     }
     let mut out = std::io::stdout();
@@ -303,6 +327,16 @@ pub fn ensure_sudo(mode: &str) -> bool {
     );
     Command::new("sudo")
         .arg("-v")
+        .status()
+        .is_ok_and(|s| s.success())
+}
+
+/// `sudo -n true` succeeds: the password is cached.
+pub fn sudo_cached() -> bool {
+    Command::new("sudo")
+        .args(["-n", "true"])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
         .status()
         .is_ok_and(|s| s.success())
 }
