@@ -6,7 +6,7 @@
   <img src="share/icons/secaudit.svg" width="64" alt="Security Audit logo">
 </p>
 
-> **Status: built, not released (2026-10-10).** Both products are ported to Rust and checked against the Go and Bash versions on a real machine. Release, the GUI stack (Q9) and Slint's license (Q10) wait on the owners ([07](docs/07-decisions.md)). The Go OmaPhoenix is finished and waits on its freeze gate (G1–G7).
+> **Status: release candidate `v0.1.0-rc.2` (2026-10-10).** Both products are ported to Rust and checked against the Go and Bash versions on a real machine. Every open question is now decided (ADR-0019 to 0023): Slint for the desktop, the repo stays private, handover after the migration. The Go OmaPhoenix is finished and waits on its freeze gate (G1–G7).
 >
 > **Decided:**
 > - The integration is built **directly in Rust** (ADR-0011).
@@ -74,6 +74,7 @@ secaudit-ui                                       # Security Audit menus (gum po
 | 10 | [docs/10-secaudit-port-notes.md](docs/10-secaudit-port-notes.md) | Security Audit port: parity method, ids per section, Bash quirks S1–S7 (proposals for Manish) |
 | 11 | [docs/11-omaphoenix-port-notes.md](docs/11-omaphoenix-port-notes.md) | OmaPhoenix port: parity method and results, deliberate differences from Go |
 | 12 | [docs/12-secaudit-handover.md](docs/12-secaudit-handover.md) | Handing Security Audit to Manish: what moves, how, what's left |
+| 13 | [docs/13-migration.md](docs/13-migration.md) | Moving from the Go and Bash/Python versions: what carries over, what changes, going back |
 | — | [RUST.md](RUST.md) | **Engineering standards for the Rust codebase:** safe, idiomatic, modern; lints, errors, testing, deps, release |
 | — | [DESIGN.md](DESIGN.md) | **Single source of truth for UI/UX:** feel, voice, theme tokens from Omarchy, spring physics, keymap, consent patterns, definition of done |
 | — | [AGENTS.md](AGENTS.md) | Rules for AI agents working on this project |

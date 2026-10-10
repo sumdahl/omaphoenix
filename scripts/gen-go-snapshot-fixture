@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Writes tests/fixtures/go/snapshot.bundle: a snapshot repo made by the Go
+# OmaPhoenix (format 1) from a FAKE home with a FAKE key, its vault sealed
+# with a throwaway passphrase. The Rust test go_snapshot.rs restores it, so
+# old snapshots keep restoring after the cutover (P4.5).
+#
+# Usage: scripts/gen-go-snapshot-fixture [path/to/go/omaphoenix/checkout]
+set -euo pipefail
+
+go_src=${1:-$HOME/personal/omaphoenix}
+root=$(cd "$(dirname "$0")/.." && pwd)
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+
+(cd "$go_src" && go build -o "$work/go" ./cmd/omaphoenix)
+fake=$work/home
+mkdir -p "$fake/.ssh" "$fake/.config/hypr" "$fake/.config/git"
+printf -- '-----BEGIN OPENSSH PRIVATE KEY-----\nFAKE-NOT-A-REAL-KEY\n-----END OPENSSH PRIVATE KEY-----\n' >"$fake/.ssh/id_fake"
+chmod 600 "$fake/.ssh/id_fake"
+echo 'ssh-ed25519 AAAAFAKE fake' >"$fake/.ssh/id_fake.pub"
+echo 'bind = SUPER, Q, exec, kitty' >"$fake/.config/hypr/bindings.conf"
+printf '[user]\n\tname = Fixture\n' >"$fake/.config/git/config"
+
+as() { HOME=$fake XDG_STATE_HOME=$fake/.local/state XDG_CONFIG_HOME=$fake/.config XDG_DATA_HOME=$fake/.local/share "$@"; }
+export OMAPHOENIX_REPO=$work/repo OMAPHOENIX_PASSPHRASE=fixture-passphrase-not-secret
+as "$work/go" init >/dev/null
+as "$work/go" secrets init >/dev/null 2>&1
+# Only the fake home: nothing from this machine's packages, /etc or bins.
+printf 'config:*\nsecret:.ssh/*\n' >"$work/repo/selection.conf"
+as "$work/go" snapshot >/dev/null 2>&1
+if grep -rq 'FAKE-NOT-A-REAL-KEY' --exclude-dir=.git "$work/repo"; then echo "plaintext key in repo" >&2; exit 1; fi
+leak=$(cd "$work/repo" && git ls-files | grep -Ev '^(manifest\.json|selection\.conf|secrets/.*|files/(config|secret-plain)/.*|[a-z-]+\.(json|txt)|packages/.*)$' || true)
+[[ -z $leak ]] || { echo "unexpected files in the fixture:" >&2; echo "$leak" >&2; exit 1; }
+git -C "$work/repo" bundle create "$root/tests/fixtures/go/snapshot.bundle" --all 2>/dev/null
+echo "wrote tests/fixtures/go/snapshot.bundle ($(git -C "$go_src" rev-parse --short HEAD))"

@@ -22,3 +22,8 @@ One file per decision. Records are never edited after acceptance, only **superse
 | [0016](0016-finding-contract-v1-adopted.md) | Finding contract v1 adopted as proposed | Accepted |
 | [0017](0017-memory-budgets-are-binding.md) | Memory budgets are binding | Accepted |
 | [0018](0018-one-engine-crate.md) | One engine crate, modules per Go package | Accepted |
+| [0019](0019-the-desktop-stack-is-slint.md) | The desktop stack is Slint (memory-gated) | Accepted |
+| [0020](0020-slint-under-its-royalty-free-license.md) | Slint under its Royalty-free license | Accepted |
+| [0021](0021-gate-excludes-failures-and-warns-on-warnings.md) | The gate excludes failures and warns on warnings | Accepted |
+| [0022](0022-the-repo-stays-private.md) | The repo stays private | Accepted |
+| [0023](0023-handover-after-the-migration.md) | Handover after the migration is finished | Accepted |

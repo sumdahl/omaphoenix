@@ -55,3 +55,14 @@ module_name_repetitions = "allow"
 lto = "thin"
 codegen-units = 1
 strip = true
+
+# age's passphrase stretching (scrypt) takes ~20 s unoptimised; tests and
+# debug runs that open a vault need it fast.
+[profile.dev.package.scrypt]
+opt-level = 3
+[profile.dev.package.salsa20]
+opt-level = 3
+[profile.dev.package.pbkdf2]
+opt-level = 3
+[profile.dev.package.sha2]
+opt-level = 3
