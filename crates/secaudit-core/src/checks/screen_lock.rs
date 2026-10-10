@@ -98,9 +98,7 @@ fn omarchy_shell(ctx: &Ctx, r: &mut Report, conf: &std::path::Path) {
     }
 }
 
-/// The lock listener's timeout, exactly as Bash's awk reads it: the third
-/// field of the last line containing `timeout` before an `on-timeout … lock`
-/// line, which is that line itself (docs/10, S7).
+/// The lock listener's timeout, read exactly as Bash's awk does (docs/10, S7).
 fn hypridle_timeout(conf: &str) -> Option<String> {
     let mut in_listener = false;
     let mut t = String::new();

@@ -1,5 +1,4 @@
-//! "Rootkit & malware indicators": modules hidden from lsmod, PIDs hidden
-//! from ps, processes running deleted binaries, executables in temp dirs.
+//! "Rootkit & malware indicators": hidden modules and PIDs, deleted binaries, temp executables.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
