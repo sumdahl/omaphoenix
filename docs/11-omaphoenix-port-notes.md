@@ -25,6 +25,9 @@ How the Rust port of the Go OmaPhoenix is checked, where it deliberately differs
 | Undo journal | kept across a no-op restore since Go 2a0345a (K2) | same | was a Go bug, now fixed in both |
 | `notified.json` time | RFC 3339 string | Unix seconds; an old file re-notifies once | no date parsing without a dependency |
 | Audit before backup | none | gate on by default (docs/04); `OMAPHOENIX_AUDIT=off` | the joint product |
+| Gate's filesystem walk | n/a | "Filesystem permissions" reused for a day (`$XDG_STATE_HOME/omaphoenix/gate-daily.json`); `reaudit` always fresh | it was ~11 of 17 s CPU in every timer run |
+| Choosing what to back up | `selection.conf` defaults to everything | nothing is decided for the user: the apps open on Backup until a choice is saved; items found later are asked about (`reviewed.txt` in the repo) | the owner wants full control |
+| Timer | `timer on <interval>` | same, plus manual-only / interval choice in both apps; the unit always runs the CLI | the app's toggle pointed the unit at omaphoenix-gui |
 
 ## Found while porting
 - **Memory figures:** the Go "126 MB" peak was `npm ls`, a child process (ADR-0017 correction). Measured on its own, the Rust `snapshot` peaks at 8.7 MB.
