@@ -3,7 +3,7 @@ use std::fs;
 use phx_contract::{Item, Manifest, Rules};
 
 use super::{App, AppError, rfc3339_now};
-use crate::category::{self, Env, write_json};
+use crate::category::{self, Env, read_json, write_json};
 use crate::store::Snapshot;
 use crate::sys;
 
@@ -63,6 +63,7 @@ impl App<'_> {
             }
             fs::rename(e.path(), prev.join(&name))?;
         }
+        let before: Option<Manifest> = read_json(&prev.join("manifest.json")).ok().flatten();
         category::files::set_reuse(Some((self.repo.dir.clone(), prev.clone())));
         let captured = self.capture_into(&rules);
         category::files::set_reuse(None);
@@ -70,7 +71,8 @@ impl App<'_> {
         let m = captured?;
         write_json(&self.repo.dir.join("manifest.json"), &m)?;
         (self.log)("step", "saving the snapshot");
-        if !self.repo.commit(&format!("snapshot {}", rfc3339_now()))? {
+        let message = super::summary::commit_message(&rfc3339_now(), before.as_ref(), &m);
+        if !self.repo.commit(&message)? {
             // Nothing new, but retry a push an earlier run failed.
             if self.repo.unpushed()
                 && let Err(e) = self.repo.push()

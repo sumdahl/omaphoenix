@@ -6,7 +6,7 @@
 | Version | 0.1.0-rc.7 |
 | Found | 2026-10-10, choosing a snapshot to roll back to on the reference laptop |
 | Severity | low: usability; nothing is wrong, but picking a rollback point means guessing |
-| Status | open |
+| Status | fixed in 0.1.0-rc.8; test `phx_core::app::summary::tests::names_what_was_added_and_removed` |
 
 ## What happens
 
@@ -44,7 +44,9 @@ omaphoenix list            # both lines say only "snapshot <time>"
    ```
 
    Put the item names in the body, up to ~20.
-3. Show the subject in `list` and both Timelines, and the body in the preview.
+3. Show the subject in `list` and both Timelines.
+
+Done as above, except the body is not shown in the preview yet. It is in the snapshot repo's history (`git -C ~/.local/share/omaphoenix/repo log`). Add it to the preview when someone needs it.
 
 The first snapshot reads `· first snapshot`. Package version upgrades don't count, since the manifest has names only.
 

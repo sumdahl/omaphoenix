@@ -22,7 +22,12 @@ pub fn run(app: &App<'_>) -> Result<(), String> {
 
 pub fn list(app: &App<'_>) -> Result<(), String> {
     for s in app.repo.list().map_err(|e| e.to_string())? {
-        say(&format!("{}  {}", s.id, s.time));
+        let changes = phx_core::app::changes(&s.subject);
+        if changes.is_empty() {
+            say(&format!("{}  {}", s.id, s.time));
+        } else {
+            say(&format!("{}  {}  {changes}", s.id, s.time));
+        }
     }
     Ok(())
 }

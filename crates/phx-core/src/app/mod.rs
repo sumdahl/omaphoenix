@@ -6,6 +6,7 @@ mod reaudit;
 mod restore;
 mod review;
 mod snapshot;
+mod summary;
 
 use std::fs;
 use std::io::Write;
@@ -19,6 +20,7 @@ use crate::sys;
 
 pub use journal::{Deferred, Journal};
 pub use review::{REVIEWED, key as review_key};
+pub use summary::changes;
 
 /// A failure of a whole operation.
 #[derive(Debug, thiserror::Error)]
