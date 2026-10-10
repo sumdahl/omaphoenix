@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <title>Security Audit</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1f2733"/>
+      <stop offset="1" stop-color="#121820"/>
+    </linearGradient>
+    <linearGradient id="shield" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#74aeff"/>
+      <stop offset="1" stop-color="#2f6fe0"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="url(#bg)"/>
+  <!-- shield -->
+  <path fill="url(#shield)" d="M64 18 L100 31 V60 C100 84 85 101 64 110 C43 101 28 84 28 60 V31 Z"/>
+  <path fill="#ffffff" fill-opacity="0.14" d="M64 18 L100 31 V60 C100 84 85 101 64 110 Z"/>
+  <!-- the app's ◆ mark, and the scan line -->
+  <path fill="#ffffff" d="M64 38 L72 46 L64 54 L56 46 Z"/>
+  <path fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" d="M47 72 L59 84 L82 61"/>
+</svg>

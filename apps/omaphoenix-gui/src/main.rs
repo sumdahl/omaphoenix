@@ -549,6 +549,8 @@ fn set_busy(app: &App, what: &str) {
 )]
 fn main() -> Result<(), slint::PlatformError> {
     let app = App::new()?;
+    // Matches omaphoenix.desktop, so the compositor shows its icon.
+    slint::set_xdg_app_id("omaphoenix")?;
     // Fails only without $HOME; checked once here so ui_engine() can't.
     Engine::from_env(&quiet).map_err(|e| slint::PlatformError::Other(e.to_string()))?;
     if let Some(tokens) = theme_file().and_then(|p| read_tokens(&p)) {

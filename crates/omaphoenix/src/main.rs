@@ -25,6 +25,10 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Cmd {
+    /// Open the terminal app (also what bare `omaphoenix` does on a terminal)
+    Tui,
+    /// Open the desktop app (omaphoenix-gui, installed alongside)
+    Gui,
     /// Create the local snapshot repo, optionally with a private GitHub remote
     Init {
         /// Existing git remote URL for snapshots
@@ -245,6 +249,21 @@ fn report_hwm() {
     }
 }
 
+/// Replaces this process with `omaphoenix-gui` from the same directory.
+fn open_gui() -> Result<(), String> {
+    use std::os::unix::process::CommandExt;
+    let gui = std::env::current_exe()
+        .ok()
+        .and_then(|e| e.parent().map(|d| d.join("omaphoenix-gui")))
+        .filter(|g| g.is_file())
+        .ok_or("the desktop app isn't installed; rerun install.sh and choose it (or use: omaphoenix tui)")?;
+    Err(format!(
+        "{}: {}",
+        gui.display(),
+        std::process::Command::new(&gui).exec()
+    ))
+}
+
 /// Sets a variable for this process and its children.
 fn set_env(key: &str, value: &str) {
     // ponytail: std::env::set_var is unsafe in edition 2024 and unsafe is
@@ -258,6 +277,9 @@ fn set_env(key: &str, value: &str) {
     reason = "one match arm per command, as the Go cobra tree"
 )]
 fn run(cli: Cli) -> Result<(), String> {
+    if matches!(cli.command, Some(Cmd::Gui)) {
+        return open_gui();
+    }
     let ask = || passphrase(false);
     let mut app = App::from_env(&log).map_err(|e| e.to_string())?;
     app.passphrase = Some(&ask);
@@ -270,6 +292,8 @@ fn run(cli: Cli) -> Result<(), String> {
         return tui::run(&app).map_err(|e| e.to_string());
     };
     match cmd {
+        Cmd::Tui => return tui::run(&app).map_err(|e| e.to_string()),
+        Cmd::Gui => return open_gui(),
         Cmd::Init { mut remote, github } => {
             if !github.is_empty() {
                 let url = sys::output(

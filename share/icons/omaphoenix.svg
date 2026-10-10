@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <title>OmaPhoenix</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a2230"/>
+      <stop offset="1" stop-color="#16121a"/>
+    </linearGradient>
+    <linearGradient id="fire" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#e2442f"/>
+      <stop offset="0.5" stop-color="#f38d3c"/>
+      <stop offset="1" stop-color="#ffd27a"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="url(#bg)"/>
+  <!-- restore ring: a snapshot coming back around -->
+  <g fill="#f38d70" fill-opacity="0.4" stroke="#f38d70" stroke-opacity="0.4">
+    <path d="M30 88 A40 40 0 1 1 98 88" fill="none" stroke-width="5" stroke-linecap="round"/>
+    <path d="M105 91 L93 96 L94 83 Z" stroke-width="2" stroke-linejoin="round"/>
+  </g>
+  <!-- the phoenix rising: wings swept up, flame tail -->
+  <g fill="url(#fire)">
+    <path d="M59 62 C50 50 36 40 18 31 C23 44 28 51 34 57 C29 57 25 57 20 56 C28 66 39 71 52 71 Z"/>
+    <path d="M69 62 C78 50 92 40 110 31 C105 44 100 51 94 57 C99 57 103 57 108 56 C100 66 89 71 76 71 Z"/>
+    <path d="M64 40 C70 48 72 60 70 72 C69 80 72 88 77 96 C70 94 66 100 64 109 C62 100 58 94 51 96 C56 88 59 80 58 72 C56 60 58 48 64 40 Z"/>
+    <path d="M64 48 C59 44 57 38 59 32 C60 29 62 26 61 20 C65 23 68 27 69 32 C70 37 68 44 64 48 Z"/>
+  </g>
+</svg>

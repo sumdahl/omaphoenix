@@ -1,5 +1,11 @@
 # OmaPhoenix × Security Audit: integration project
 
+<p>
+  <img src="share/icons/omaphoenix.svg" width="64" alt="OmaPhoenix logo">
+  &nbsp;
+  <img src="share/icons/secaudit.svg" width="64" alt="Security Audit logo">
+</p>
+
 > **Status: built, not released (2026-10-10).** Both products are ported to Rust and checked against the Go and Bash versions on a real machine. Release, the GUI stack (Q9) and Slint's license (Q10) wait on the owners ([07](docs/07-decisions.md)). The Go OmaPhoenix is finished and waits on its freeze gate (G1–G7).
 >
 > **Decided:**
@@ -16,15 +22,22 @@
 
 | Binary | What | Crates |
 |---|---|---|
-| `omaphoenix` | Snapshot and restore an Omarchy setup; every snapshot is audited first, and risky files stay out of it. CLI (the Go version's commands) and a TUI with DESIGN.md's six sections | `phx-core`, `phx-contract`, `secaudit-core` |
-| `secaudit` | Security Audit: the Bash engine's 13 sections, same messages, plus a TUI. Shares scan history with the old Python TUI | `secaudit-core` (→ Manish) |
-| `omaphoenix-gui` | The desktop app (Slint), in `apps/` until Q9/Q10 are decided | `phx-core`, `secaudit-core` |
+| `omaphoenix` | Snapshot and restore an Omarchy setup; every snapshot is audited first, and risky files stay out of it. CLI (the Go version's commands) and the terminal app (`omaphoenix tui`) with DESIGN.md's six sections | `phx-core`, `phx-contract`, `secaudit-core` |
+| `omaphoenix-gui` | The desktop app (Slint), `omaphoenix gui`; optional at install. In `apps/` until Q9/Q10 are decided | `phx-core`, `secaudit-core` |
+| `secaudit` | Security Audit's engine: the Bash engine's 13 sections, same messages | `secaudit-core` (→ Manish) |
+| `secaudit-tui` | Exact port of Manish's Python Textual app: same screens, keys, layout and colours | `secaudit` |
+| `secaudit-ui` | Exact port of Manish's gum/Bash front end, gum built in | `secaudit` |
+
+OmaPhoenix gives a choice of **terminal or desktop app**: both launchers ("OmaPhoenix (Terminal)" and "OmaPhoenix") appear in the app menu, and `omaphoenix tui` / `omaphoenix gui` open them directly.
 
 ```sh
-cargo build --release -p omaphoenix -p secaudit   # target/release/{omaphoenix,secaudit}
-omaphoenix                                        # TUI (or: init, snapshot, list, restore, undo, doctor, secrets, timer)
-secaudit                                          # report (or: secaudit tui)
-(cd apps/omaphoenix-gui && cargo run --release)   # desktop app
+cargo build --release -p omaphoenix -p secaudit   # target/release/{omaphoenix,secaudit,secaudit-tui,secaudit-ui}
+omaphoenix tui                                    # terminal app (bare `omaphoenix` too); or init, snapshot, list, restore, …
+omaphoenix gui                                    # desktop app (needs omaphoenix-gui beside it)
+secaudit                                          # report
+secaudit-tui                                      # Security Audit terminal app (Textual port)
+secaudit-ui                                       # Security Audit menus (gum port)
+(cd apps/omaphoenix-gui && cargo run --release)   # desktop app from source
 ```
 
 **How we know it matches the old versions** (run them yourself):
@@ -32,7 +45,7 @@ secaudit                                          # report (or: secaudit tui)
 - `scripts/omaphoenix-parity`: Go vs Rust snapshot of the real home. Result: identical tree, byte-identical manifest. It also restores across implementations, including each other's encrypted vaults.
 - `scripts/peak-rss`: every path's own memory, against RUST.md §9. All within budget; a snapshot peaks at ~9 MB.
 
-**Install** (once a release exists): `curl -fsSL https://raw.githubusercontent.com/sumdahl/omaphoenix-secaudit/<tag>/install.sh | bash`. It verifies `SHA256SUMS` and installs static binaries.
+**Install** (once a release exists): `curl -fsSL https://raw.githubusercontent.com/sumdahl/omaphoenix-secaudit/<tag>/install.sh | bash`. It verifies `SHA256SUMS`, installs the static terminal binaries, asks whether to add the desktop app, and adds launchers with their icons. Options after `bash -s --`: `--gui`, `--no-gui`, `--sysctl` (Manish's kernel hardening drop-in), `--uninstall`.
 
 ## The two projects
 

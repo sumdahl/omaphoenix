@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=OmaPhoenix
+GenericName=Setup Snapshots
+Comment=Snapshot this Omarchy setup and restore it after a reinstall
+Exec=@BINDIR@/omaphoenix-gui
+Icon=omaphoenix
+StartupWMClass=omaphoenix
+Categories=Utility;Archiving;
+Keywords=backup;restore;snapshot;omarchy;dotfiles;
+Terminal=false

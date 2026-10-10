@@ -29,17 +29,40 @@ jobs:
         with:
           tool: cross
       - run: cross build --locked --release --target ${{ matrix.target }} -p omaphoenix -p secaudit
+      # The terminal apps, plus what install.sh puts beside them: icons,
+      # launcher templates and the sysctl drop-in.
       - run: |
-          mkdir -p dist
+          mkdir -p dist stage
+          cp target/${{ matrix.target }}/release/{omaphoenix,secaudit,secaudit-tui,secaudit-ui} stage/
+          cp -r share extras stage/
           tar -czf dist/omaphoenix_linux_${{ matrix.arch }}.tar.gz \
-            -C target/${{ matrix.target }}/release omaphoenix secaudit
+            -C stage omaphoenix secaudit secaudit-tui secaudit-ui share extras
       - uses: actions/upload-artifact@v4
         with:
           name: dist-${{ matrix.arch }}
           path: dist/*.tar.gz
 
+  # The desktop app (Slint): glibc, amd64. It links fontconfig and loads
+  # Wayland/X11 at run time; install.sh offers it as an option.
+  gui:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libfontconfig1-dev libxkbcommon-dev
+      - uses: dtolnay/rust-toolchain@1.95.0
+      - run: cargo build --locked --release --manifest-path apps/omaphoenix-gui/Cargo.toml
+      - run: |
+          mkdir -p dist
+          tar -czf dist/omaphoenix-gui_linux_amd64.tar.gz -C apps/omaphoenix-gui/target/release omaphoenix-gui
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-gui
+          path: dist/*.tar.gz
+
   release:
-    needs: build
+    needs: [build, gui]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4

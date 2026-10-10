@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=OmaPhoenix (Terminal)
+GenericName=Setup Snapshots
+Comment=Snapshot this Omarchy setup and restore it after a reinstall, in the terminal
+Exec=@LAUNCH@ @BINDIR@/omaphoenix tui
+Icon=omaphoenix
+Categories=Utility;Archiving;
+Keywords=backup;restore;snapshot;omarchy;dotfiles;tui;
+Terminal=@TERMINAL@
