@@ -28,8 +28,8 @@ const FIXED: &[&str] = &[
 /// App state dirs larger than this are history, caches or media, not settings.
 const MAX_STATE_DIR: u64 = 1 << 20;
 
-/// State that must come from the new install itself.
-const STATE_SKIP: &[&str] = &["omarchy", "mise", "nvim", "pnpm", "gh"];
+/// State that must come from the new install itself; `omaphoenix` is this tool's own cache and undo records.
+const STATE_SKIP: &[&str] = &["omarchy", "mise", "nvim", "pnpm", "gh", "omaphoenix"];
 
 const LAUNCHER_DEFAULTS: &[&str] = &["/usr/share/omarchy/applications", "/usr/share/applications"];
 
@@ -111,5 +111,31 @@ impl Category for Local {
             *p = p.replacen(" ~/", " ~/.local/", 1);
         }
         Ok(res)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Local;
+    use crate::category::{Category, Env};
+
+    #[test]
+    fn never_offers_omaphoenix_own_state() {
+        let t = tempfile::tempdir().unwrap_or_else(|e| unreachable!("{e}"));
+        for (dir, file) in [("omaphoenix", "gate-daily.json"), ("myapp", "state.json")] {
+            let d = t.path().join(".local/state").join(dir);
+            std::fs::create_dir_all(&d).unwrap_or_else(|e| unreachable!("{e}"));
+            std::fs::write(d.join(file), "{}").unwrap_or_else(|e| unreachable!("{e}"));
+        }
+        let log = |_: &str, _: &str| {};
+        let env = Env::new(t.path(), &t.path().join("tree"), &log);
+        let ids: Vec<String> = Local
+            .detect(&env)
+            .unwrap_or_default()
+            .into_iter()
+            .map(|i| i.id)
+            .collect();
+        assert!(ids.contains(&"state/myapp".to_owned()), "{ids:?}");
+        assert!(!ids.contains(&"state/omaphoenix".to_owned()), "{ids:?}");
     }
 }

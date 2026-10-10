@@ -9,7 +9,7 @@ Bugs and surprises found while testing or using the products, one file each. A f
 | # | Finding | Product | Severity | Status |
 |---|---|---|---|---|
 | [F-001](F-001-vanished-item-flagged-new.md) | An item that disappeared before you saved is reported as new | OmaPhoenix | low | open |
-| [F-002](F-002-own-state-dir-captured.md) | OmaPhoenix backs up its own state folder | OmaPhoenix | low | open |
+| [F-002](F-002-own-state-dir-captured.md) | OmaPhoenix backs up its own state folder | OmaPhoenix | low | fixed in rc.8 |
 | [F-003](F-003-dry-run-plans-decrypting-identical-keys.md) | A dry run says it would decrypt keys that are already identical | OmaPhoenix | low | fixed in rc.8 |
 | [F-004](F-004-stale-git-lock-after-power-loss.md) | After a power cut during a snapshot, every later snapshot can fail | OmaPhoenix | medium | fixed in rc.8 |
 | [F-005](F-005-item-restore-asks-for-passphrase.md) | Restoring one item asks for the secrets passphrase anyway | OmaPhoenix | medium | fixed in rc.8 |

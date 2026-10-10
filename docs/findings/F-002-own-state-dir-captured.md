@@ -6,7 +6,7 @@
 | Version | 0.1.0-rc.7 |
 | Found | 2026-10-10, the first snapshot after a clean start on the reference laptop |
 | Severity | low: one unwanted item and a false "new item" warning; no data at risk |
-| Status | open |
+| Status | fixed in 0.1.0-rc.8; test `phx_core::category::local::tests::never_offers_omaphoenix_own_state` |
 
 ## What happens
 
