@@ -77,6 +77,10 @@ scripts/peak-rss                                        # memory budgets
 - **Pipe safety:** use `set -o pipefail` before piping any test command, or a failure gets hidden.
 - **GUI screenshots** use a headless Hyprland output, and keys target the test window by pid. Afterwards, always `hyprctl reload` and `hyprctl output remove`.
 
+## Findings
+
+A bug or surprise found while testing or using the products goes in `docs/findings/` (copy `template.md`, add a row to its index): exact message, safe reproduction, cause, workaround, planned fix and its test. When it is fixed, update the status there; don't delete the file.
+
 ## Docs
 
 Short sentences, tables for facts. Update the roadmap status when a task changes state.
