@@ -3147,7 +3147,7 @@ dependencies = [
 
 [[package]]
 name = "omaphoenix"
-version = "0.1.0-rc.2"
+version = "0.1.0-rc.3"
 dependencies = [
  "clap",
  "phx-contract",
@@ -3162,7 +3162,7 @@ dependencies = [
 
 [[package]]
 name = "omaphoenix-desktop"
-version = "0.1.0-rc.2"
+version = "0.1.0-rc.3"
 dependencies = [
  "serde",
  "serde_json",
@@ -3463,7 +3463,7 @@ dependencies = [
 
 [[package]]
 name = "phx-contract"
-version = "0.1.0-rc.2"
+version = "0.1.0-rc.3"
 dependencies = [
  "proptest",
  "serde",
@@ -3473,7 +3473,7 @@ dependencies = [
 
 [[package]]
 name = "phx-core"
-version = "0.1.0-rc.2"
+version = "0.1.0-rc.3"
 dependencies = [
  "age",
  "phx-contract",
@@ -4240,7 +4240,7 @@ dependencies = [
 
 [[package]]
 name = "secaudit"
-version = "0.1.0-rc.2"
+version = "0.1.0-rc.3"
 dependencies = [
  "clap",
  "ratatui",
@@ -4252,7 +4252,7 @@ dependencies = [
 
 [[package]]
 name = "secaudit-core"
-version = "0.1.0-rc.2"
+version = "0.1.0-rc.3"
 dependencies = [
  "regex",
  "serde",
