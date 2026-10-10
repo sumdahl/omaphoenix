@@ -20,8 +20,8 @@ How the Rust port of the Go OmaPhoenix is checked, where it deliberately differs
 |---|---|---|---|
 | `bin`, `etc` ownership | loads `pacman -Qlq` (every owned path) into a map | asks `pacman -Qo` about the candidates only, in batches | RUST.md §9: ask, don't dump |
 | File comparison and secret scan | reads whole files | streams: size first, then 64 KiB chunks; lines capped at 1 MiB | RUST.md §9 |
-| `#` in selection ids | can't be named (Go K1) | escaped as `\#` | fixes K1 |
-| Undo journal | a restore that changes nothing replaces it with an empty one (Go K2) | kept unless the restore changed something | fixes K2 |
+| `#` in selection ids | escaped as `\#` since Go 2a0345a (K1) | same | was a Go bug, now fixed in both |
+| Undo journal | kept across a no-op restore since Go 2a0345a (K2) | same | was a Go bug, now fixed in both |
 | `notified.json` time | RFC 3339 string | Unix seconds; an old file re-notifies once | no date parsing without a dependency |
 | Audit before backup | none | gate on by default (docs/04); `OMAPHOENIX_AUDIT=off` | the joint product |
 

@@ -50,7 +50,10 @@ jobs:
       - run: cd dist && sha256sum *.tar.gz > SHA256SUMS
       # Lets users check a download came from this workflow:
       #   gh attestation verify omaphoenix_linux_amd64.tar.gz -R sumdahl/omaphoenix-secaudit
-      - uses: actions/attest-build-provenance@v2
+      # GitHub offers attestations only on public repos for user accounts
+      # (Q2 decides visibility); SHA256SUMS still guards every download.
+      - if: ${{ !github.event.repository.private }}
+        uses: actions/attest-build-provenance@v2
         with:
           subject-path: dist/*.tar.gz
       - run: gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --generate-notes --verify-tag
