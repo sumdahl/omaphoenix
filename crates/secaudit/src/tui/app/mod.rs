@@ -1,137 +1,30 @@
 //! State and behaviour of `secaudit-tui`, a method-by-method port of the Python `AuditApp`.
 
-mod actions;
 mod ai;
+mod fixes;
 mod history;
 mod main_keys;
 mod modals;
 mod mouse;
+mod output;
+mod scans;
+mod shown_run;
+mod types;
 mod util;
 
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
 use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use secaudit_core::store::{Accepted, Item, Run, Store, sev_name, sev_order};
+use secaudit_core::store::{Accepted, Item, Run, Store, sev_name};
 
-use super::scan::Scan;
 use super::theme::Pal;
-
-/// Columns at which the detail pane moves beside the table.
-pub const WIDE: u16 = 150;
-
-/// Below this the trend box hides and the sidebar shrinks.
-pub const NARROW: u16 = 110;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Tab {
-    Issues,
-    Accepted,
-    Notes,
-    Passed,
-    All,
-}
-
-impl Tab {
-    pub const ALL: [Self; 5] = [
-        Self::Issues,
-        Self::Accepted,
-        Self::Notes,
-        Self::Passed,
-        Self::All,
-    ];
-
-    pub fn holds(self, f: &Item) -> bool {
-        let sev = sev_name(f.finding.sev);
-        match self {
-            Self::Issues => f.is_issue() && !f.accepted,
-            Self::Accepted => f.accepted,
-            Self::Notes => sev == "info" || sev == "skip",
-            Self::Passed => sev == "pass",
-            Self::All => true,
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Focus {
-    Sections,
-    Tabs,
-    Search,
-    Table,
-    Detail,
-    /// The welcome screen's buttons: Full, Quick, Deep.
-    Welcome(usize),
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Severity {
-    Information,
-    Warning,
-    Error,
-}
-
-pub struct Toast {
-    pub title: Option<String>,
-    pub body: String,
-    pub severity: Severity,
-    pub until: Instant,
-}
-
-/// What a confirm dialog does on yes.
-pub enum Action {
-    RunFixes(Vec<usize>),
-    DeleteRun(PathBuf),
-}
-
-pub struct Confirm {
-    pub title: String,
-    pub code: Vec<String>,
-    pub note: String,
-    pub ok: String,
-    pub danger: bool,
-    /// The focused button: false = Cancel (default), true = ok.
-    pub on_ok: bool,
-    pub action: Action,
-}
-
-pub enum Modal {
-    Confirm(Confirm),
-    /// `ScanChooser`, with the highlighted option.
-    Chooser(usize),
-    /// The command palette: query and highlighted row.
-    Palette(String, usize),
-    AiSetup(super::ai_screen::AiSetup),
-}
-
-pub enum Screen {
-    Main,
-    Scan(Box<Scan>),
-    /// `HistoryScreen` with its cursor row.
-    History(usize),
-    /// `LogScreen`: lines, scroll offset, title date.
-    Log(Vec<String>, usize, String),
-    Ai(Box<super::ai_screen::AiView>),
-}
-
-pub enum Suspend {
-    Sudo(String),
-    Fixes(Vec<usize>),
-}
-
-/// Clickable regions recorded while drawing.
-#[derive(Default, Clone)]
-pub struct Hits {
-    pub tabs: Vec<(u16, u16, u16)>,
-    pub table: Option<(u16, u16, u16, usize)>,
-    pub sections: Option<(u16, u16, u16, usize)>,
-    pub search: Option<(u16, u16, u16)>,
-    pub buttons: Vec<(u16, u16, u16, &'static str)>,
-    pub options: Vec<(u16, u16, usize)>,
-    pub history: Option<(u16, u16, usize)>,
-}
+pub use types::{
+    Action, CHOOSER, Confirm, Focus, Hits, Modal, NARROW, Screen, Severity, Suspend, Tab, Toast,
+    WIDE,
+};
 
 pub struct App {
     pub pal: Pal,
@@ -225,10 +118,6 @@ impl App {
         }
         app
     }
-    pub fn run(&self) -> Option<&Run> {
-        let cur = self.current.as_ref()?;
-        self.runs.iter().find(|r| &r.path == cur)
-    }
 
     pub fn notify(&mut self, body: &str, severity: Severity, secs: u64) {
         self.notify_for(None, body, severity, secs);
@@ -241,116 +130,6 @@ impl App {
             severity,
             until: Instant::now() + Duration::from_secs(secs),
         });
-    }
-
-    pub fn show_run(&mut self, path: &Path) {
-        if self.current.as_deref() != Some(path) {
-            self.marked.clear();
-        }
-        self.current = Some(path.to_path_buf());
-        let sections = self.sections();
-        if self.section.as_ref().is_some_and(|s| !sections.contains(s)) {
-            self.section = None;
-        }
-        self.section_cursor = self
-            .section
-            .as_ref()
-            .and_then(|s| sections.iter().position(|x| x == s))
-            .map_or(0, |i| i + 1);
-        self.focus = Focus::Table;
-        self.clamp_row();
-    }
-
-    fn show_empty(&mut self) {
-        self.current = None;
-        self.focus = Focus::Welcome(0);
-    }
-
-    /// Sections present in the run, in engine order, then any others.
-    pub fn sections(&self) -> Vec<String> {
-        let Some(run) = self.run() else {
-            return Vec::new();
-        };
-        let present: BTreeSet<&str> = run
-            .items
-            .iter()
-            .map(|i| i.finding.section.as_str())
-            .collect();
-        let order: Vec<&str> = secaudit_core::checks::SECTIONS
-            .iter()
-            .map(|s| s.name)
-            .collect();
-        let mut out: Vec<String> = order
-            .iter()
-            .filter(|s| present.contains(**s))
-            .map(|s| (*s).to_owned())
-            .collect();
-        out.extend(
-            present
-                .iter()
-                .filter(|s| !order.contains(s))
-                .map(|s| (*s).to_owned()),
-        );
-        out
-    }
-
-    /// `visible()`: tab, section and search applied, worst first.
-    pub fn visible(&self) -> Vec<&Item> {
-        let Some(run) = self.run() else {
-            return Vec::new();
-        };
-        let q = self.search.trim().to_lowercase();
-        let mut rows: Vec<&Item> = run
-            .items
-            .iter()
-            .filter(|f| self.tab.holds(f))
-            .filter(|f| {
-                self.section
-                    .as_ref()
-                    .is_none_or(|s| &f.finding.section == s)
-            })
-            .filter(|f| {
-                let fd = &f.finding;
-                q.is_empty()
-                    || format!(
-                        "{}\n{}\n{}\n{}\n{}",
-                        fd.msg, fd.section, fd.detail, fd.fix, fd.hint
-                    )
-                    .to_lowercase()
-                    .contains(&q)
-            })
-            .collect();
-        rows.sort_by_key(|f| (sev_order(f.finding.sev), f.n));
-        rows
-    }
-
-    pub fn selected(&self) -> Option<&Item> {
-        self.visible().get(self.row).copied()
-    }
-
-    fn clamp_row(&mut self) {
-        let n = self.visible().len();
-        self.row = self.row.min(n.saturating_sub(1));
-        self.detail_scroll = 0;
-    }
-
-    /// Keeps the same finding selected after the view changes (`refresh_table()`), else the same position.
-    fn refresh(&mut self, keep: Option<usize>) {
-        if let Some(n) = keep
-            && let Some(i) = self.visible().iter().position(|f| f.n == n)
-        {
-            self.row = i;
-        }
-        self.clamp_row();
-    }
-
-    fn previous_of(&self, path: &Path) -> Option<&Run> {
-        let i = self.runs.iter().position(|r| r.path == path)?;
-        self.runs.get(i + 1)
-    }
-
-    pub fn previous_of_run(&self, run: &Run) -> Option<&Run> {
-        self.previous_of(&run.path)
     }
 
     pub fn tick(&mut self) -> bool {
@@ -430,24 +209,3 @@ impl App {
         }
     }
 }
-
-pub const CHOOSER: [(&str, &str, &str, &str); 3] = [
-    (
-        "full",
-        "Full scan",
-        "f",
-        "sudo · every check · about 20 seconds",
-    ),
-    (
-        "quick",
-        "Quick scan",
-        "q",
-        "no sudo · skips root-only checks · about 10 seconds",
-    ),
-    (
-        "deep",
-        "Deep scan",
-        "d",
-        "sudo · adds package integrity and whole-disk SUID · several minutes",
-    ),
-];
