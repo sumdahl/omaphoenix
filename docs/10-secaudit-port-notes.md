@@ -2,6 +2,14 @@
 
 How the Rust port of `bin/secaudit` is checked, and what it found in the Bash version. For Manish (owner, ADR-0013): every item under "Bash quirks" is a proposal; nothing here changes the Bash repo.
 
+**Parity base:** Manish's `c8d91f9` (2026-10-10), which added `--user`, reworded Secure Boot, and the AI assistant in `secaudit-tui`. All three are ported; the engine is back at 82/82 findings and 11/11 detail lists.
+
+## Keeping up with Manish's repo
+1. `git -C ~/personal/secaudit pull --ff-only` (read-only; nothing is pushed there).
+2. `git -C ~/personal/secaudit log --oneline <last base>..HEAD` and read the diff.
+3. Port it, then: `scripts/secaudit-parity` for the engine; tmux captures of his app against ours on a copy of the history (`XDG_STATE_HOME`), as done for each screen; for AI prompts, run his `cache_path`/`finding_block`/`plan_prompt` from his uv environment and compare with `SECAUDIT_PY_AI_JSON=… cargo test -p secaudit --test ai_parity`.
+4. Update the parity base above.
+
 ## How parity is checked
 - **Engine:** `crates/secaudit-core`. Each report section is a module in `src/checks/`, with Bash's messages kept word for word and a stable `id` plus `targets` on every finding (contract v1).
 - **Harness:** `scripts/secaudit-parity` runs both versions on the same machine and diffs `(section, sev, msg)` for every ported section. It needs the Bash checkout and `jq`, so it runs locally, not in CI.
