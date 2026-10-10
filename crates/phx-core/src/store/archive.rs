@@ -1,7 +1,7 @@
 use std::fs::{self, File};
 use std::io;
 use std::path::{Component, Path};
-use std::process::Stdio;
+use std::process::{Child, Stdio};
 
 use super::{Repo, StoreError};
 use crate::sys::{self, CmdError};
@@ -12,25 +12,36 @@ impl Repo {
     /// # Errors
     /// When git fails or an entry would land outside `dst`.
     pub fn extract(&self, id: &str, dst: &Path) -> Result<(), StoreError> {
-        let mut child = sys::command("git")
+        let child = sys::command("git")
             .args(["archive", "--format=tar", id])
             .current_dir(&self.dir)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()?;
-        let result = child.stdout.take().map_or(Ok(()), |out| untar(out, dst));
-        let status = child.wait()?;
-        result?;
-        if !status.success() {
-            return Err(CmdError {
-                cmd: format!("git archive {id}"),
-                status: format!("{status}"),
-                stderr: String::new(),
-            }
-            .into());
-        }
-        Ok(())
+        untar_from(child, dst, &format!("git archive {id}"))
     }
+}
+
+/// Unpacks `child`'s tar output, then reads it to the end: closing early kills a producer still writing padding (SIGPIPE).
+fn untar_from(mut child: Child, dst: &Path, what: &str) -> Result<(), StoreError> {
+    let result = match child.stdout.take() {
+        Some(mut out) => untar(&mut out, dst).and_then(|()| {
+            io::copy(&mut out, &mut io::sink())?;
+            Ok(())
+        }),
+        None => Ok(()),
+    };
+    let status = child.wait()?;
+    result?;
+    if !status.success() {
+        return Err(CmdError {
+            cmd: what.to_owned(),
+            status: format!("{status}"),
+            stderr: String::new(),
+        }
+        .into());
+    }
+    Ok(())
 }
 
 /// Unpacks a tar stream into `dst`, refusing absolute paths and `..`.
@@ -77,4 +88,42 @@ pub fn untar(rd: impl io::Read, dst: &Path) -> Result<(), StoreError> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use std::process::{Command, Stdio};
+
+    #[test]
+    fn reads_the_producer_to_the_end() {
+        let t = tempfile::tempdir().unwrap_or_else(|e| unreachable!("{e}"));
+        let mut b = tar::Builder::new(Vec::new());
+        let mut h = tar::Header::new_ustar();
+        h.set_path("a.txt").unwrap_or_else(|e| unreachable!("{e}"));
+        h.set_size(2);
+        h.set_mode(0o644);
+        h.set_cksum();
+        b.append(&h, &b"hi"[..])
+            .unwrap_or_else(|e| unreachable!("{e}"));
+        let tar = t.path().join("x.tar");
+        std::fs::write(&tar, b.into_inner().unwrap_or_default())
+            .unwrap_or_else(|e| unreachable!("{e}"));
+        // A valid tar, a pause, then more padding than a pipe holds: git archive's shape under load.
+        let child = Command::new("sh")
+            .args([
+                "-c",
+                "cat \"$1\"; sleep 0.3; head -c 200000 /dev/zero",
+                "sh",
+            ])
+            .arg(&tar)
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap_or_else(|e| unreachable!("{e}"));
+        let out = t.path().join("out");
+        super::untar_from(child, &out, "producer").unwrap_or_else(|e| unreachable!("{e}"));
+        assert_eq!(
+            std::fs::read_to_string(out.join("a.txt")).ok().as_deref(),
+            Some("hi")
+        );
+    }
 }
