@@ -25,6 +25,12 @@ Each crate and app has its own `AGENTS.md` with the rules for that part: its con
 - **Owners.** OmaPhoenix: Sumiran Dahal. secaudit: Manish Karki. Never push to `mnshchtri/secaudit`; fetch it read-only.
 - **Authorship:** `git -c user.email=sumirandahal46@gmail.com commit`, no `Co-Authored-By` trailer.
 - **The repo is private** (ADR-0022). Ask before pushing; never tag a release without an explicit OK.
+- **`main` is protected.** Nobody pushes to it directly, admins included. Work on a branch (`feat/…`, `fix/…`), push it, and open a pull request with `gh pr create`. It merges only with:
+  - one approving review from someone other than the last pusher;
+  - green CI (`check`, `gui`, `msrv`) on an up-to-date branch;
+  - all conversations resolved.
+  
+  History stays linear (squash or rebase merges), and force-pushes and deleting `main` are blocked. Release tags are still pushed by hand after the release PR merges.
 - **Secrets.** Never print a token, key or `.env` value: not in output, logs, errors, fixtures or docs. Name the file, never its content. Tests use generated fake keys only.
 - **The audit is read-only.** Nothing applies a fix without a human confirming it.
 - **Unattended runs never prompt.** The timer has no terminal: no sudo, no passphrase prompt, no blocking.
