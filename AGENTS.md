@@ -2,6 +2,18 @@
 
 Rules for any coding agent (Claude Code or other) working in this repo. Read it before touching anything. [RUST.md](RUST.md) has the long form; [DESIGN.md](DESIGN.md) covers how the apps look and speak.
 
+Each crate and app has its own `AGENTS.md` with the rules for that part: its contracts, traps and tests. Read the one nearest the file you're editing as well as this one. When the two conflict, this file wins.
+
+| Path | What it is |
+|---|---|
+| `crates/phx-contract` | snapshot formats (`manifest.json`, `selection.conf`) |
+| `crates/phx-core` | the OmaPhoenix engine |
+| `crates/omaphoenix` | OmaPhoenix CLI and TUI |
+| `crates/secaudit-core` | the audit engine and finding contract |
+| `crates/secaudit` | Security Audit CLI, TUI, gum UI, AI |
+| `apps/` | the two Slint desktop apps |
+| `crates/omaphoenix-desktop`, `ui/desktop`, `spikes/` | decision records; don't extend |
+
 ## Orientation
 
 1. `README.md`, then `docs/05-roadmap.md`. The first task whose status isn't `done` is next.
