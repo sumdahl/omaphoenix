@@ -31,6 +31,8 @@
 
 **Nothing is backed up until you choose what.** `init` opens the Backup screen; both apps open on it until a choice is saved, and anything found later is marked new and asked about before a snapshot. Snapshots are automatic on a schedule you pick, or manual only.
 
+**Coding-agent skills.** `share/skills/omaphoenix` and `share/skills/secaudit` teach coding agents (Claude Code, Hermes, anything reading `~/.agents/skills`) to operate both tools safely: dry-run before any restore, never choose what to back up for the user, never run a fix without confirmation. `install.sh` links them in, as Omarchy does with its own skill.
+
 OmaPhoenix gives a choice of **terminal or desktop app**: both launchers ("OmaPhoenix (Terminal)" and "OmaPhoenix") appear in the app menu, and Security Audit likewise has "Security Audit" (terminal) and "Security Audit (Desktop)", and `omaphoenix tui` / `omaphoenix gui` open them directly.
 
 ```sh

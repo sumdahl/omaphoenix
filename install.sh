@@ -5,14 +5,14 @@
 #   ... | bash -s -- --gui         also install the desktop apps (asked otherwise)
 #   ... | bash -s -- --no-gui      terminal apps only
 #   ... | bash -s -- --sysctl      also apply the kernel hardening drop-in (sudo)
-#   ... | bash -s -- --uninstall   remove the commands, launchers and icons
+#   ... | bash -s -- --uninstall   remove the commands, launchers, icons and agent skills
 #
 # Downloads a release, verifies it against SHA256SUMS, installs `omaphoenix`
 # (CLI and terminal app), `secaudit`, `secaudit-tui` and `secaudit-ui` to
 # ~/.local/bin, optionally the `omaphoenix-gui` and `secaudit-gui` desktop
-# apps, adds launcher
-# entries with their icons, then offers to back this machine up or restore a
-# snapshot. The terminal binaries are static; the desktop app uses the
+# apps, adds launcher entries with their icons, links the coding-agent skills
+# (share/skills) into ~/.claude, ~/.agents and ~/.hermes where they exist,
+# then offers to back this machine up or restore a snapshot. The terminal binaries are static; the desktop app uses the
 # system's graphics libraries. Everything lives in main(), so a download cut
 # off mid-way runs nothing.
 #
@@ -112,6 +112,7 @@ main() {
   fi
 
   launchers "$tmp/share" "$bin_dir" "$data_dir"
+  skills "$tmp/share" "$data_dir"
 
   if [[ $sysctl == 1 ]]; then
     sudo install -Dm644 "$tmp/extras/sysctl/99-zz-hardening.conf" /etc/sysctl.d/99-zz-hardening.conf
@@ -190,6 +191,44 @@ launchers() {
   if command -v gtk-update-icon-cache >/dev/null; then gtk-update-icon-cache -q "$data_dir/icons/hicolor" 2>/dev/null || true; fi
 }
 
+# agent_skill_dirs: the skills directories of coding agents installed here
+# (Claude Code, the shared ~/.agents, Hermes and its profiles), one per line.
+agent_skill_dirs() {
+  local d
+  [[ -d $HOME/.claude ]] && echo "$HOME/.claude/skills"
+  [[ -d $HOME/.agents ]] && echo "$HOME/.agents/skills"
+  [[ -d $HOME/.hermes ]] && echo "$HOME/.hermes/skills"
+  for d in "$HOME"/.hermes/profiles/*/; do
+    [[ -d $d ]] && echo "${d%/}/skills"
+  done
+  return 0
+}
+
+# skills SHARE DATA_DIR: the omaphoenix and secaudit agent skills, copied to
+# DATA_DIR/omaphoenix-skills and linked into each agent's skills directory, as
+# Omarchy links its own. A real directory of the same name is left alone.
+skills() {
+  local src=$1/skills dest=${2:?}/omaphoenix-skills dir s name
+  [[ -d $src ]] || return 0
+  rm -rf -- "${dest:?}"
+  mkdir -p "$dest"
+  cp -r "$src"/. "$dest"/
+  local dirs=()
+  mapfile -t dirs < <(agent_skill_dirs)
+  for dir in "${dirs[@]}"; do
+    mkdir -p "$dir"
+    for s in "$dest"/*/; do
+      name=$(basename "$s")
+      if [[ -e $dir/$name && ! -L $dir/$name ]]; then
+        echo "  note: kept $dir/$name (not ours); this version is in $dest/$name"
+        continue
+      fi
+      ln -sfn "$dest/$name" "$dir/$name"
+      say "✓ agent skill $name → $dir/$name"
+    done
+  done
+}
+
 # uninstall BIN_DIR DATA_DIR: the commands, launchers and icons this script
 # installed. Snapshots, the backup repo, scan history and the sysctl drop-in
 # stay. Every path is guarded: an empty variable stops here, never reaches /.
@@ -209,6 +248,20 @@ uninstall() {
       say "removed $data_dir/$f"
     fi
   done
+  local skills_dir=${data_dir:?}/omaphoenix-skills dir link dirs=()
+  mapfile -t dirs < <(agent_skill_dirs)
+  for dir in "${dirs[@]}"; do
+    for link in "$dir"/*; do
+      if [[ -L $link && $(readlink "$link") == "$skills_dir"/* ]]; then
+        rm -f -- "$link"
+        say "removed $link"
+      fi
+    done
+  done
+  if [[ -d $skills_dir ]]; then
+    rm -rf -- "${skills_dir:?}"
+    say "removed $skills_dir"
+  fi
   if [[ -f /etc/sysctl.d/99-zz-hardening.conf ]]; then
     echo "  kept /etc/sysctl.d/99-zz-hardening.conf (remove with: sudo rm /etc/sysctl.d/99-zz-hardening.conf && sudo sysctl --system)"
   fi
