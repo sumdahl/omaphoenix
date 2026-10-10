@@ -54,18 +54,20 @@ pub fn setup_secrets(dir: &Path, passphrase: &str) -> Result<(), Error> {
     Ok(())
 }
 
-/// Private keys in `~/.ssh` (files that are not public halves).
+/// Private keys in `~/.ssh` (files that are not public halves), as sorted item ids like `.ssh/id_ed25519`.
 #[must_use]
-pub fn private_ssh_keys(home: &Path) -> usize {
-    fs::read_dir(home.join(".ssh"))
+pub fn private_ssh_keys(home: &Path) -> Vec<String> {
+    let mut keys: Vec<String> = fs::read_dir(home.join(".ssh"))
         .into_iter()
         .flatten()
         .flatten()
-        .filter(|e| {
-            e.file_type().is_ok_and(|t| t.is_file())
-                && !is_public_half(&e.file_name().to_string_lossy())
-        })
-        .count()
+        .filter(|e| e.file_type().is_ok_and(|t| t.is_file()))
+        .map(|e| e.file_name().to_string_lossy().into_owned())
+        .filter(|n| !is_public_half(n))
+        .map(|n| format!(".ssh/{n}"))
+        .collect();
+    keys.sort_unstable();
+    keys
 }
 
 /// Whether `secrets init` has run for the repo at `dir`.

@@ -182,7 +182,9 @@ impl<'a> App<'a> {
             &self.repo.dir.join(category::secret::SECRETS_DIR),
             passphrase,
         )?;
-        if self.rules()?.selected("secret", ".ssh/id_x") {
+        let rules = self.rules()?;
+        let keys = category::secret::private_ssh_keys(&self.home);
+        if !keys.is_empty() && keys.iter().all(|k| rules.selected("secret", k)) {
             return Ok(());
         }
         let mut f = fs::File::options()

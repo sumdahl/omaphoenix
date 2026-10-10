@@ -85,15 +85,28 @@ impl App<'_> {
     }
 
     fn check_secrets(&self, add: &mut dyn FnMut(&str, &str, String)) {
-        let private = secret::private_ssh_keys(&self.home);
-        if private == 0 || !self.repo.exists() {
+        let keys = secret::private_ssh_keys(&self.home);
+        if keys.is_empty() || !self.repo.exists() {
             return;
         }
-        let ready = secret::secrets_ready(&self.repo.dir);
-        let selected = self
-            .rules()
-            .is_ok_and(|r| r.selected("secret", ".ssh/id_x"));
-        if ready && selected {
+        if !secret::secrets_ready(&self.repo.dir) {
+            add(
+                "warn",
+                "secrets",
+                format!(
+                    "{} SSH private key(s) are not in snapshots; a reinstall means new keys everywhere. Run: omaphoenix secrets init",
+                    keys.len()
+                ),
+            );
+            return;
+        }
+        let rules = self.rules().unwrap_or_default();
+        let missing: Vec<&str> = keys
+            .iter()
+            .filter(|k| !rules.selected("secret", k))
+            .map(String::as_str)
+            .collect();
+        if missing.is_empty() {
             add(
                 "ok",
                 "secrets",
@@ -104,7 +117,10 @@ impl App<'_> {
                 "warn",
                 "secrets",
                 format!(
-                    "{private} SSH private key(s) are not in snapshots; a reinstall means new keys everywhere. Run: omaphoenix secrets init"
+                    "{} of {} SSH private key(s) are not in snapshots ({}). Tick them in Backup → secret: omaphoenix select",
+                    missing.len(),
+                    keys.len(),
+                    missing.join(", ")
                 ),
             );
         }
@@ -114,6 +130,57 @@ impl App<'_> {
 #[cfg(test)]
 mod tests {
     use super::go_duration;
+
+    fn secrets_findings(rules: &str, ready: bool) -> Vec<super::Finding> {
+        let t = tempfile::tempdir().unwrap_or_else(|e| unreachable!("{e}"));
+        let home = t.path().join("home");
+        let repo = t.path().join("repo");
+        for d in [home.join(".ssh"), repo.join(".git"), repo.join("secrets")] {
+            std::fs::create_dir_all(d).unwrap_or_else(|e| unreachable!("{e}"));
+        }
+        for k in ["id_a", "id_b", "id_a.pub"] {
+            std::fs::write(home.join(".ssh").join(k), "x").unwrap_or_else(|e| unreachable!("{e}"));
+        }
+        std::fs::write(repo.join("selection.conf"), rules).unwrap_or_else(|e| unreachable!("{e}"));
+        if ready {
+            std::fs::write(repo.join("secrets/recipient.txt"), "age1x")
+                .unwrap_or_else(|e| unreachable!("{e}"));
+        }
+        let app = crate::App {
+            home,
+            repo: crate::store::Repo { dir: repo },
+            log: &|_, _| {},
+            passphrase: None,
+        };
+        let mut out = Vec::new();
+        app.check_secrets(&mut |level, area, msg| {
+            out.push(super::Finding {
+                level: level.into(),
+                area: area.into(),
+                msg,
+            });
+        });
+        out
+    }
+
+    #[test]
+    fn secrets_are_judged_by_each_real_key() {
+        let per_item = "secret:.ssh/id_a\nsecret:.ssh/id_a.pub\nsecret:.ssh/id_b\n";
+        let f = secrets_findings(per_item, true);
+        assert_eq!(f.first().map(|f| f.level.as_str()), Some("ok"), "{f:?}");
+        let f = secrets_findings("secret:.ssh/id_a\n", true);
+        assert!(
+            f.first().is_some_and(|f| f.level == "warn"
+                && f.msg.contains("1 of 2")
+                && f.msg.contains(".ssh/id_b")),
+            "{f:?}"
+        );
+        let f = secrets_findings("secret:.ssh/*\n", false);
+        assert!(
+            f.first().is_some_and(|f| f.msg.contains("secrets init")),
+            "{f:?}"
+        );
+    }
 
     #[test]
     fn durations_read_like_go() {

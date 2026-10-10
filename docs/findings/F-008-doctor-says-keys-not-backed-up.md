@@ -6,7 +6,7 @@
 | Version | 0.1.0-rc.7 |
 | Found | 2026-10-10, `omaphoenix doctor` after reviewing in Backup on the reference laptop |
 | Severity | medium: a false alarm about the most important item in the backup, and its advice ends in an error |
-| Status | open |
+| Status | fixed in 0.1.0-rc.8; test `phx_core::doctor::tests::secrets_are_judged_by_each_real_key` |
 
 ## What happens
 
