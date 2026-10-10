@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 use super::{Category, Env, Error, Outcome, read_json, write_json};
 use crate::sys;
 
+mod npm;
+
 /// `pkg-other`.
 pub struct PkgOther;
 
@@ -44,18 +46,6 @@ struct MiseVersion {
 }
 
 #[derive(Deserialize, Default)]
-struct NpmTree {
-    #[serde(default)]
-    dependencies: BTreeMap<String, NpmDep>,
-}
-
-#[derive(Deserialize)]
-struct NpmDep {
-    #[serde(default)]
-    version: String,
-}
-
-#[derive(Deserialize, Default)]
 struct Crates2 {
     #[serde(default)]
     installs: BTreeMap<String, serde_json::Value>,
@@ -75,20 +65,15 @@ fn detect_other(home: &std::path::Path) -> Vec<OtherPkg> {
             );
         }
     }
-    if sys::has("npm")
-        && let Ok(s) = sys::output(None, &["npm", "ls", "-g", "--depth=0", "--json"])
-    {
-        let tree: NpmTree = serde_json::from_str(&s).unwrap_or_default();
-        for (name, d) in tree.dependencies {
-            if name == "npm" || name == "corepack" {
-                continue;
-            }
-            out.push(if d.version.is_empty() {
-                OtherPkg::new("npm", &name, "", "linked local checkout")
-            } else {
-                OtherPkg::new("npm", &name, &d.version, "")
-            });
+    for (name, version) in npm::globals(home) {
+        if name == "npm" || name == "corepack" {
+            continue;
         }
+        out.push(if version.is_empty() {
+            OtherPkg::new("npm", &name, "", "linked local checkout")
+        } else {
+            OtherPkg::new("npm", &name, &version, "")
+        });
     }
     if let Ok(b) = std::fs::read(home.join(".cargo/.crates2.json")) {
         let crates: Crates2 = serde_json::from_slice(&b).unwrap_or_default();

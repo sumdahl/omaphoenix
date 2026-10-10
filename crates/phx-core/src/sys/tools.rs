@@ -25,13 +25,18 @@ pub fn pacman_owned(paths: &[String]) -> BTreeSet<String> {
 /// Whether a command is on `PATH`.
 #[must_use]
 pub fn has(name: &str) -> bool {
+    which(name).is_some()
+}
+
+/// The first executable `name` on `PATH`.
+#[must_use]
+pub fn which(name: &str) -> Option<std::path::PathBuf> {
     use std::os::unix::fs::PermissionsExt;
-    std::env::var_os("PATH").is_some_and(|paths| {
-        std::env::split_paths(&paths).any(|d| {
-            std::fs::metadata(d.join(name))
-                .is_ok_and(|m| m.is_file() && m.permissions().mode() & 0o111 != 0)
+    std::env::split_paths(&std::env::var_os("PATH")?)
+        .map(|d| d.join(name))
+        .find(|p| {
+            std::fs::metadata(p).is_ok_and(|m| m.is_file() && m.permissions().mode() & 0o111 != 0)
         })
-    })
 }
 
 /// git `-c` flags that authenticate https remotes with gh's token.
