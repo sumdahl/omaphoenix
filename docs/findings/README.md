@@ -20,5 +20,8 @@ Bugs and surprises found while testing or using the products, one file each. A f
 | [F-010](F-010-list-before-setup-says-no-such-file.md) | `omaphoenix list` before setup says "No such file or directory" | OmaPhoenix | low | open |
 | [F-011](F-011-secrets-init-reincludes-excluded-key.md) | `secrets init` can include a key you excluded | OmaPhoenix | low | open |
 | [F-012](F-012-doctor-unreadable-selection.md) | `doctor` doesn't say when `selection.conf` can't be read | OmaPhoenix | low | open |
+| [F-013](F-013-runtime-files-make-daily-snapshots.md) | Files programs rewrite at startup make a snapshot after every boot | OmaPhoenix | low | open |
+| [F-014](F-014-summary-after-failed-snapshot.md) | After a failed snapshot, the next one's summary compares against the wrong "before" | OmaPhoenix | low | open |
+| [F-015](F-015-raw-git-lock-error.md) | When git's lock is held, a snapshot shows git's raw error | OmaPhoenix | low | open |
 
 **Severity:** `high` loses or leaks data, or breaks a restore. `medium` is wrong behaviour with no data at risk. `low` is a wrong message or a cosmetic problem.
