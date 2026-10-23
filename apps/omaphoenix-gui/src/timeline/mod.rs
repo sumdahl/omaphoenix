@@ -23,9 +23,15 @@ pub(crate) fn refresh_snapshots(app: &App, engine: &Engine<'_>) {
             )
             .into(),
     );
+    let query = ui_state().borrow().query.timeline.clone();
+    app.set_snaps_filtered(!query.is_empty());
+    let shown = phx_core::fuzzy::filter(&query, &snaps, |s| {
+        format!("{} {} {}", s.id, s.time, s.subject)
+    });
     app.set_snaps(model(
-        snaps
+        shown
             .iter()
+            .filter_map(|&i| snaps.get(i))
             .map(|s| Snap {
                 id: s.id.as_str().into(),
                 when: ago(&s.time).into(),

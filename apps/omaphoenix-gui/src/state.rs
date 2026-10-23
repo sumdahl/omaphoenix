@@ -28,6 +28,17 @@ pub(crate) struct Model {
     /// Background loads in flight, for the status line: `choices`, `doctor`.
     pub(crate) jobs: BTreeSet<&'static str>,
     pub(crate) timer_running: bool,
+    /// Search text per section: Timeline, Audit, Backup.
+    pub(crate) query: Queries,
+    /// Backup rows on screen as (category, item) while searching.
+    pub(crate) shown: Vec<(usize, usize)>,
+}
+
+#[derive(Default)]
+pub(crate) struct Queries {
+    pub(crate) timeline: String,
+    pub(crate) audit: String,
+    pub(crate) backup: String,
 }
 
 pub(crate) type Shared = Rc<RefCell<Model>>;

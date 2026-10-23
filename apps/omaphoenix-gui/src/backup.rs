@@ -25,6 +25,12 @@ pub(crate) fn refresh_backup(app: &App, state: &Shared) {
             })
             .collect(),
     ));
+    if !s.query.backup.is_empty() {
+        drop(s);
+        show_search(app, state);
+        return;
+    }
+    app.set_backup_search_note(SharedString::new());
     let sel = usize::try_from(app.get_cat_sel()).ok();
     let items = sel
         .and_then(|i| s.choices.get(i))
@@ -54,6 +60,53 @@ fn new_note(unreviewed: &BTreeSet<String>, c: &Choice) -> SharedString {
     } else {
         format!("● {n} new").into()
     }
+}
+
+/// Every category's items matching the Backup search, best first, as `category:id`.
+fn show_search(app: &App, state: &Shared) {
+    let mut s = state.borrow_mut();
+    let all: Vec<(usize, usize, String)> = s
+        .choices
+        .iter()
+        .enumerate()
+        .flat_map(|(c, (choice, _))| {
+            choice
+                .items
+                .iter()
+                .enumerate()
+                .map(move |(i, (id, _))| (c, i, review_key(&choice.category, id)))
+        })
+        .collect();
+    let hits = phx_core::fuzzy::rank(&s.query.backup, &all, |(_, _, k)| k.clone());
+    let mut rows = Vec::new();
+    let mut shown = Vec::new();
+    for (i, _) in hits {
+        let Some((cat, item, key)) = all.get(i) else {
+            continue;
+        };
+        let Some(((_, on), note)) = s
+            .choices
+            .get(*cat)
+            .and_then(|(c, notes)| c.items.get(*item).zip(notes.get(*item)))
+        else {
+            continue;
+        };
+        rows.push(ItemRow {
+            id: key.as_str().into(),
+            on: *on,
+            note: note.as_str().into(),
+            new: s.unreviewed.contains(key),
+        });
+        shown.push((*cat, *item));
+    }
+    let note = match rows.len() {
+        0 => format!("No item matches \u{201c}{}\u{201d}.", s.query.backup),
+        n => format!("{n} match(es) across all categories. Click to tick or untick, then Save."),
+    };
+    s.shown = shown;
+    drop(s);
+    app.set_backup_search_note(note.into());
+    app.set_items(model(rows));
 }
 
 pub(crate) fn load_choices(app: &App) {
@@ -121,9 +174,14 @@ pub(crate) fn wire(app: &App) {
         let (weak, state) = (app.as_weak(), state.clone());
         move |i| {
             let Some(app) = weak.upgrade() else { return };
-            let (Ok(cat), Ok(i)) = (usize::try_from(app.get_cat_sel()), usize::try_from(i)) else {
-                return;
+            let Ok(i) = usize::try_from(i) else { return };
+            let searching = !state.borrow().query.backup.is_empty();
+            let target = if searching {
+                state.borrow().shown.get(i).copied()
+            } else {
+                usize::try_from(app.get_cat_sel()).ok().map(|c| (c, i))
             };
+            let Some((cat, i)) = target else { return };
             if let Some((_, on)) = state
                 .borrow_mut()
                 .choices

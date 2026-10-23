@@ -15,6 +15,33 @@ use crate::spring::GLIDE;
 use crate::state::{Shared, model, ui_engine, ui_motion, ui_state, ui_timer};
 use crate::ui::{App, AuditRow};
 
+/// Issues on screen: matching the Audit search, accepted last, worst first.
+fn shown_issues<'a>(
+    run: &'a secaudit_core::store::Run,
+    query: &str,
+) -> Vec<&'a secaudit_core::store::Item> {
+    let issues: Vec<&secaudit_core::store::Item> =
+        run.items.iter().filter(|i| i.is_issue()).collect();
+    let mut items: Vec<&secaudit_core::store::Item> =
+        phx_core::fuzzy::filter(query, &issues, |i| {
+            format!(
+                "{} {} {}",
+                i.finding.msg, i.finding.section, i.finding.detail
+            )
+        })
+        .into_iter()
+        .filter_map(|i| issues.get(i).copied())
+        .collect();
+    items.sort_by_key(|i| {
+        (
+            i.accepted,
+            secaudit_core::store::sev_order(i.finding.sev),
+            i.n,
+        )
+    });
+    items
+}
+
 pub(crate) fn refresh_audit(
     app: &App,
     state: &Shared,
@@ -32,15 +59,7 @@ pub(crate) fn refresh_audit(
     app.set_fails(i32::try_from(c.fail).unwrap_or(0));
     app.set_warns(i32::try_from(c.warn).unwrap_or(0));
     app.set_accepted(i32::try_from(c.accepted).unwrap_or(0));
-    let mut items: Vec<&secaudit_core::store::Item> =
-        run.items.iter().filter(|i| i.is_issue()).collect();
-    items.sort_by_key(|i| {
-        (
-            i.accepted,
-            secaudit_core::store::sev_order(i.finding.sev),
-            i.n,
-        )
-    });
+    let items = shown_issues(run, &s.query.audit);
     app.set_findings(model(
         items
             .iter()
@@ -147,15 +166,7 @@ fn wire_findings(app: &App) {
             {
                 let mut s = state.borrow_mut();
                 let Some(run) = &s.audit else { return };
-                let mut items: Vec<&secaudit_core::store::Item> =
-                    run.items.iter().filter(|x| x.is_issue()).collect();
-                items.sort_by_key(|x| {
-                    (
-                        x.accepted,
-                        secaudit_core::store::sev_order(x.finding.sev),
-                        x.n,
-                    )
-                });
+                let items = shown_issues(run, &s.query.audit);
                 let Some(item) = items.get(i) else { return };
                 let (key, was, title, section) = (
                     item.accept_key(),

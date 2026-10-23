@@ -8,6 +8,7 @@ mod motion;
 mod nav;
 mod pulse;
 mod run;
+mod search;
 mod settings;
 mod spring;
 mod state;
@@ -81,6 +82,7 @@ fn main() -> Result<(), slint::PlatformError> {
     activity::refresh(&app);
 
     nav::wire(&app);
+    search::wire(&app);
     timeline::wire(&app);
     pulse::wire(&app);
     audit::wire(&app);
