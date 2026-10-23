@@ -110,6 +110,7 @@ It asks for the secrets passphrase if SSH keys were backed up encrypted.
 | 11 | [docs/11-omaphoenix-port-notes.md](docs/11-omaphoenix-port-notes.md) | OmaPhoenix port: parity method and results, deliberate differences from Go |
 | 12 | [docs/12-secaudit-handover.md](docs/12-secaudit-handover.md) | Handing Security Audit to Manish: what moves, how, what's left |
 | 13 | [docs/13-migration.md](docs/13-migration.md) | Moving from the Go and Bash/Python versions: what carries over, what changes, going back |
+| 14 | [docs/14-vm-restore-test.md](docs/14-vm-restore-test.md) | Full restore on a fresh Omarchy VM: the plan to build the test and the scenarios that prove it (T1–T12) |
 | — | [docs/findings/](docs/findings/README.md) | **Bugs and testing findings**, one file each: how to reproduce, cause, workaround, fix and its test |
 | — | [RUST.md](RUST.md) | **Engineering standards for the Rust codebase:** safe, idiomatic, modern; lints, errors, testing, deps, release |
 | — | [DESIGN.md](DESIGN.md) | **Single source of truth for UI/UX:** feel, voice, theme tokens from Omarchy, spring physics, keymap, consent patterns, definition of done |

@@ -34,7 +34,7 @@ Each crate and app has its own `AGENTS.md` with the rules for that part: its con
 - **Secrets.** Never print a token, key or `.env` value: not in output, logs, errors, fixtures or docs. Name the file, never its content. Tests use generated fake keys only.
 - **The audit is read-only.** Nothing applies a fix without a human confirming it.
 - **Unattended runs never prompt.** The timer has no terminal: no sudo, no passphrase prompt, no blocking.
-- **Restores are tested in the VM or a temp `HOME`.** On the real home, only `--dry-run`.
+- **Restores are tested in the VM or a temp `HOME`.** On the real home, only `--dry-run`. The VM test and its rules are in docs/14.
 
 ## Rust: safe and idiomatic
 
