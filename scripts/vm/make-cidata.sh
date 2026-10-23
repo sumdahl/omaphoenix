@@ -4,7 +4,7 @@
 # The Omarchy ISO skips its setup wizard when a drive labelled "cidata" holds
 # the wizard's own output files (see /usr/local/bin/omarchy-cidata-load on the
 # ISO). user_configuration.json mirrors the full_disk template in the ISO's
-# configurator (Omarchy 4.0.4); regenerate it from there if a new ISO changes it.
+# configurator (Omarchy 4.0.6; 4.0.6 added input_method and input_xkb_layout); regenerate it from there if a new ISO changes it.
 #
 # Usage: make-cidata.sh <workdir> <disk-bytes>
 # Writes <workdir>/cidata.iso and <workdir>/vm_key (a throwaway SSH key that
@@ -68,6 +68,8 @@ cat >"$dir/user_configuration.json" <<EOF
     "bootloader_config": { "bootloader": "Limine", "uki": false, "removable": false },
     "custom_commands": [],
     "omarchy_install": {
+        "input_method": "none",
+        "input_xkb_layout": "",
         "mode": "full_disk",
         "defer_provisioning": false,
         "target_mount": "/mnt",

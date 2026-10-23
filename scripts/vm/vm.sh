@@ -15,7 +15,7 @@
 set -euo pipefail
 
 dir=${OMAPHOENIX_VM_DIR:-$HOME/.cache/omaphoenix-vm}
-iso=${OMAPHOENIX_VM_ISO:-$dir/omarchy-4.0.4.iso}
+iso=${OMAPHOENIX_VM_ISO:-$dir/omarchy-4.0.6.iso}
 disk_bytes=$((64 * 1024 * 1024 * 1024))
 name=omaphoenix-vm
 port=2222
