@@ -78,6 +78,7 @@ cargo deny check
 scripts/peak-rss                                        # memory budgets
 ```
 
+- **Before a release that changes restore, capture or secrets:** the full-restore VM test. Build the test snapshots with `scripts/vm/make-test-snapshot`, then run `scripts/vm/restore-test.sh --release <rc>`. It's a local check only (GitHub's runners have no KVM); scenarios and results are in docs/14.
 - **Port or engine changes:** `scripts/secaudit-parity` and `scripts/omaphoenix-parity`. TUI screen changes are compared cell by cell against the original (`docs/10`).
 - **Behaviour is proven by a test**, using a fake `HOME`, a fake secret or a fake command runner. "It compiles" is not done.
 - **Pipe safety:** use `set -o pipefail` before piping any test command, or a failure gets hidden.
