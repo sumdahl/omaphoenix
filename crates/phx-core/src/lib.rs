@@ -3,6 +3,7 @@
 pub mod app;
 pub mod category;
 pub mod doctor;
+pub mod fuzzy;
 pub mod gate;
 pub mod migrate;
 pub mod schedule;

@@ -29,21 +29,16 @@ impl State<'_> {
         let Some(run) = &self.audit else {
             return Vec::new();
         };
-        let q = self.search.to_lowercase();
-        let mut items: Vec<_> = run
-            .items
-            .iter()
-            .filter(|i| i.is_issue())
-            .filter(|i| {
-                q.is_empty()
-                    || format!(
-                        "{} {} {}",
-                        i.finding.msg, i.finding.section, i.finding.detail
-                    )
-                    .to_lowercase()
-                    .contains(&q)
-            })
-            .collect();
+        let issues: Vec<_> = run.items.iter().filter(|i| i.is_issue()).collect();
+        let mut items: Vec<_> = phx_core::fuzzy::filter(&self.search, &issues, |i| {
+            format!(
+                "{} {} {}",
+                i.finding.msg, i.finding.section, i.finding.detail
+            )
+        })
+        .into_iter()
+        .filter_map(|i| issues.get(i).copied())
+        .collect();
         items.sort_by_key(|i| {
             (
                 i.accepted,

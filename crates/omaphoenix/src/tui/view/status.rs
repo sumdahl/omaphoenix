@@ -68,10 +68,13 @@ pub(super) fn footer(st: &State<'_>) -> Line<'static> {
             Span::styled("/ ", t.bold().fg(t.accent)),
             Span::raw(st.search.clone()),
             Span::styled(
-                if st.searching {
-                    "▏  enter keep · esc clear"
-                } else {
-                    "   esc clears the search"
+                match (st.section, st.searching) {
+                    (Section::Backup, true) => "▏  ↑↓ move · tab tick · enter done · esc clear",
+                    (Section::Backup, false) => {
+                        "   ↑↓ move · space tick · a all · / edit · esc clear · w save"
+                    }
+                    (_, true) => "▏  enter keep · esc clear",
+                    (_, false) => "   esc clears the search",
                 },
                 t.fg(t.muted),
             ),
@@ -91,7 +94,7 @@ fn hint(st: &State<'_>) -> &'static str {
         Section::Backup if st.in_items => {
             "↑↓ move · space tick · a all/none · esc back · w save · q quit"
         }
-        Section::Backup => "↑↓ move · enter open · space all/none · w save · 1-6 · q quit",
+        Section::Backup => "/ search · ↑↓ move · enter open · space all/none · w save · q quit",
         Section::Migrate => "↑↓ step · enter do it · R start over · 1-6 sections · q quit",
         Section::Settings => "t next schedule · e set up encrypted secrets · 1-6 sections · q quit",
     }

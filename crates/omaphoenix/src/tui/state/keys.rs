@@ -43,10 +43,13 @@ impl State<'_> {
                 return;
             }
             KeyCode::Char('/') => {
-                if matches!(self.section, Section::Timeline | Section::Audit) {
+                if matches!(
+                    self.section,
+                    Section::Timeline | Section::Audit | Section::Backup
+                ) {
                     self.searching = true;
                 } else {
-                    self.notify("/ searches the Timeline and Audit lists");
+                    self.notify("/ searches Timeline, Audit and Backup");
                 }
                 return;
             }
@@ -103,6 +106,9 @@ impl State<'_> {
     }
 
     fn search_key(&mut self, key: KeyEvent) {
+        if self.section == Section::Backup && self.backup_search_typing_key(key) {
+            return;
+        }
         match key.code {
             KeyCode::Enter => self.searching = false,
             KeyCode::Esc => {
@@ -117,6 +123,7 @@ impl State<'_> {
         }
         self.snap_sel = 0;
         self.audit_sel = 0;
+        self.search_sel = 0;
     }
 
     pub(super) fn switch(&mut self, s: Section) {

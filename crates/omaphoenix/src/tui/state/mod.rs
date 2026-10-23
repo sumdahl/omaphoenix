@@ -2,6 +2,9 @@
 
 mod audit;
 mod backup;
+mod backup_search;
+
+pub use backup_search::Hit;
 mod jobs;
 mod keys;
 mod migrate;
@@ -98,6 +101,8 @@ pub struct State<'a> {
     /// `/`: filter text for the current list, and whether keys type into it.
     pub search: String,
     pub searching: bool,
+    /// Highlighted row in Backup's search results.
+    pub search_sel: usize,
     /// `:` or `⌃k`: the command palette's query and highlighted row.
     pub palette: Option<(String, usize)>,
     pub output: Vec<String>,
@@ -161,6 +166,7 @@ impl<'a> State<'a> {
             help: false,
             search: String::new(),
             searching: false,
+            search_sel: 0,
             palette: None,
             audit_progress: None,
             output: Vec::new(),

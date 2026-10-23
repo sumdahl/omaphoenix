@@ -25,16 +25,11 @@ pub const ACTIONS: [&str; 16] = [
 ];
 
 impl State<'_> {
-    /// Actions matching the palette query (subsequence, any case).
+    /// Actions matching the palette query, best first.
     pub fn actions(q: &str) -> Vec<&'static str> {
-        let q = q.to_lowercase();
-        ACTIONS
-            .iter()
-            .copied()
-            .filter(|a| {
-                let mut it = a.to_lowercase().chars().collect::<Vec<_>>().into_iter();
-                q.chars().all(|c| it.any(|x| x == c))
-            })
+        phx_core::fuzzy::rank(q, &ACTIONS, |a: &&str| (*a).to_owned())
+            .into_iter()
+            .filter_map(|(i, _)| ACTIONS.get(i).copied())
             .collect()
     }
 
