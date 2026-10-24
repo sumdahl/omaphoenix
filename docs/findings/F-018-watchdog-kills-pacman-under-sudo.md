@@ -6,7 +6,7 @@
 | Version | 0.1.0-rc.8 (and since the watchdog, docs/08) |
 | Found | 2026-10-24, VM restore test T2 (#33), fresh Omarchy 4.0.6 |
 | Severity | **high**: pacman is killed mid-transaction, which can leave a half-installed system; a stale `db.lck` then fails every later install, and the restore hangs |
-| Status | open |
+| Status | fixed in 0.1.0-rc.9; tests `sys::watchdog::tests::time_it_cannot_measure_is_never_a_stall`, `sys::watched::tests::a_tree_with_another_users_process_counts_as_unmeasured`; proven by the VM test T2 |
 
 ## What happens
 
@@ -48,3 +48,13 @@ Tests (phx-core, `sys::watched`):
 - A tree whose child is unreadable (simulate with a process that does no reads but burns CPU for longer than the stall limit) is **not** stopped.
 - A tree that does nothing at all is still stopped.
 - docs/08's spec is updated to match.
+
+## What was done
+
+Point 1 of the fix above, which is enough on its own:
+
+- `tree_progress` (`sys/watched.rs`) reports the tree as **blind** when a process's `/proc/<pid>/io` is permission-denied.
+- While the tree is blind, the runner calls `Watchdog::unmeasured` instead of `observe`, so that time is neither a stall nor slow, and it never stops the tree.
+- Installs that run entirely as the user (mise, cargo, npm, uv, AUR builds before `pacman -U`) are watched exactly as before.
+
+Points 2 and 3 aren't needed: a blind tree is never stopped, so pacman is never interrupted and leaves no lock behind.

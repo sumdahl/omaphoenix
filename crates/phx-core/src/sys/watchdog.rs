@@ -87,6 +87,16 @@ impl Watchdog {
         }
     }
 
+    /// Progress can't be measured at `t` (part of the install runs as root): this time
+    /// counts neither as a stall nor as slow, and the rate window starts afresh after it.
+    pub fn unmeasured(&mut self, t: Duration, bytes: u64) {
+        self.last_move = t;
+        self.last_bytes = self.last_bytes.max(bytes);
+        self.slow_since = None;
+        self.samples.clear();
+        self.samples.push_back((t, self.last_bytes));
+    }
+
     /// Current trailing-window rate in bytes/s.
     #[must_use]
     pub fn rate(&self) -> f64 {
@@ -125,6 +135,36 @@ mod tests {
             t += 5;
         }
         (Verdict::Continue, total_s)
+    }
+
+    #[test]
+    fn time_it_cannot_measure_is_never_a_stall() {
+        let mut w = Watchdog::default();
+        let mut t = 0;
+        while t <= 1800 {
+            if (600..=1200).contains(&t) {
+                w.unmeasured(Duration::from_secs(t), 0);
+            } else {
+                assert_eq!(
+                    w.observe(Duration::from_secs(t), t * 100_000),
+                    Verdict::Continue,
+                    "t={t}"
+                );
+            }
+            t += 5;
+        }
+        let mut w = Watchdog::default();
+        w.unmeasured(Duration::from_secs(600), 0);
+        assert_eq!(
+            w.observe(Duration::from_secs(700), 0),
+            Verdict::Continue,
+            "a quiet tick right after root work is fine"
+        );
+        assert_eq!(
+            w.observe(Duration::from_secs(785), 0),
+            Verdict::Stalled,
+            "a real stall afterwards is still caught"
+        );
     }
 
     #[test]

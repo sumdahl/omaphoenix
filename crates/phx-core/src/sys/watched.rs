@@ -74,7 +74,13 @@ pub fn interactive_watched(
         }
         if Instant::now() >= next {
             next += interval;
-            let verdict = w.observe(start.elapsed(), tree_read_bytes(root));
+            let (bytes, blind) = tree_progress(root);
+            if blind {
+                // Never stop what can't be measured: pacman under sudo must not die mid-transaction (F-018).
+                w.unmeasured(start.elapsed(), bytes);
+                continue;
+            }
+            let verdict = w.observe(start.elapsed(), bytes);
             if verdict != Verdict::Continue {
                 stop_tree(root, &mut child);
                 return Err(WatchError::Deferred {
@@ -87,18 +93,26 @@ pub fn interactive_watched(
     }
 }
 
-// Unreadable processes (root under sudo) are skipped: the count only gets conservative.
-fn tree_read_bytes(root: u32) -> u64 {
-    descendants(root)
-        .iter()
-        .filter_map(|pid| std::fs::read_to_string(format!("/proc/{pid}/io")).ok())
-        .filter_map(|io| {
-            io.lines().find_map(|l| {
-                l.strip_prefix("rchar: ")
-                    .and_then(|v| v.trim().parse::<u64>().ok())
-            })
-        })
-        .sum()
+/// Bytes read by the tree, and whether part of it can't be measured (another user's process, e.g. root under sudo).
+fn tree_progress(root: u32) -> (u64, bool) {
+    let mut bytes = 0;
+    let mut blind = false;
+    for pid in descendants(root) {
+        match std::fs::read_to_string(format!("/proc/{pid}/io")) {
+            Ok(io) => {
+                bytes += io
+                    .lines()
+                    .find_map(|l| {
+                        l.strip_prefix("rchar: ")
+                            .and_then(|v| v.trim().parse::<u64>().ok())
+                    })
+                    .unwrap_or(0);
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::PermissionDenied => blind = true,
+            Err(_) => {} // exited between listing and reading
+        }
+    }
+    (bytes, blind)
 }
 
 fn descendants(root: u32) -> Vec<u32> {
@@ -154,6 +168,27 @@ fn stop_tree(root: u32, child: &mut Child) {
 mod tests {
     use super::{Watchdog, interactive_watched};
     use std::time::Duration;
+
+    #[test]
+    fn a_tree_with_another_users_process_counts_as_unmeasured() {
+        let root_owned = std::fs::metadata("/proc/1").is_ok_and(|m| {
+            use std::os::unix::fs::MetadataExt;
+            m.uid() == 0
+        });
+        let we_are_root = std::fs::read_to_string("/proc/self/status").is_ok_and(|s| {
+            s.lines()
+                .any(|l| l.starts_with("Uid:") && l.split_whitespace().nth(1) == Some("0"))
+        });
+        if !root_owned || we_are_root {
+            return; // needs an unprivileged user and a root init, as on any desktop and CI runner
+        }
+        assert!(
+            super::tree_progress(1).1,
+            "pid 1 runs as root: its io can't be read"
+        );
+        let me = std::process::id();
+        assert!(!super::tree_progress(me).1, "our own process is measurable");
+    }
 
     #[test]
     fn watched_command_runs_and_fails_like_a_command() {
