@@ -21,5 +21,6 @@ Bugs and surprises found while testing or using the products, one file each. A f
 | [F-011](F-011-secrets-init-reincludes-excluded-key.md) | `secrets init` can include a key you excluded | OmaPhoenix | low | open |
 | [F-012](F-012-doctor-unreadable-selection.md) | `doctor` doesn't say when `selection.conf` can't be read | OmaPhoenix | low | open |
 | [F-016](F-016-temp-copy-of-secret-captured.md) | A program's temp file (e.g. a copy of `.claude.json`) is backed up as config | OmaPhoenix | medium | open |
+| [F-017](F-017-dry-run-counts-lines-not-packages.md) | A dry run's "planned" counts plan lines for packages, not packages | OmaPhoenix | low | open |
 
 **Severity:** `high` loses or leaks data, or breaks a restore. `medium` is wrong behaviour with no data at risk. `low` is a wrong message or a cosmetic problem.
