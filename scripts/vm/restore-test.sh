@@ -11,6 +11,7 @@
 #   OMAPHOENIX_VM_DIR   VM state (default ~/.cache/omaphoenix-vm)
 #   VM_CHECKPOINT       clean checkpoint to revert to (default: fresh)
 #   VM_SNAP             test snapshot repo to restore (default: $OMAPHOENIX_VM_DIR/snap)
+#   VM_BIN              an omaphoenix binary to test as is (e.g. a build from another branch)
 #
 # The VM gets fake keys only: the test snapshot carries no secrets (scripts/vm/make-test-snapshot
 # checks that), SSH uses the throwaway vm_key, and private repos go in as file mirrors.
@@ -34,6 +35,10 @@ done
 
 stage_binary() {
   local out=$dir/transfer/omaphoenix
+  if [[ -n ${VM_BIN:-} ]]; then
+    install -m755 "$VM_BIN" "$out"
+    return
+  fi
   if [[ -z $release ]]; then
     cargo build -q --release -p omaphoenix --manifest-path "$repo/Cargo.toml"
     install -m755 "$repo/target/release/omaphoenix" "$out"
