@@ -126,3 +126,14 @@ Each scenario starts from the clean checkpoint (`vm.sh revert fresh-<version>`) 
 | Date | Version | Scenarios | Result | Restore time | Notes |
 |---|---|---|---|---|---|
 | 2026-10-09 | Go v0.3.0 (pre-rc) | T1, T2 partial | stopped: VM network 55 kB/s | — | packages, plugins, themes, config, local, scripts verified; `/etc`, services, reboot not reached |
+| 2026-10-24 | 0.1.0-rc.8 | T1 | pass | 0 min | Nothing changed; peak 5.8 MB. Package "planned" counts plan lines (F-017) |
+| 2026-10-24 | 0.1.0-rc.8 | T2 | **fail** | (killed at 3 min) | Watchdog killed pacman mid-install under sudo, leaving `db.lck` and hanging AUR (**F-018, high**) |
+| 2026-10-24 | rc.9 branch (F-018 fix) | T2 | pass with known failures | 31 min | 8 of 11 stages ✓. ✗: npm via system npm (F-020), uv missing (F-021), hardware-skipped service reported failed (F-019), local AUR package (F-022). Peak 8 MB |
+| 2026-10-24 | rc.9 branch | T3 | pass | 74 s | Every category `applied 0`; only the known failures repeat |
+| 2026-10-24 | rc.9 branch | T4 | **fail**, then pass with workaround | — | Desktop session never started: restored `.profile` sources `~/.cargo/env` and `~/.local/bin/env`, missing on a fresh machine (**F-023, high**). With them created: theme, bar, plugins, ncal date as on the laptop; hardware settings kept the VM's own. Harness: the restored ufw denies SSH; fixed in `restore-test.sh` |
+| 2026-10-24 | rc.9 branch | T5 | pass | — | 53/54 services enabled (the 54th skipped as other hardware); all 32 `/etc` files byte-identical |
+| 2026-10-24 | rc.9 branch | T6 | partial | — | mise 12/12, cargo 5/5; npm 0/5 (F-020), uv 0/4 (F-021) |
+| 2026-10-24 | rc.9 branch | T7 | pass | — | Fake keys byte-identical, 700/600/644; wrong passphrase writes nothing; config item never asks (F-005 confirmed) |
+| 2026-10-24 | rc.9 branch | T8 | pass, one bug | — | Single file and `--only theme` restore exactly that. Naming a folder pulled in hardware-specific `monitors.lua` (F-024) |
+| 2026-10-24 | rc.9 branch | T9 | pass | — | Undo puts the edited file back; restored theme goes to the undo trash |
+| 2026-10-24 | rc.9 branch | T10 | partial | — | `doctor` clean; a new snapshot matches (gaps explained). `reaudit` after undo can't find the restore (F-025) |
