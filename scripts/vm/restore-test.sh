@@ -87,5 +87,8 @@ OMAPHOENIX_REPORT_HWM=1 OMAPHOENIX_NO_NOTIFY=1 nohup ~/.local/bin/omaphoenix res
 echo "omaphoenix in the VM: $("$vm" ssh '~/.local/bin/omaphoenix --version')"
 start=$(date +%s)
 until ! "$vm" ssh 'pgrep -f "omaphoenix restor[e]" >/dev/null' 2>/dev/null; do sleep 30; done
+# The restored firewall may deny SSH (the reference laptop's ufw has "22/tcp DENY IN"). Test-only, inside
+# the VM: allow the harness (QEMU's host address) first, so later scenarios and the reboot can still reach it.
+"$vm" ssh 'command -v ufw >/dev/null && sudo ufw insert 1 allow from 10.0.2.2 to any port 22 proto tcp >/dev/null 2>&1 || true'
 echo "restore took $((($(date +%s) - start) / 60)) min"
 "$vm" ssh 'grep -E "^(✓|✗|⏸)|^    (✗|⏸)|^(dry run|restore) of|^error:|VmHWM" ~/restore.log'
