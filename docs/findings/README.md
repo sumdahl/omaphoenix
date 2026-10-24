@@ -23,5 +23,9 @@ Bugs and surprises found while testing or using the products, one file each. A f
 | [F-016](F-016-temp-copy-of-secret-captured.md) | A program's temp file (e.g. a copy of `.claude.json`) is backed up as config | OmaPhoenix | medium | open |
 | [F-017](F-017-dry-run-counts-lines-not-packages.md) | A dry run's "planned" counts plan lines for packages, not packages | OmaPhoenix | low | open |
 | [F-018](F-018-watchdog-kills-pacman-under-sudo.md) | The watchdog kills pacman mid-install when an install under sudo runs past 3 minutes | OmaPhoenix | **high** | fixed in rc.9 |
+| [F-019](F-019-skipped-service-reported-failed.md) | A service skipped as "other hardware" is also reported as failed | OmaPhoenix | medium | open |
+| [F-020](F-020-npm-restore-uses-system-npm.md) | On a fresh machine, npm tools are installed with the system npm and fail | OmaPhoenix | medium | open |
+| [F-021](F-021-uv-tools-need-uv-first.md) | uv tools fail on a fresh machine because uv itself isn't restored | OmaPhoenix | medium | open |
+| [F-022](F-022-local-aur-package-reported-as-error.md) | A locally built package that isn't on the AUR shows as a raw failure | OmaPhoenix | low | open |
 
 **Severity:** `high` loses or leaks data, or breaks a restore. `medium` is wrong behaviour with no data at risk. `low` is a wrong message or a cosmetic problem.
