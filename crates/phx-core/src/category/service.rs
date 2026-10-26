@@ -86,7 +86,8 @@ impl Category for Service {
         let mut todo: [(&str, Vec<&str>); 2] = [("system", Vec::new()), ("user", Vec::new())];
         for id in text.split_whitespace() {
             let (scope, unit) = id.split_once('/').unwrap_or((id, ""));
-            if !env.want(id) && !env.want(unit) {
+            // Hardware rules match the scoped id; the bare unit name only counts when the user named it (F-019).
+            if !(env.want(id) || (!env.items.is_empty() && env.want(unit))) {
                 continue;
             }
             let state =
@@ -126,5 +127,41 @@ impl Category for Service {
             }
         }
         Ok(res)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Service;
+    use crate::category::{Category, Env};
+
+    #[test]
+    fn a_unit_skipped_as_other_hardware_is_not_enabled() {
+        let t = tempfile::tempdir().unwrap_or_else(|e| unreachable!("{e}"));
+        std::fs::write(
+            t.path().join("services.txt"),
+            "system/phx-hw-only.service\nsystem/phx-test-unit.service\n",
+        )
+        .unwrap_or_else(|e| unreachable!("{e}"));
+        let log = |_: &str, _: &str| {};
+        let mut env = Env::new(t.path(), t.path(), &log);
+        env.dry_run = true;
+        env.foreign = true;
+        env.category = "service".into();
+        env.machine = std::collections::BTreeMap::from([(
+            "service".to_owned(),
+            vec!["system/phx-hw-only.service".to_owned()],
+        )]);
+        let res = Service.restore(&env).unwrap_or_default();
+        assert!(
+            !res.planned.iter().any(|p| p.contains("phx-hw-only")),
+            "{:?}",
+            res.planned
+        );
+        assert!(res.failed.is_empty(), "{:?}", res.failed);
+        assert_eq!(
+            env.skipped.borrow().as_slice(),
+            ["system/phx-hw-only.service"]
+        );
     }
 }

@@ -6,7 +6,7 @@
 | Version | 0.1.0-rc.8 |
 | Found | 2026-10-24, VM restore test T2 (#33) |
 | Severity | medium: a false failure makes a good restore exit as failed (`error: 3 stage(s) failed`) |
-| Status | open |
+| Status | fixed in 0.1.0-rc.9; test `phx_core::category::service::tests::a_unit_skipped_as_other_hardware_is_not_enabled` |
 
 ## What happens
 
