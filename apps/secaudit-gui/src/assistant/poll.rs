@@ -1,7 +1,7 @@
 use std::fs;
 use std::time::Duration;
 
-use secaudit::ai::{self, Event};
+use phx_audit_ui::ai::{self, Event};
 use serde_json::json;
 use slint::{ComponentHandle, Timer, TimerMode};
 

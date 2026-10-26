@@ -4,7 +4,7 @@ use std::process::Command;
 use std::rc::Rc;
 use std::time::{Duration, Instant};
 
-use secaudit_core::store::{Accepted, Run, Store};
+use phx_audit::store::{Accepted, Run, Store};
 use slint::{ComponentHandle, ModelRc, SharedString, Timer, TimerMode, VecModel};
 
 use crate::assistant::{AiSess, Then};

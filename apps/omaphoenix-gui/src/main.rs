@@ -32,7 +32,7 @@ mod ui {
 use phx_core::App as Engine;
 use phx_core::migrate::Migration;
 use phx_core::sys;
-use secaudit_core::store::Store;
+use phx_audit::store::Store;
 use slint::ComponentHandle;
 
 use state::{quiet, ui_engine, ui_motion, ui_state, ui_timer};

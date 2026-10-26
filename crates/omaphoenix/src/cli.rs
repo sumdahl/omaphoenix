@@ -72,6 +72,16 @@ pub enum Cmd {
         #[arg(long)]
         dry_run: bool,
     },
+    /// Security audit of this machine: the report, or `tui` / `menu`
+    ///
+    /// Read-only; never changes the system. Run with sudo for full coverage.
+    /// Audit engine by Manish Karki.
+    Audit {
+        #[command(flatten)]
+        args: phx_audit_ui::cli::AuditArgs,
+        #[command(subcommand)]
+        view: Option<phx_audit_ui::cli::AuditView>,
+    },
     /// What would be lost if this machine were reinstalled right now
     Doctor {
         /// Machine-readable output

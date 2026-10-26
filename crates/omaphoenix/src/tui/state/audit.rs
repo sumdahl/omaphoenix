@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
-use secaudit_core::store::{Accepted, Store};
+use phx_audit::store::{Accepted, Store};
 
 use super::{Msg, State, Suspend};
 
@@ -15,7 +15,7 @@ impl State<'_> {
         }
         let tx = self.tx.clone();
         let store = self.audit_store.clone();
-        self.audit_progress = Some((0, secaudit_core::checks::SECTIONS.len(), String::new()));
+        self.audit_progress = Some((0, phx_audit::checks::SECTIONS.len(), String::new()));
         std::thread::spawn(move || {
             let progress = tx.clone();
             let r = audit_now(&store, |done, total, section| {
@@ -25,7 +25,7 @@ impl State<'_> {
         });
     }
 
-    pub fn audit_items(&self) -> Vec<&secaudit_core::store::Item> {
+    pub fn audit_items(&self) -> Vec<&phx_audit::store::Item> {
         let Some(run) = &self.audit else {
             return Vec::new();
         };
@@ -42,7 +42,7 @@ impl State<'_> {
         items.sort_by_key(|i| {
             (
                 i.accepted,
-                secaudit_core::store::sev_order(i.finding.sev),
+                phx_audit::store::sev_order(i.finding.sev),
                 i.n,
             )
         });
@@ -124,7 +124,7 @@ impl State<'_> {
 }
 
 fn audit_now(store: &Store, progress: impl FnMut(usize, usize, &str)) -> Result<PathBuf, String> {
-    let ctx = secaudit_core::audit::Ctx::from_env();
+    let ctx = phx_audit::audit::Ctx::from_env();
     let host = std::fs::read_to_string("/proc/sys/kernel/hostname").unwrap_or_default();
     let kernel = std::fs::read_to_string("/proc/sys/kernel/osrelease").unwrap_or_default();
     store

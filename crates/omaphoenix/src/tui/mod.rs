@@ -106,7 +106,7 @@ mod tests {
     use ratatui::Terminal;
     use ratatui::backend::TestBackend;
     use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-    use secaudit_core::store::Store;
+    use phx_audit::store::Store;
 
     use super::state::{Section, State};
     use super::view;
@@ -184,7 +184,7 @@ mod tests {
 
     #[test]
     fn unified_keymap_confirms_searches_and_names_every_action() {
-        use secaudit_core::store::Meta;
+        use phx_audit::store::Meta;
         let t = tempfile::tempdir().unwrap_or_else(|e| unreachable!("{e}"));
         let app = App {
             home: t.path().into(),

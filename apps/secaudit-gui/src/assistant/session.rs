@@ -2,7 +2,7 @@ use std::fs;
 use std::path::Path;
 use std::sync::mpsc;
 
-use secaudit::ai;
+use phx_audit_ui::ai;
 use serde_json::json;
 use slint::SharedString;
 

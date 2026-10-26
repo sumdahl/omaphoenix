@@ -1,0 +1,21 @@
+[package]
+name = "phx-audit"
+description = "Security Audit engine and finding contract, shared by Security Audit and OmaPhoenix"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+regex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

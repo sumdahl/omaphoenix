@@ -1,6 +1,6 @@
 use std::sync::mpsc::Receiver;
 
-use secaudit::ai::{Event, Request};
+use phx_audit_ui::ai::{Event, Request};
 use serde_json::Value;
 
 mod markdown;

@@ -12,13 +12,14 @@ edition = "2024"
 # older MSRV pinned vulnerable versions. 1.89: `File::try_lock` (the snapshot
 # repo lock) without a libc-wrapping crate.
 rust-version = "1.89"
-repository = "https://github.com/sumdahl/omaphoenix-secaudit"
+repository = "https://github.com/sumdahl/omaphoenix"
 license = "MIT OR Apache-2.0" # ADR-0015
 # Unpublished until the handover (ADR-0013).
 publish = false
 
 [workspace.dependencies]
-secaudit-core = { path = "crates/secaudit-core" }
+phx-audit = { path = "crates/phx-audit" }
+phx-audit-ui = { path = "crates/phx-audit-ui" }
 clap = { version = "4", features = ["derive"] }
 phx-contract = { path = "crates/phx-contract" }
 phx-core = { path = "crates/phx-core" }

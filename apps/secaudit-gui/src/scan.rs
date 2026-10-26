@@ -3,8 +3,8 @@ use std::process::{Command, Stdio};
 use std::time::Duration;
 use std::{env, fs, thread};
 
-use secaudit_core::audit::Ctx;
-use secaudit_core::store::{Meta, Run, now};
+use phx_audit::audit::Ctx;
+use phx_audit::store::{Meta, Run, now};
 use slint::{ComponentHandle, SharedString, Weak};
 
 use crate::state::{local, refresh, state, toast};
@@ -127,7 +127,7 @@ pub(crate) fn scan(app: &App, mode: &str) {
 
 /// Progress comes from the `== Section ==` headers the terminal scan tees to `output.txt`.
 pub(crate) fn follow_output(weak: Weak<App>, output: PathBuf, mode: String) {
-    let total = secaudit_core::checks::SECTIONS.len();
+    let total = phx_audit::checks::SECTIONS.len();
     thread::spawn(move || {
         let mut seen = 0;
         loop {

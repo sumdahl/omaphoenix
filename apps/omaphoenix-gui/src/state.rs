@@ -8,7 +8,7 @@ use std::rc::Rc;
 use phx_contract::selection::Choice;
 use phx_core::App as Engine;
 use phx_core::migrate::Migration;
-use secaudit_core::store::{Accepted, Run};
+use phx_audit::store::{Accepted, Run};
 use slint::{ModelRc, Timer, VecModel};
 
 use crate::motion::{Motion, SHEET_H};

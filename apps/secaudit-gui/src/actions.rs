@@ -4,7 +4,7 @@ use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 use std::{env, fs};
 
-use secaudit_core::store::{Accepted, Run, now};
+use phx_audit::store::{Accepted, Run, now};
 use slint::ComponentHandle;
 
 use crate::state::{local, refresh, selected, state, toast};

@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use secaudit_core::store::{Item, sev_name, sev_order};
+use phx_audit::store::{Item, sev_name, sev_order};
 use slint::ComponentHandle;
 
 use super::{State, int, local, model, state};

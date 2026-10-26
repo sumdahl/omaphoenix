@@ -21,7 +21,13 @@ fn main() -> ExitCode {
     {
         sys::set_child_env("OMARCHY_PATH", "/usr/share/omarchy");
     }
-    let code = match commands::run(cli::Cli::parse()) {
+    let cli = cli::Cli::parse();
+    if let Some(cli::Cmd::Audit { args, view }) = cli.command {
+        let code = phx_audit_ui::cli::run(&args, view);
+        out::report_hwm();
+        return ExitCode::from(code);
+    }
+    let code = match commands::run(cli) {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
             let _ = writeln!(io::stderr(), "error: {e}");

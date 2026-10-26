@@ -4,7 +4,7 @@ use std::cell::RefCell;
 use std::fs;
 use std::rc::Rc;
 
-use secaudit_core::store::{Accepted, Store};
+use phx_audit::store::{Accepted, Store};
 use slint::{ComponentHandle, SharedString, Timer};
 
 use crate::migrate::refresh_migrate;
@@ -17,12 +17,12 @@ use crate::ui::{App, AuditRow};
 
 /// Issues on screen: matching the Audit search, accepted last, worst first.
 fn shown_issues<'a>(
-    run: &'a secaudit_core::store::Run,
+    run: &'a phx_audit::store::Run,
     query: &str,
-) -> Vec<&'a secaudit_core::store::Item> {
-    let issues: Vec<&secaudit_core::store::Item> =
+) -> Vec<&'a phx_audit::store::Item> {
+    let issues: Vec<&phx_audit::store::Item> =
         run.items.iter().filter(|i| i.is_issue()).collect();
-    let mut items: Vec<&secaudit_core::store::Item> =
+    let mut items: Vec<&phx_audit::store::Item> =
         phx_core::fuzzy::filter(query, &issues, |i| {
             format!(
                 "{} {} {}",
@@ -35,7 +35,7 @@ fn shown_issues<'a>(
     items.sort_by_key(|i| {
         (
             i.accepted,
-            secaudit_core::store::sev_order(i.finding.sev),
+            phx_audit::store::sev_order(i.finding.sev),
             i.n,
         )
     });
@@ -64,7 +64,7 @@ pub(crate) fn refresh_audit(
         items
             .iter()
             .map(|i| AuditRow {
-                sev: secaudit_core::store::sev_name(i.finding.sev).into(),
+                sev: phx_audit::store::sev_name(i.finding.sev).into(),
                 title: i.title().into(),
                 section: i.finding.section.as_str().into(),
                 detail: i.finding.detail.as_str().into(),
@@ -100,7 +100,7 @@ pub(crate) fn wire(app: &App) {
             background(
                 &app,
                 move || {
-                    let ctx = secaudit_core::audit::Ctx::from_env();
+                    let ctx = phx_audit::audit::Ctx::from_env();
                     let host = fs::read_to_string("/proc/sys/kernel/hostname").unwrap_or_default();
                     let kernel =
                         fs::read_to_string("/proc/sys/kernel/osrelease").unwrap_or_default();
@@ -182,7 +182,7 @@ fn wire_findings(app: &App) {
                         Accepted {
                             section,
                             msg: title,
-                            at: secaudit_core::store::now(),
+                            at: phx_audit::store::now(),
                         },
                     );
                 }

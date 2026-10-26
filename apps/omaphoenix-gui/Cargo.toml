@@ -14,7 +14,7 @@ publish = false
 [dependencies]
 phx-contract = { path = "../../crates/phx-contract" }
 phx-core = { path = "../../crates/phx-core" }
-secaudit-core = { path = "../../crates/secaudit-core" }
+phx-audit = { path = "../../crates/phx-audit" }
 slint = "1.18"
 toml = "1"
 

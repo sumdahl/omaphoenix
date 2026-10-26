@@ -35,6 +35,11 @@ pub fn run(cli: Cli) -> Result<(), String> {
         Cmd::Tui => tui::run(&app, None).map_err(|e| e.to_string()),
         Cmd::Select { all } => select::run(&app, all),
         Cmd::Gui => gui::open(),
+        // main.rs runs the audit before building the app, so it needs no snapshot repo.
+        Cmd::Audit { args, view } => match phx_audit_ui::cli::run(&args, view) {
+            0 => Ok(()),
+            code => Err(format!("audit exited with {code}")),
+        },
         Cmd::Init { remote, github } => init::run(&app, remote, &github),
         Cmd::Snapshot => snapshot::run(&app),
         Cmd::List => snapshot::list(&app),

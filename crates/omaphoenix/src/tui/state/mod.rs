@@ -22,7 +22,7 @@ use phx_contract::selection::Choice;
 use phx_core::doctor::Finding;
 use phx_core::store::Snapshot;
 use phx_core::{App, schedule};
-use secaudit_core::store::{Accepted, Run, Store};
+use phx_audit::store::{Accepted, Run, Store};
 
 use super::theme::Theme;
 
