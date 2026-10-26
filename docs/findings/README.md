@@ -17,7 +17,7 @@ Bugs and surprises found while testing or using the products, one file each. A f
 | [F-007](F-007-timeline-says-only-the-time.md) | The timeline says when each snapshot was taken, not what changed | OmaPhoenix | low | fixed in rc.8 |
 | [F-008](F-008-doctor-says-keys-not-backed-up.md) | `doctor` says the SSH keys aren't backed up after saving in Backup | OmaPhoenix | medium | fixed in rc.8 |
 | [F-009](F-009-restore-fails-with-sigpipe.md) | A restore can fail with `git archive … signal: 13 (SIGPIPE)` when the machine is busy | OmaPhoenix | high | fixed in rc.8 |
-| [F-010](F-010-list-before-setup-says-no-such-file.md) | `omaphoenix list` before setup says "No such file or directory" | OmaPhoenix | low | open |
+| [F-010](F-010-list-before-setup-says-no-such-file.md) | `omaphoenix list` before setup says "No such file or directory" | OmaPhoenix | low | fixed in rc.9 |
 | [F-011](F-011-secrets-init-reincludes-excluded-key.md) | `secrets init` can include a key you excluded | OmaPhoenix | low | open |
 | [F-012](F-012-doctor-unreadable-selection.md) | `doctor` doesn't say when `selection.conf` can't be read | OmaPhoenix | low | open |
 | [F-016](F-016-temp-copy-of-secret-captured.md) | A program's temp file (e.g. a copy of `.claude.json`) is backed up as config | OmaPhoenix | medium | fixed in rc.9 |
