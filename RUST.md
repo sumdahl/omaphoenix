@@ -116,8 +116,8 @@ The user's standing requirement: **"optimize memory usage, very efficient."** Bu
 | `snapshot` (full machine) | **≤ 48 MB** | 8.7 MB (real home, 149 MB captured) |
 | `restore --dry-run` | **≤ 48 MB** | 5.2 MB |
 | `doctor`, `list` | **≤ 16 MB** | 4.8 MB, 4.3 MB |
-| `secaudit` full quick audit | **≤ 48 MB** | 7.7 MB |
-| TUI, idle | **≤ 24 MB** | `secaudit tui` 4.6 MB |
+| `omaphoenix audit` full quick audit | **≤ 48 MB** | 7.7 MB |
+| TUI, idle | **≤ 24 MB** | `omaphoenix audit tui` 4.6 MB |
 | Timer snapshot (background) | **≤ 48 MB**, `Nice=19`, idle I/O | as `snapshot` |
 | Desktop app, idle (all processes, PSS) | **target ≤ 150 MB, ceiling 250 MB** | Tauri spike 234 MB; Slint spike 46 MB (docs/09) |
 

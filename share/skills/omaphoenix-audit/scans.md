@@ -4,17 +4,17 @@
 
 | Scan | How | Covers |
 |---|---|---|
-| Quick | `secaudit` as the user | Everything readable without root; root-only checks report `skip` |
-| Full | `sudo secaudit` (user runs it in a terminal) | Adds shadow, sudoers, root-only files |
-| Deep | `sudo secaudit --deep` | Adds every package file checksum and a whole-disk SUID/SGID scan (slow) |
+| Quick | `omaphoenix audit` as the user | Everything readable without root; root-only checks report `skip` |
+| Full | `sudo omaphoenix audit` (user runs it in a terminal) | Adds shadow, sudoers, root-only files |
+| Deep | `sudo omaphoenix audit --deep` | Adds every package file checksum and a whole-disk SUID/SGID scan (slow) |
 
 Run the quick scan yourself. For full or deep, give the user the command, or tell them to press
-`s` in `secaudit-tui` and pick the mode.
+`s` in `omaphoenix audit tui` and pick the mode.
 
 ## Machine-readable output
 
 ```bash
-secaudit --json /tmp/findings.jsonl --no-color >/dev/null
+omaphoenix audit --json /tmp/findings.jsonl --no-color >/dev/null
 ```
 
 One JSON object per line:
@@ -30,7 +30,7 @@ One JSON object per line:
 | `targets` | Files, units or packages the finding is about |
 | `schema` | Contract version (1) |
 
-Each scan from the apps is also saved under `~/.local/state/secaudit/runs/<stamp>/findings.jsonl`.
+Each scan from the apps is also saved under `~/.local/state/omaphoenix-audit/runs/<stamp>/findings.jsonl`.
 
 ## Reading findings
 

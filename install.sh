@@ -218,6 +218,10 @@ skills() {
   mapfile -t dirs < <(agent_skill_dirs)
   for dir in "${dirs[@]}"; do
     mkdir -p "$dir"
+    # A skill renamed since the last install (secaudit) leaves a dead link.
+    for s in "$dir"/*; do
+      if [[ -L $s && ! -e $s && $(readlink "$s") == "$dest"/* ]]; then rm -f -- "$s"; fi
+    done
     for s in "$dest"/*/; do
       name=$(basename "$s")
       if [[ -e $dir/$name && ! -L $dir/$name ]]; then

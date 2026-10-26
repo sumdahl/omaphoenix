@@ -10,7 +10,7 @@ Each crate and app has its own `AGENTS.md` with the rules for that part: its con
 | `crates/phx-core` | the OmaPhoenix engine |
 | `crates/omaphoenix` | OmaPhoenix CLI and TUI |
 | `crates/phx-audit` | the audit engine and finding contract |
-| `crates/secaudit` | Security Audit CLI, TUI, gum UI, AI |
+| `crates/phx-audit-ui` | `omaphoenix audit`: report, TUI, gum UI, AI |
 | `apps/` | the two Slint desktop apps |
 | `crates/omaphoenix-desktop`, `ui/desktop`, `spikes/` | decision records; don't extend |
 

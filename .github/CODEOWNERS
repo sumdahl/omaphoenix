@@ -1,8 +1,8 @@
 # Review requests for every pull request. Approval rules live in the branch protection on main.
 *                         @sumdahl @mnshchtri
-/crates/secaudit/         @mnshchtri @sumdahl
-/crates/phx-audit/    @mnshchtri @sumdahl
-/apps/omaphoenix-audit-gui/       @mnshchtri @sumdahl
+/crates/phx-audit-ui/     @mnshchtri @sumdahl
+/crates/phx-audit/        @mnshchtri @sumdahl
+/apps/omaphoenix-audit-gui/ @mnshchtri @sumdahl
 /crates/phx-core/         @sumdahl @mnshchtri
 /crates/phx-contract/     @sumdahl @mnshchtri
 /crates/omaphoenix/       @sumdahl @mnshchtri

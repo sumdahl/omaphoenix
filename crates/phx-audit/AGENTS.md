@@ -1,6 +1,6 @@
 # phx-audit
 
-The Security Audit engine and the finding contract, shared by Security Audit and the OmaPhoenix gate. A port of Manish's Bash `bin/secaudit` (owner: Manish, ADR-0013). The root AGENTS.md rules apply too.
+The audit engine and the finding contract, shared by `omaphoenix audit` and the OmaPhoenix gate. A port of Manish's Bash `bin/secaudit` (owner: Manish, ADR-0013). The root AGENTS.md rules apply too.
 
 ## Rules
 - **Read-only.** The audit never changes the system (ADR-0004). It suggests fix commands; it never runs them.
