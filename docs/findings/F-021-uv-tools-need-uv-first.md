@@ -6,7 +6,7 @@
 | Version | 0.1.0-rc.8 |
 | Found | 2026-10-24, VM restore test T2 (#33) |
 | Severity | medium: every uv tool fails to restore on a fresh Omarchy |
-| Status | open |
+| Status | fixed in 0.1.0-rc.9; test `phx_core::category::pkg_other::tests::on_a_fresh_machine_npm_and_uv_go_through_mise; verified in the VM` |
 
 ## What happens
 
