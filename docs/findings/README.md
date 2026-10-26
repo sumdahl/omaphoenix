@@ -26,7 +26,7 @@ Bugs and surprises found while testing or using the products, one file each. A f
 | [F-019](F-019-skipped-service-reported-failed.md) | A service skipped as "other hardware" is also reported as failed | OmaPhoenix | medium | fixed in rc.9 |
 | [F-020](F-020-npm-restore-uses-system-npm.md) | On a fresh machine, npm tools are installed with the system npm and fail | OmaPhoenix | medium | fixed in rc.9 |
 | [F-021](F-021-uv-tools-need-uv-first.md) | uv tools fail on a fresh machine because uv itself isn't restored | OmaPhoenix | medium | fixed in rc.9 |
-| [F-022](F-022-local-aur-package-reported-as-error.md) | A locally built package that isn't on the AUR shows as a raw failure | OmaPhoenix | low | open |
+| [F-022](F-022-local-aur-package-reported-as-error.md) | A locally built package that isn't on the AUR shows as a raw failure | OmaPhoenix | low | fixed in rc.9 |
 | [F-023](F-023-restored-profile-locks-out-desktop.md) | A restored shell profile that sources a missing file stops the desktop from starting | OmaPhoenix | **high** | fixed in rc.9 |
 | [F-024](F-024-folder-restore-pulls-hardware-files.md) | Restoring a folder pulls in the hardware-specific files inside it | OmaPhoenix | medium | fixed in rc.9 |
 | [F-025](F-025-reaudit-after-undo.md) | After an undo, `reaudit` says "nothing to undo" | OmaPhoenix | low | open |

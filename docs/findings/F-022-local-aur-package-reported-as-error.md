@@ -6,7 +6,7 @@
 | Version | 0.1.0-rc.8 |
 | Found | 2026-10-24, VM restore test T2 (#33) |
 | Severity | low: wording, but it makes the restore exit as failed |
-| Status | open |
+| Status | fixed in 0.1.0-rc.9; test `phx_core::category::pkg::tests::reads_the_packages_yay_cannot_find; verify in the VM rerun` |
 
 ## What happens
 

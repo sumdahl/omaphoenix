@@ -82,6 +82,10 @@ fn print_report(snap: &Snapshot, reports: &[StageReport], dry: bool) -> Result<(
         r.skipped
             .iter()
             .for_each(|s| say(&format!("    · skipped, other hardware: {s}")));
+        r.result
+            .notes
+            .iter()
+            .for_each(|n| say(&format!("    · {n}")));
         if let Some(e) = &r.err {
             say(&format!("    ✗ {e}"));
         }
