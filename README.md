@@ -90,7 +90,7 @@ It asks for the secrets passphrase if SSH keys were backed up encrypted.
 | | OmaPhoenix | Security Audit (`secaudit`) |
 |---|---|---|
 | Owner | Sumiran Dahal | Manish Karki |
-| Repo | `github.com/sumdahl/omaphoenix` (**private**) | `github.com/mnshchtri/secaudit` (**public, no LICENSE file yet**) |
+| Repo | `github.com/sumdahl/omaphoenix-go` (**private**, the Go version) | `github.com/mnshchtri/secaudit` (**public, no LICENSE file yet**) |
 | Local path | `~/personal/omaphoenix` | `~/personal/secaudit` |
 | Language today | Go (single static binary) | Bash engine + Python Textual TUI + gum UI |
 | What it does | Timestamped snapshots of packages, plugins, themes, config, `/etc`, services, encrypted SSH keys, stored in the user's private git repo; one-command restore | Read-only audit of ~14 areas (packages, boot, sysctl, firewall, network, SSH, users, lock, filesystem, persistence, containers, secrets, rootkit); score + grade; fix commands run only on confirmation |
@@ -125,7 +125,7 @@ It asks for the secrets passphrase if SSH keys were backed up encrypted.
 ~/personal/joint-omaphoenix-secaudit/     the joint workspace (home of this project)
 ├── omaphoenix-secaudit/                  this design folder: README, AGENTS, DESIGN, RUST, docs/
 └── secaudit/                             clone of github.com/mnshchtri/secaudit (Manish's repo)
-~/personal/omaphoenix/                    the Go OmaPhoenix (private repo sumdahl/omaphoenix)
+~/personal/omaphoenix/                    the Go OmaPhoenix (private repo sumdahl/omaphoenix-go)
 ~/personal/project-ideas/omaphoenix-secaudit → symlink to the design folder (old path)
 ```
 

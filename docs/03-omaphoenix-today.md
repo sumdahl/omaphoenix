@@ -1,6 +1,6 @@
 # 03: OmaPhoenix as it is today (2026-10-09)
 
-The source is `~/personal/omaphoenix`, private repo `github.com/sumdahl/omaphoenix`. CI is green. The authoritative docs are in that repo's `docs/` folder; this is the summary the integration needs.
+The source is `~/personal/omaphoenix`, private repo `github.com/sumdahl/omaphoenix-go` (renamed from `omaphoenix` at 0.1.0). CI is green. The authoritative docs are in that repo's `docs/` folder; this is the summary the integration needs.
 
 ## Shape
 
