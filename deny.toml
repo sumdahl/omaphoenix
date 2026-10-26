@@ -10,6 +10,7 @@ yanked = "deny"
 # ignored here: upgrade instead. Revisit when Tauri moves to GTK4/WebKitGTK 6,
 # or if the GUI stack decision (issue #11) picks something else.
 ignore = [
+  { id = "RUSTSEC-2026-0387", reason = "crypto-bigint 0.5 timing issue, via age 0.12.1 (latest) → p256/elliptic-curve 0.13, a non-optional dependency. OmaPhoenix only uses age's x25519 recipients and scrypt passphrases (secret/keys.rs, secret/mod.rs), never P-256, so the affected code never runs on our data. The fix (0.7.6) needs elliptic-curve 0.14; drop this when age moves to it." },
   { id = "RUSTSEC-2026-0374", reason = "basic-toml (unmaintained) via age's i18n-embed: a compile-time proc macro reading age's own i18n.toml, never user input; age 0.12.1 is the latest. Drop when age moves off i18n-embed-fl or basic-toml." },
   { id = "RUSTSEC-2024-0370", reason = "proc-macro-error via gtk-rs 0.18 (GTK3 bindings, required by Tauri on Linux)" },
   { id = "RUSTSEC-2025-0075", reason = "unic-* via urlpattern via tauri-utils" },
