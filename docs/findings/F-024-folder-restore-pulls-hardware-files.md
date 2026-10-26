@@ -6,7 +6,7 @@
 | Version | 0.1.0-rc.8 |
 | Found | 2026-10-24, VM restore test T8 (#33) |
 | Severity | medium: on different hardware it can apply another machine's monitor layout or touchpad settings without being asked |
-| Status | open |
+| Status | fixed in 0.1.0-rc.9; test `phx_core::category::env::tests::want_scopes_and_skips_hardware_items` |
 
 ## What happens
 
