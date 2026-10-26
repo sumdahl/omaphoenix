@@ -142,7 +142,8 @@ fn install_args(o: &OtherPkg, has: &dyn Fn(&str) -> bool) -> Result<Vec<String>,
     let tool = argv.first().map_or("", String::as_str);
     let prefix: &[&str] = match (o.manager.as_str(), has("mise"), has(tool)) {
         ("npm", true, _) => &["mise", "exec", "--"],
-        ("uv", true, false) => &["mise", "exec", "uv@latest", "--"],
+        // mise's uv shim can be on PATH with no uv version behind it, so `has("uv")` proves nothing.
+        ("uv", true, _) => &["mise", "exec", "uv@latest", "--"],
         (_, _, true) => &[],
         (_, true, false) => &["mise", "exec", "--"],
         (_, false, false) => return Err(format!("{tool} is not installed")),
@@ -269,6 +270,18 @@ mod tests {
             cargo.first().map(String::as_str),
             Some("cargo"),
             "cargo worked as is"
+        );
+        let shim = |p: &str| matches!(p, "npm" | "mise" | "uv");
+        let uv =
+            install_args(&OtherPkg::new("uv", "spotdl", "4.5.2", ""), &shim).unwrap_or_default();
+        assert_eq!(
+            uv.get(..4).map(<[String]>::to_vec),
+            Some(
+                ["mise", "exec", "uv@latest", "--"]
+                    .map(String::from)
+                    .to_vec()
+            ),
+            "a uv shim on PATH still goes through mise"
         );
         let none = |_: &str| false;
         assert!(install_args(&OtherPkg::new("uv", "x", "1", ""), &none).is_err());
