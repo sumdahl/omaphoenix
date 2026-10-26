@@ -9,7 +9,7 @@
 #
 # Environment:
 #   OMAPHOENIX_VM_DIR   VM state (default ~/.cache/omaphoenix-vm)
-#   VM_CHECKPOINT       clean checkpoint to revert to (default: fresh)
+#   VM_CHECKPOINT       clean checkpoint to revert to (default: fresh-4.0.6, docs/14 phase 3)
 #   VM_SNAP             test snapshot repo to restore (default: $OMAPHOENIX_VM_DIR/snap)
 #   VM_BIN              an omaphoenix binary to test as is (e.g. a build from another branch)
 #
@@ -18,7 +18,7 @@
 set -euo pipefail
 
 dir=${OMAPHOENIX_VM_DIR:-$HOME/.cache/omaphoenix-vm}
-checkpoint=${VM_CHECKPOINT:-fresh}
+checkpoint=${VM_CHECKPOINT:-fresh-4.0.6}
 snap=${VM_SNAP:-$dir/snap}
 here=$(cd "$(dirname "$0")" && pwd)
 repo=$(cd "$here/../.." && pwd)
