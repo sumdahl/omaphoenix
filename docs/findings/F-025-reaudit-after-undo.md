@@ -6,7 +6,7 @@
 | Version | 0.1.0-rc.8 |
 | Found | 2026-10-24, VM restore test T10 (#33) |
 | Severity | low: wrong wording; the check can't run |
-| Status | open |
+| Status | fixed in 0.1.0-rc.9; test `phx_core::app::journal::tests::the_last_restore_is_found_after_an_undo` |
 
 ## What happens
 
