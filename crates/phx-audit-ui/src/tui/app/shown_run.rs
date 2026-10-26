@@ -45,10 +45,7 @@ impl App {
             .iter()
             .map(|i| i.finding.section.as_str())
             .collect();
-        let order: Vec<&str> = phx_audit::checks::SECTIONS
-            .iter()
-            .map(|s| s.name)
-            .collect();
+        let order: Vec<&str> = phx_audit::checks::SECTIONS.iter().map(|s| s.name).collect();
         let mut out: Vec<String> = order
             .iter()
             .filter(|s| present.contains(**s))

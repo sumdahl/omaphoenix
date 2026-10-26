@@ -1,11 +1,11 @@
-use super::{Accepted, KEEP_RUNS, Meta, Store, accept_key};
+use super::{Accepted, KEEP_RUNS, Meta, Store, accept_key, renamed_dir};
 use std::collections::BTreeMap;
 use std::fs;
 
 fn store() -> (tempfile::TempDir, Store) {
     let t = tempfile::tempdir().unwrap_or_else(|e| unreachable!("{e}"));
     let s = Store {
-        dir: t.path().join("secaudit"),
+        dir: t.path().join("omaphoenix-audit"),
     };
     (t, s)
 }
@@ -111,4 +111,19 @@ fn compares_and_records_fixes_and_exports() {
         "{md}"
     );
     assert!(md.contains("  Fix: `chmod 600 ~/.netrc`"));
+}
+
+#[test]
+fn the_old_secaudit_dir_moves_once() {
+    let t = tempfile::tempdir().unwrap_or_else(|e| unreachable!("{e}"));
+    let _ = fs::create_dir_all(t.path().join("secaudit/runs"));
+    let dir = renamed_dir(t.path());
+    assert!(dir.join("runs").is_dir(), "history moved");
+    assert!(!t.path().join("secaudit").exists());
+    let _ = fs::create_dir_all(t.path().join("secaudit"));
+    assert_eq!(renamed_dir(t.path()), dir);
+    assert!(
+        t.path().join("secaudit").exists(),
+        "a newer dir is never overwritten"
+    );
 }

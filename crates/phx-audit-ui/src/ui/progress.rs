@@ -16,7 +16,7 @@ impl Ui {
         done: bool,
     ) {
         let w = width();
-        let secs = self.engine_sections();
+        let secs = Self::engine_sections();
         let total = secs.len().max(1);
         let out = std::fs::read_to_string(dir.join("output.txt")).unwrap_or_default();
         let mut order: Vec<(String, usize, usize)> = Vec::new();

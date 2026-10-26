@@ -1,7 +1,7 @@
 //! AI explain and plan: setup gate, opening and keys of the AI screen.
 
-use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use phx_audit::store::sev_name;
+use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use super::util::copy_to_clipboard;
 use super::{App, Modal, Screen, Severity};

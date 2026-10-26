@@ -3,11 +3,11 @@
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
-use phx_contract::{AuditSummary, GateItem};
 use phx_audit::audit::{self, Ctx, Section};
 use phx_audit::checks::SECTIONS;
 use phx_audit::store::{Store, accept_key};
 use phx_audit::{Severity, Target};
+use phx_contract::{AuditSummary, GateItem};
 
 /// Sections in gate scope: what could carry a risk into a backup.
 const GATE_SECTIONS: &[&str] = &[
@@ -97,7 +97,7 @@ pub fn run(home: &Path, cache: Option<&Path>, log: &dyn Fn(&str, &str)) -> Gate 
     let accepted = Store::from_env().accepted();
     let (score, grade) = report.score();
     let mut summary = AuditSummary::new(
-        "omaphoenix (secaudit-core)",
+        "omaphoenix (phx-audit)",
         env!("CARGO_PKG_VERSION"),
         score,
         grade,

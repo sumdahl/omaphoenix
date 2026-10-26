@@ -4,35 +4,35 @@ use std::path::PathBuf;
 
 use serde_json::Value;
 
-/// `SECAUDIT_AI_MODEL`, if set.
+/// `OMAPHOENIX_AUDIT_AI_MODEL`, if set.
 #[must_use]
 pub fn model_override() -> Option<String> {
-    std::env::var("SECAUDIT_AI_MODEL").ok()
+    std::env::var("OMAPHOENIX_AUDIT_AI_MODEL").ok()
 }
 
-/// The API model: `SECAUDIT_AI_MODEL`, else `claude-opus-5-5`.
+/// The API model: `OMAPHOENIX_AUDIT_AI_MODEL`, else `claude-opus-5-5`.
 #[must_use]
 pub fn model() -> String {
     model_override().unwrap_or_else(|| "claude-opus-5-5".into())
 }
 
-/// `SECAUDIT_AI_EFFORT`, else `medium`.
+/// `OMAPHOENIX_AUDIT_AI_EFFORT`, else `medium`.
 #[must_use]
 pub fn effort() -> String {
-    std::env::var("SECAUDIT_AI_EFFORT").unwrap_or_else(|_| "medium".into())
+    std::env::var("OMAPHOENIX_AUDIT_AI_EFFORT").unwrap_or_else(|_| "medium".into())
 }
 
 pub(super) fn home() -> String {
     std::env::var("HOME").unwrap_or_default()
 }
 
-/// `$XDG_CONFIG_HOME/secaudit` (else `~/.config/secaudit`).
+/// `$XDG_CONFIG_HOME/omaphoenix-audit` (else `~/.config/omaphoenix-audit`).
 #[must_use]
 pub fn config_dir() -> PathBuf {
-    std::env::var_os("XDG_CONFIG_HOME")
+    let base = std::env::var_os("XDG_CONFIG_HOME")
         .filter(|v| !v.is_empty())
-        .map_or_else(|| PathBuf::from(home()).join(".config"), PathBuf::from)
-        .join("secaudit")
+        .map_or_else(|| PathBuf::from(home()).join(".config"), PathBuf::from);
+    phx_audit::store::renamed_dir(&base)
 }
 
 /// Where a pasted API key is kept (mode 600).
@@ -116,7 +116,7 @@ pub fn claude_bin() -> Option<PathBuf> {
         .unwrap_or_default();
     mise.sort();
     mise.reverse();
-    let candidates = std::env::var_os("SECAUDIT_CLAUDE_BIN")
+    let candidates = std::env::var_os("OMAPHOENIX_AUDIT_CLAUDE_BIN")
         .map(PathBuf::from)
         .into_iter()
         .chain(on_path)

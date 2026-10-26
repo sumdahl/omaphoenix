@@ -13,11 +13,11 @@ use crate::tui::app::App;
 use crate::tui::times::local_time;
 use crate::tui::view::{mmss, put_lines, wrap_spans};
 use crate::tui::widgets::{self, put};
+use phx_audit::store::Run;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Modifier;
 use ratatui::text::{Line, Span};
-use phx_audit::store::Run;
 use std::fmt::Write as _;
 
 pub(super) fn trendbox(buf: &mut Buffer, app: &App, r: Rect, run: &Run) {

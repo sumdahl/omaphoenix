@@ -1,4 +1,4 @@
-//! Security Audit desktop app (Slint), a front end of `secaudit-core`.
+//! OmaPhoenix Audit desktop app (Slint), a front end of `phx-audit`.
 
 #[allow(
     unsafe_code,
@@ -30,7 +30,7 @@ use ui::{App, Theme};
 
 fn main() -> Result<(), slint::PlatformError> {
     let app = App::new()?;
-    slint::set_xdg_app_id("secaudit-gui")?;
+    slint::set_xdg_app_id("omaphoenix-audit-gui")?;
     if let Some(tokens) = theme::theme_file().and_then(|p| theme::read_tokens(&p)) {
         theme::apply_theme(&app, &tokens);
     }

@@ -1,4 +1,4 @@
-//! Scan history and accepted risks under `$XDG_STATE_HOME/secaudit`, shared with the Python and Bash apps.
+//! Scan history and accepted risks under `$XDG_STATE_HOME/omaphoenix-audit` (`secaudit` before 0.1.0).
 
 use std::collections::BTreeMap;
 use std::fs;
@@ -26,15 +26,26 @@ pub fn now() -> u64 {
         .map_or(0, |d| d.as_secs())
 }
 
+/// `base/omaphoenix-audit`, first moving `base/secaudit` there if only the old one exists.
+#[must_use]
+pub fn renamed_dir(base: &Path) -> PathBuf {
+    let new = base.join("omaphoenix-audit");
+    let old = base.join("secaudit");
+    if !new.exists() && old.is_dir() {
+        let _ = fs::rename(&old, &new);
+    }
+    new
+}
+
 /// Where state lives.
 #[derive(Clone, Debug)]
 pub struct Store {
-    /// `$XDG_STATE_HOME/secaudit`.
+    /// `$XDG_STATE_HOME/omaphoenix-audit`.
     pub dir: PathBuf,
 }
 
 impl Store {
-    /// `$XDG_STATE_HOME/secaudit`, or `~/.local/state/secaudit`.
+    /// `$XDG_STATE_HOME/omaphoenix-audit`, or `~/.local/state/omaphoenix-audit`.
     #[must_use]
     pub fn from_env() -> Self {
         let base = std::env::var_os("XDG_STATE_HOME")
@@ -43,7 +54,7 @@ impl Store {
             .or_else(|| std::env::var_os("HOME").map(|h| Path::new(&h).join(".local/state")))
             .unwrap_or_default();
         Self {
-            dir: base.join("secaudit"),
+            dir: renamed_dir(&base),
         }
     }
 

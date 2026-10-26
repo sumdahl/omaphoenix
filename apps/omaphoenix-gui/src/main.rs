@@ -29,10 +29,10 @@ mod ui {
     slint::include_modules!();
 }
 
+use phx_audit::store::Store;
 use phx_core::App as Engine;
 use phx_core::migrate::Migration;
 use phx_core::sys;
-use phx_audit::store::Store;
 use slint::ComponentHandle;
 
 use state::{quiet, ui_engine, ui_motion, ui_state, ui_timer};

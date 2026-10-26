@@ -121,7 +121,8 @@ pub(super) fn audit_cli(cli: &AuditArgs) -> io::Result<bool> {
     let (score, grade) = report.score();
     out.line(&format!("  Score {score}/100, grade {grade}"))?;
     if !ctx.is_root {
-        let me = std::env::current_exe().map_or_else(|_| "omaphoenix".into(), |p| p.display().to_string());
+        let me = std::env::current_exe()
+            .map_or_else(|_| "omaphoenix".into(), |p| p.display().to_string());
         out.line(&format!(
             "  {}Re-run with sudo for full coverage: sudo {me} audit{}",
             st.dim, st.reset

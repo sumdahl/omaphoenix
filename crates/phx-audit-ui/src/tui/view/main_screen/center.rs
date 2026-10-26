@@ -13,11 +13,11 @@ use crate::tui::app::{App, Focus, Tab};
 use crate::tui::theme::blend;
 use crate::tui::view::{hline, vline};
 use crate::tui::widgets::{self, fill, put};
+use phx_audit::store::Run;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
-use phx_audit::store::Run;
 
 use super::{detail, table};
 

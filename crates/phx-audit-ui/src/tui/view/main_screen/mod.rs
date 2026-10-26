@@ -10,10 +10,10 @@ use crate::tui::app::{App, NARROW, WIDE};
 use crate::tui::times::{ago, local_time};
 use crate::tui::view::{hline, put_lines, vline, w16, wrap_spans};
 use crate::tui::widgets::{self, put};
+use phx_audit::store::Run;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::text::{Line, Span};
-use phx_audit::store::Run;
 
 use center::center;
 use detail::detail;

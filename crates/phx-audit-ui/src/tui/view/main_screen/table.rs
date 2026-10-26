@@ -8,11 +8,11 @@
 use crate::tui::app::{App, Focus};
 use crate::tui::view::{HELP_W, scrolled, w16};
 use crate::tui::widgets::{self, badge, clip, fill, pad, put};
+use phx_audit::store::{Item, Run, sev_name};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Modifier;
 use ratatui::text::{Line, Span};
-use phx_audit::store::{Item, Run, sev_name};
 use std::fmt::Write as _;
 
 /// The findings `DataTable`.

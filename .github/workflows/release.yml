@@ -28,15 +28,15 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: cross
-      - run: cross build --locked --release --target ${{ matrix.target }} -p omaphoenix -p secaudit
-      # The terminal apps, plus what install.sh puts beside them: icons,
+      - run: cross build --locked --release --target ${{ matrix.target }} -p omaphoenix
+      # The terminal app, plus what install.sh puts beside them: icons,
       # launcher templates and the sysctl drop-in.
       - run: |
           mkdir -p dist stage
-          cp target/${{ matrix.target }}/release/{omaphoenix,secaudit,secaudit-tui,secaudit-ui} stage/
+          cp target/${{ matrix.target }}/release/omaphoenix stage/
           cp -r share extras stage/
           tar -czf dist/omaphoenix_linux_${{ matrix.arch }}.tar.gz \
-            -C stage omaphoenix secaudit secaudit-tui secaudit-ui share extras
+            -C stage omaphoenix share extras
       - uses: actions/upload-artifact@v4
         with:
           name: dist-${{ matrix.arch }}
@@ -54,7 +54,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.95.0
       - run: |
           mkdir -p dist
-          for app in omaphoenix-gui secaudit-gui; do
+          for app in omaphoenix-gui omaphoenix-audit-gui; do
             cargo build --locked --release --manifest-path apps/$app/Cargo.toml
             tar -czf dist/${app}_linux_amd64.tar.gz -C apps/$app/target/release $app
           done
@@ -75,7 +75,7 @@ jobs:
           path: dist
       - run: cd dist && sha256sum *.tar.gz > SHA256SUMS
       # Lets users check a download came from this workflow:
-      #   gh attestation verify omaphoenix_linux_amd64.tar.gz -R sumdahl/omaphoenix-secaudit
+      #   gh attestation verify omaphoenix_linux_amd64.tar.gz -R sumdahl/omaphoenix
       # GitHub offers attestations only on public repos for user accounts
       # (Q2 decides visibility); SHA256SUMS still guards every download.
       - if: ${{ !github.event.repository.private }}

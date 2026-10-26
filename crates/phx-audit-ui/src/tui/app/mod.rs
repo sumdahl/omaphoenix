@@ -1,4 +1,4 @@
-//! State and behaviour of `secaudit-tui`, a method-by-method port of the Python `AuditApp`.
+//! State and behaviour of `omaphoenix audit tui`, a method-by-method port of the Python `AuditApp`.
 
 mod ai;
 mod fixes;
@@ -17,8 +17,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
-use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use phx_audit::store::{Accepted, Item, Run, Store, sev_name};
+use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use super::theme::Pal;
 pub use types::{
@@ -100,7 +100,10 @@ impl App {
             hits: RefCell::new(Hits::default()),
         };
         if !app.engine.is_file() {
-            let msg = format!("the audit engine (omaphoenix) was not found at {}", app.engine.display());
+            let msg = format!(
+                "the audit engine (omaphoenix) was not found at {}",
+                app.engine.display()
+            );
             app.notify_for(None, &msg, Severity::Error, 30);
         }
         match app.runs.first().map(|r| r.path.clone()) {

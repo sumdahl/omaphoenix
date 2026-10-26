@@ -1,4 +1,4 @@
-//! The parts of `gum` that `secaudit-ui` used, drawn inline the way gum 2 draws them.
+//! The parts of `gum` that the gum `secaudit-ui` used, drawn inline the way gum 2 draws them.
 
 use std::collections::HashMap;
 

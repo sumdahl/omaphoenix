@@ -31,8 +31,8 @@ saved, so asking again is free.
 
 | Variable | Effect |
 |---|---|
-| `SECAUDIT_AI_MODEL` | Model for the API backend |
-| `SECAUDIT_AI_EFFORT` | Effort setting for the request |
-| `SECAUDIT_CLAUDE_BIN` | Path to the `claude` binary |
+| `OMAPHOENIX_AUDIT_AI_MODEL` | Model for the API backend |
+| `OMAPHOENIX_AUDIT_AI_EFFORT` | Effort setting for the request |
+| `OMAPHOENIX_AUDIT_CLAUDE_BIN` | Path to the `claude` binary |
 
 Never turn AI on, store a key, or send findings anywhere on the user's behalf.

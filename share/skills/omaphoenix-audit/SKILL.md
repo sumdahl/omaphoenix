@@ -49,7 +49,7 @@ system by itself.
 | `secaudit --home DIR`, `sudo secaudit --user NAME` | Audit another home |
 | `secaudit-tui [--scan quick\|full\|deep]` (or `secaudit tui`) | Terminal app: scan, review, accept, fix, history |
 | `secaudit-ui [--scan quick\|full\|deep] [--last]` | Menu front end |
-| `secaudit-gui` | Desktop app (if installed) |
+| `omaphoenix-audit-gui` | Desktop app (if installed) |
 
 Exit code: 1 if anything fails, else 0.
 

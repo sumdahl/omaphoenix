@@ -1,7 +1,7 @@
 use super::{CONTRACT_SCHEMA, ContractError, Finding, MAX_LINE, Severity, Target};
 
-const LEGACY: &str = include_str!("../../../../tests/fixtures/secaudit/legacy.jsonl");
-const V1: &str = include_str!("../../../../tests/fixtures/secaudit/v1.jsonl");
+const LEGACY: &str = include_str!("../../../../tests/fixtures/audit/legacy.jsonl");
+const V1: &str = include_str!("../../../../tests/fixtures/audit/v1.jsonl");
 
 fn parse(line: &str) -> Finding {
     match Finding::parse_line(line) {

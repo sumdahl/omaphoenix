@@ -8,7 +8,7 @@
 #   `patsub_replacement` is on (Bash 5.2+ default): the `~` in the
 #   replacement is tilde-expanded. Rust prints `~/…` as intended.
 #
-# Usage: scripts/secaudit-parity [path/to/bash/secaudit]
+# Usage: scripts/audit-parity [path/to/bash/secaudit]
 set -euo pipefail
 
 bash_secaudit=${1:-$HOME/personal/secaudit/bin/secaudit}
@@ -16,9 +16,9 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
-cargo build -q --release -p secaudit --manifest-path "$root/Cargo.toml"
+cargo build -q --release -p omaphoenix --manifest-path "$root/Cargo.toml"
 "$bash_secaudit" --no-color --json "$work/bash.jsonl" >/dev/null || true
-"$root/target/release/secaudit" --no-color --json "$work/rust.jsonl" >/dev/null || true
+"$root/target/release/omaphoenix" audit --no-color --json "$work/rust.jsonl" >/dev/null || true
 
 sections=$(jq -r .section "$work/rust.jsonl" | sort -u)
 key='[.section, .sev, .msg] | @tsv'

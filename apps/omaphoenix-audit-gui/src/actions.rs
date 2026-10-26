@@ -97,7 +97,7 @@ pub(crate) fn run_fix(app: &App) {
         );
     }
     let status = env::temp_dir().join(format!(
-        "secaudit-gui-fix-{}-{}",
+        "omaphoenix-audit-gui-fix-{}-{}",
         std::process::id(),
         item.n
     ));

@@ -51,7 +51,7 @@ pub fn ask_api(messages: &[Value], tx: Sender<Event>) -> Request {
     // Headers and body in private temp files: the key stays off the process list.
     let dir = std::env::var_os("XDG_RUNTIME_DIR")
         .map_or_else(std::env::temp_dir, PathBuf::from)
-        .join(format!("secaudit-ai-{}", uuid()));
+        .join(format!("omaphoenix-audit-ai-{}", uuid()));
     let setup = std::fs::create_dir_all(&dir)
         .and_then(|()| std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o700)))
         .and_then(|()| {
@@ -193,14 +193,17 @@ pub fn ask_api(messages: &[Value], tx: Sender<Event>) -> Request {
             }
             403 => {
                 return fail(
-                    "This API key can't use this model. Set SECAUDIT_AI_MODEL to one it can use."
+                    "This API key can't use this model. Set OMAPHOENIX_AUDIT_AI_MODEL to one it can use."
                         .into(),
                     false,
                 );
             }
             404 => {
                 return fail(
-                    format!("Model {} wasn't found. Check SECAUDIT_AI_MODEL.", model()),
+                    format!(
+                        "Model {} wasn't found. Check OMAPHOENIX_AUDIT_AI_MODEL.",
+                        model()
+                    ),
                     false,
                 );
             }

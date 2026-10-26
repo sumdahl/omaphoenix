@@ -21,4 +21,4 @@ cd ~/personal/secaudit && git apply secaudit-quirks-S1-S7.patch
 
 **Verified:** `bash -n` passes. Run on the reference machine before and after, the findings differ only by S1's `~` paths.
 
-**After it lands:** switch the Rust port's S2–S7 to the fixed behaviour (it reproduces the quirks today, for parity), and drop S1's normalisation in `scripts/secaudit-parity`.
+**After it lands:** switch the Rust port's S2–S7 to the fixed behaviour (it reproduces the quirks today, for parity), and drop S1's normalisation in `scripts/audit-parity`.

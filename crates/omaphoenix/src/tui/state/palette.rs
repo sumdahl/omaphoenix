@@ -73,7 +73,7 @@ impl State<'_> {
             "Save backup selection" => press(self, Section::Backup, KeyCode::Char('w')),
             "Turn automatic snapshots on/off" => press(self, Section::Settings, KeyCode::Char('t')),
             "Set up encrypted secrets" => press(self, Section::Settings, KeyCode::Char('e')),
-            "Open the Security Audit app" => self.suspend = Some(Suspend::SecauditTui),
+            "Open the Security Audit app" => self.suspend = Some(Suspend::AuditTui),
             "Keys" => self.help = true,
             other => {
                 if let Some(s) = Section::ALL

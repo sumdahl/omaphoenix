@@ -1,13 +1,13 @@
 //! Prompt and cache-key parity with Manish's Python app. Runs only when
-//! `SECAUDIT_PY_AI_JSON` points at the output of his functions on the same
+//! `OMAPHOENIX_AUDIT_PY_AI_JSON` points at the output of his functions on the same
 //! state (see docs/10); otherwise it has nothing to compare against.
 
-use phx_audit_ui::ai;
 use phx_audit::store::{Store, sev_order};
+use phx_audit_ui::ai;
 
 #[test]
 fn prompts_and_cache_keys_match_python() {
-    let Some(path) = std::env::var_os("SECAUDIT_PY_AI_JSON") else {
+    let Some(path) = std::env::var_os("OMAPHOENIX_AUDIT_PY_AI_JSON") else {
         return;
     };
     let py: serde_json::Value =

@@ -25,8 +25,9 @@ pub fn ask_claude_code(
 ) -> Request {
     let Some(exe) = claude_bin() else {
         let _ = tx.send(Event::Error {
-            message: "Claude Code (the claude command) wasn't found. Set SECAUDIT_CLAUDE_BIN."
-                .into(),
+            message:
+                "Claude Code (the claude command) wasn't found. Set OMAPHOENIX_AUDIT_CLAUDE_BIN."
+                    .into(),
             retry: false,
         });
         return Request { child: None };

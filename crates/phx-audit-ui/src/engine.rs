@@ -13,7 +13,10 @@ pub fn exe() -> PathBuf {
         return PathBuf::from(e);
     }
     let me = std::env::current_exe().ok();
-    if let Some(m) = me.as_ref().filter(|m| m.file_name().is_some_and(|n| n == "omaphoenix")) {
+    if let Some(m) = me
+        .as_ref()
+        .filter(|m| m.file_name().is_some_and(|n| n == "omaphoenix"))
+    {
         return m.clone();
     }
     me.and_then(|m| m.parent().map(|d| d.join("omaphoenix")))

@@ -3,8 +3,8 @@
 use std::collections::BTreeSet;
 use std::io::{self, Write};
 
-use ratatui::crossterm::terminal;
 use phx_audit::store::{Run, sev_name};
+use ratatui::crossterm::terminal;
 
 pub(super) const RED: &str = "\x1b[31m";
 pub(super) const YEL: &str = "\x1b[33m";

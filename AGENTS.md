@@ -9,7 +9,7 @@ Each crate and app has its own `AGENTS.md` with the rules for that part: its con
 | `crates/phx-contract` | snapshot formats (`manifest.json`, `selection.conf`) |
 | `crates/phx-core` | the OmaPhoenix engine |
 | `crates/omaphoenix` | OmaPhoenix CLI and TUI |
-| `crates/secaudit-core` | the audit engine and finding contract |
+| `crates/phx-audit` | the audit engine and finding contract |
 | `crates/secaudit` | Security Audit CLI, TUI, gum UI, AI |
 | `apps/` | the two Slint desktop apps |
 | `crates/omaphoenix-desktop`, `ui/desktop`, `spikes/` | decision records; don't extend |
@@ -57,7 +57,7 @@ These are enforced by `[workspace.lints]`. Never silence one to get green; fix t
 - **One concern per file.** `main.rs` only declares modules and wires: parse args, dispatch, map the result to an exit code. Commands, CLI definitions, output and prompts each get their own file (see `crates/omaphoenix/src/`).
 - **Small files.** Aim for under ~250 lines. Past that, split along a real seam into a folder module (`foo/mod.rs` plus `foo/bar.rs`) and re-export so callers don't change. Data tables and long string literals (prompts, Slint markup) may run longer.
 - **Small functions.** One job each. A `match` that dispatches calls functions; it doesn't contain them. If a function needs `#[allow(clippy::too_many_lines)]`, split it instead. `too_many_arguments` is allowed only for passing CLI flags straight through.
-- **No UI in engines.** `phx-core`, `phx-contract` and `secaudit-core` never print, prompt or draw. They take callbacks (`log`, `progress`) and return data. CLI, TUI, gum UI and GUI are thin layers over the same engine.
+- **No UI in engines.** `phx-core`, `phx-contract` and `phx-audit` never print, prompt or draw. They take callbacks (`log`, `progress`) and return data. CLI, TUI, gum UI and GUI are thin layers over the same engine.
 - **No speculative code.** No trait with one implementation, no config for a constant, no "for later" scaffolding. Delete dead code; don't comment it out.
 - **Names say what, comments say why.** Write a comment only for a non-obvious reason (a trap, a parity quirk, a measured number), as one line. Never restate the code, narrate history, or leave banner comments. Public items get a one-line `///`, because `missing_docs` warns. Module `//!` headers are one line or none.
 - **Tests live next to the code they test** (`#[cfg(test)] mod tests`, or a sibling `tests.rs` when large). Every bug fix ships with a test that fails without it.
@@ -71,15 +71,15 @@ These are enforced by `[workspace.lints]`. Never silence one to get green; fix t
 cargo fmt --all                                         # run last, after any edit
 cargo clippy --workspace --all-targets -- -D warnings   # zero warnings
 cargo test --workspace
-cargo test --release -p omaphoenix -p secaudit --test pty
+cargo test --release -p omaphoenix --test pty
 (cd apps/omaphoenix-gui && cargo clippy --all-targets -- -D warnings && cargo test)
-(cd apps/secaudit-gui   && cargo clippy --all-targets -- -D warnings && cargo test)
+(cd apps/omaphoenix-audit-gui   && cargo clippy --all-targets -- -D warnings && cargo test)
 cargo deny check
 scripts/peak-rss                                        # memory budgets
 ```
 
 - **Before a release that changes restore, capture or secrets:** the full-restore VM test. Build the test snapshots with `scripts/vm/make-test-snapshot`, then run `scripts/vm/restore-test.sh --release <rc>`. It's a local check only (GitHub's runners have no KVM); scenarios and results are in docs/14.
-- **Port or engine changes:** `scripts/secaudit-parity` and `scripts/omaphoenix-parity`. TUI screen changes are compared cell by cell against the original (`docs/10`).
+- **Port or engine changes:** `scripts/audit-parity` and `scripts/omaphoenix-parity`. TUI screen changes are compared cell by cell against the original (`docs/10`).
 - **Behaviour is proven by a test**, using a fake `HOME`, a fake secret or a fake command runner. "It compiles" is not done.
 - **Pipe safety:** use `set -o pipefail` before piping any test command, or a failure gets hidden.
 - **GUI screenshots** use a headless Hyprland output, and keys target the test window by pid. Afterwards, always `hyprctl reload` and `hyprctl output remove`.

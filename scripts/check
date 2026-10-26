@@ -24,13 +24,13 @@ step fmt cargo fmt --all --check
 step clippy cargo clippy --workspace --all-targets -- -D warnings
 step tests cargo test --workspace
 if [[ ${1:-} != --quick ]]; then
-  step pty-release cargo test --release -p omaphoenix -p secaudit --test pty
+  step pty-release cargo test --release -p omaphoenix --test pty
   step omaphoenix-gui bash -c 'cd apps/omaphoenix-gui && cargo fmt --check && cargo clippy --locked --all-targets -- -D warnings && cargo test --locked'
-  step secaudit-gui bash -c 'cd apps/secaudit-gui && cargo fmt --check && cargo clippy --locked --all-targets -- -D warnings && cargo test --locked'
+  step omaphoenix-audit-gui bash -c 'cd apps/omaphoenix-audit-gui && cargo fmt --check && cargo clippy --locked --all-targets -- -D warnings && cargo test --locked'
   step deny cargo deny check
-  step release-build cargo build --release -p omaphoenix -p secaudit
+  step release-build cargo build --release -p omaphoenix
   step memory scripts/peak-rss
-  step secaudit-parity scripts/secaudit-parity
+  step audit-parity scripts/audit-parity
   step omaphoenix-parity scripts/omaphoenix-parity
 fi
 echo

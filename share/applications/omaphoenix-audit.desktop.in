@@ -1,10 +1,10 @@
 [Desktop Entry]
 Type=Application
-Name=Security Audit
+Name=OmaPhoenix Audit
 GenericName=System Security Audit
 Comment=Scan this machine, review findings and apply fixes
-Exec=@LAUNCH@ @BINDIR@/secaudit-tui
-Icon=secaudit
+Exec=@LAUNCH@ @BINDIR@/omaphoenix audit tui
+Icon=omaphoenix-audit
 Categories=System;Security;
-Keywords=security;audit;secaudit;hardening;scan;
+Keywords=security;audit;omaphoenix;secaudit;hardening;scan;
 Terminal=@TERMINAL@

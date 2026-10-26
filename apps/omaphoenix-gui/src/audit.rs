@@ -20,25 +20,17 @@ fn shown_issues<'a>(
     run: &'a phx_audit::store::Run,
     query: &str,
 ) -> Vec<&'a phx_audit::store::Item> {
-    let issues: Vec<&phx_audit::store::Item> =
-        run.items.iter().filter(|i| i.is_issue()).collect();
-    let mut items: Vec<&phx_audit::store::Item> =
-        phx_core::fuzzy::filter(query, &issues, |i| {
-            format!(
-                "{} {} {}",
-                i.finding.msg, i.finding.section, i.finding.detail
-            )
-        })
-        .into_iter()
-        .filter_map(|i| issues.get(i).copied())
-        .collect();
-    items.sort_by_key(|i| {
-        (
-            i.accepted,
-            phx_audit::store::sev_order(i.finding.sev),
-            i.n,
+    let issues: Vec<&phx_audit::store::Item> = run.items.iter().filter(|i| i.is_issue()).collect();
+    let mut items: Vec<&phx_audit::store::Item> = phx_core::fuzzy::filter(query, &issues, |i| {
+        format!(
+            "{} {} {}",
+            i.finding.msg, i.finding.section, i.finding.detail
         )
-    });
+    })
+    .into_iter()
+    .filter_map(|i| issues.get(i).copied())
+    .collect();
+    items.sort_by_key(|i| (i.accepted, phx_audit::store::sev_order(i.finding.sev), i.n));
     items
 }
 

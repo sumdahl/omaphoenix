@@ -121,7 +121,7 @@ The user's standing requirement: **"optimize memory usage, very efficient."** Bu
 | Timer snapshot (background) | **≤ 48 MB**, `Nice=19`, idle I/O | as `snapshot` |
 | Desktop app, idle (all processes, PSS) | **target ≤ 150 MB, ceiling 250 MB** | Tauri spike 234 MB; Slint spike 46 MB (docs/09) |
 
-**Measure the process, not its children.** An earlier version of this table gave a "Go baseline" of 126 MB for `snapshot`. That was `npm ls`, a child process: `wait4`'s peak RSS counts every child the process waited for, and `npm ls` alone peaks at ~126 MB. Both binaries print their own `VmHWM` when `OMAPHOENIX_REPORT_HWM` or `SECAUDIT_REPORT_HWM` is set, and `scripts/peak-rss` reads that.
+**Measure the process, not its children.** An earlier version of this table gave a "Go baseline" of 126 MB for `snapshot`. That was `npm ls`, a child process: `wait4`'s peak RSS counts every child the process waited for, and `npm ls` alone peaks at ~126 MB. Both binaries print their own `VmHWM` when `OMAPHOENIX_REPORT_HWM` or `OMAPHOENIX_AUDIT_REPORT_HWM` is set, and `scripts/peak-rss` reads that.
 
 **Rules that get there:**
 - **Stream, never slurp.** Files are hashed and compared in fixed-size chunks (`BufReader`, 64 KiB), never `fs::read` for content of unknown size. The secret scanner works line by line with a bounded line length. JSONL is parsed one line at a time.

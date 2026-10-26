@@ -1,5 +1,5 @@
-//! A scan in progress, as `ScanScreen`: the engine (`secaudit`, or
-//! `$SECAUDIT_ENGINE`) as a child process writing `findings.jsonl` into a new
+//! A scan in progress, as `ScanScreen`: the engine (`omaphoenix audit`, or
+//! `$OMAPHOENIX_AUDIT_ENGINE`) as a child process writing `findings.jsonl` into a new
 //! run directory while its report lines stream back for live progress. Full
 //! and deep scans run under `sudo -n`, after the TUI made sure sudo has the
 //! password cached.

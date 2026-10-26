@@ -1,4 +1,4 @@
-//! `secaudit-ui`: a line-for-line Rust port of the gum/Bash `secaudit-ui`.
+//! `omaphoenix audit menu`: a line-for-line Rust port of the gum/Bash `secaudit-ui`.
 
 #![allow(
     clippy::many_single_char_names,
@@ -41,7 +41,7 @@ fn hex_fg(h: &str, fallback: u8) -> String {
     )
 }
 
-/// Runs `secaudit-ui` with its arguments; returns the exit code.
+/// Runs `omaphoenix audit menu` with its arguments; returns the exit code.
 pub fn main(args: &[String]) -> u8 {
     let engine = crate::engine::exe();
     if !is_executable(&engine) {
@@ -53,13 +53,7 @@ pub fn main(args: &[String]) -> u8 {
         return 1;
     }
     let env = Env::load();
-    let state = std::env::var_os("XDG_STATE_HOME")
-        .filter(|s| !s.is_empty())
-        .map_or_else(
-            || PathBuf::from(std::env::var("HOME").unwrap_or_default()).join(".local/state"),
-            PathBuf::from,
-        )
-        .join("secaudit");
+    let state = phx_audit::store::Store::from_env().dir;
     let a = hex_fg(env.get("BORDER_FOREGROUND").unwrap_or("#4b8ef4"), 4);
     let m = hex_fg(
         env.get("GUM_INPUT_PLACEHOLDER_FOREGROUND")
@@ -83,7 +77,10 @@ pub fn main(args: &[String]) -> u8 {
         Some("--scan") => {
             let mode = args.get(1).map_or("", String::as_str);
             if !matches!(mode, "quick" | "full" | "deep") {
-                let _ = writeln!(io::stderr(), "Usage: secaudit-ui --scan quick|full|deep");
+                let _ = writeln!(
+                    io::stderr(),
+                    "Usage: omaphoenix audit menu --scan quick|full|deep"
+                );
                 return 2;
             }
             ui.scan(mode);
@@ -94,7 +91,7 @@ pub fn main(args: &[String]) -> u8 {
             }
         }
         Some("-h" | "--help") => {
-            print("Usage: secaudit-ui [--scan quick|full|deep] [--last]\n");
+            print("Usage: omaphoenix audit menu [--scan quick|full|deep] [--last]\n");
             return 0;
         }
         _ => {}

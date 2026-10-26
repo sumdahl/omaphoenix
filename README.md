@@ -3,7 +3,7 @@
 <p>
   <img src="share/icons/omaphoenix.svg" width="64" alt="OmaPhoenix logo">
   &nbsp;
-  <img src="share/icons/secaudit.svg" width="64" alt="Security Audit logo">
+  <img src="share/icons/omaphoenix-audit.svg" width="64" alt="Security Audit logo">
 </p>
 
 > **Status: release candidate `v0.1.0-rc.2` (2026-10-10).** Both products are ported to Rust and checked against the Go and Bash versions on a real machine. Every open question is now decided (ADR-0019 to 0023): Slint for the desktop, the repo stays private, handover after the migration. The Go OmaPhoenix is finished and waits on its freeze gate (G1–G7).
@@ -22,21 +22,21 @@
 
 | Binary | What | Crates |
 |---|---|---|
-| `omaphoenix` | Snapshot and restore an Omarchy setup; every snapshot is audited first, and risky files stay out of it. CLI (the Go version's commands) and the terminal app (`omaphoenix tui`) with DESIGN.md's six sections | `phx-core`, `phx-contract`, `secaudit-core` |
-| `omaphoenix-gui` | The desktop app (Slint), `omaphoenix gui`; optional at install. In `apps/` until Q9/Q10 are decided | `phx-core`, `secaudit-core` |
-| `secaudit` | Security Audit's engine: the Bash engine's 13 sections, same messages | `secaudit-core` (→ Manish) |
+| `omaphoenix` | Snapshot and restore an Omarchy setup; every snapshot is audited first, and risky files stay out of it. CLI (the Go version's commands) and the terminal app (`omaphoenix tui`) with DESIGN.md's six sections | `phx-core`, `phx-contract`, `phx-audit` |
+| `omaphoenix-gui` | The desktop app (Slint), `omaphoenix gui`; optional at install. In `apps/` until Q9/Q10 are decided | `phx-core`, `phx-audit` |
+| `secaudit` | Security Audit's engine: the Bash engine's 13 sections, same messages | `phx-audit` (→ Manish) |
 | `secaudit-tui` | Exact port of Manish's Python Textual app: same screens, keys, layout and colours | `secaudit` |
 | `secaudit-ui` | Exact port of Manish's gum/Bash front end, gum built in | `secaudit` |
-| `secaudit-gui` | Security Audit desktop app (Slint): scan, review, accept, fix, history; optional at install | `secaudit-core` |
+| `omaphoenix-audit-gui` | Security Audit desktop app (Slint): scan, review, accept, fix, history; optional at install | `phx-audit` |
 
 **Nothing is backed up until you choose what.** `init` opens the Backup screen; both apps open on it until a choice is saved, and anything found later is marked new and asked about before a snapshot. Snapshots are automatic on a schedule you pick, or manual only.
 
-**Coding-agent skills.** `share/skills/omaphoenix` and `share/skills/secaudit` teach coding agents (Claude Code, Hermes, anything reading `~/.agents/skills`) to operate both tools safely: dry-run before any restore, never choose what to back up for the user, never run a fix without confirmation. `install.sh` links them in, as Omarchy does with its own skill.
+**Coding-agent skills.** `share/skills/omaphoenix` and `share/skills/omaphoenix-audit` teach coding agents (Claude Code, Hermes, anything reading `~/.agents/skills`) to operate both tools safely: dry-run before any restore, never choose what to back up for the user, never run a fix without confirmation. `install.sh` links them in, as Omarchy does with its own skill.
 
 OmaPhoenix gives a choice of **terminal or desktop app**: both launchers ("OmaPhoenix (Terminal)" and "OmaPhoenix") appear in the app menu, and Security Audit likewise has "Security Audit" (terminal) and "Security Audit (Desktop)", and `omaphoenix tui` / `omaphoenix gui` open them directly.
 
 ```sh
-cargo build --release -p omaphoenix -p secaudit   # target/release/{omaphoenix,secaudit,secaudit-tui,secaudit-ui}
+cargo build --release -p omaphoenix   # target/release/{omaphoenix,secaudit,secaudit-tui,secaudit-ui}
 omaphoenix tui                                    # terminal app (bare `omaphoenix` too); or init, snapshot, list, restore, …
 omaphoenix gui                                    # desktop app (needs omaphoenix-gui beside it)
 omaphoenix select                                 # choose what is backed up (--all keeps everything detected)
@@ -44,11 +44,11 @@ omaphoenix timer on 1h                            # automatic snapshots (15m, 30
 secaudit                                          # report
 secaudit-tui                                      # Security Audit terminal app (Textual port)
 secaudit-ui                                       # Security Audit menus (gum port)
-(cd apps/omaphoenix-gui && cargo run --release)   # desktop apps from source (also apps/secaudit-gui)
+(cd apps/omaphoenix-gui && cargo run --release)   # desktop apps from source (also apps/omaphoenix-audit-gui)
 ```
 
 **How we know it matches the old versions** (run them yourself):
-- `scripts/secaudit-parity`: Bash vs Rust audit on this machine. Result: 82/82 findings and every detail list identical.
+- `scripts/audit-parity`: Bash vs Rust audit on this machine. Result: 82/82 findings and every detail list identical.
 - `scripts/omaphoenix-parity`: Go vs Rust snapshot of the real home. Result: identical tree, byte-identical manifest. It also restores across implementations, including each other's encrypted vaults.
 - `scripts/peak-rss`: every path's own memory, against RUST.md §9. All within budget; a snapshot peaks at ~9 MB.
 
@@ -59,13 +59,13 @@ secaudit-ui                                       # Security Audit menus (gum po
 ```sh
 sudo pacman -S --needed github-cli
 gh auth login
-gh api repos/sumdahl/omaphoenix-secaudit/contents/install.sh -H "Accept: application/vnd.github.raw" | bash
+gh api repos/sumdahl/omaphoenix/contents/install.sh -H "Accept: application/vnd.github.raw" | bash
 ```
 
 **Once the repo is public:**
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/sumdahl/omaphoenix-secaudit/v0.1.0-rc.7/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/sumdahl/omaphoenix/v0.1.0-rc.7/install.sh | bash
 ```
 
 The installer verifies the download against `SHA256SUMS` and refuses on a mismatch. It installs the static terminal binaries to `~/.local/bin`, asks whether to add the desktop apps, adds launchers with their icons, and links the agent skills. Then it offers to back this machine up or restore a snapshot. Options go after `bash -s --` (or `| bash -s --` with `gh api`): `--gui`, `--no-gui`, `--sysctl` (Manish's kernel hardening drop-in), `--uninstall`. `OMAPHOENIX_VERSION=v0.1.0-rc.7` pins a release.

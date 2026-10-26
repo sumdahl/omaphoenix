@@ -34,7 +34,7 @@ impl Ui {
         runs.get(i + 1).cloned()
     }
 
-    pub(super) fn engine_sections(&self) -> Vec<String> {
+    pub(super) fn engine_sections() -> Vec<String> {
         phx_audit::checks::SECTIONS
             .iter()
             .map(|s| s.name)

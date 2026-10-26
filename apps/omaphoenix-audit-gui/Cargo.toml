@@ -1,6 +1,6 @@
 [package]
-name = "secaudit-gui"
-description = "Security Audit desktop app (Slint): scan, review, accept risks, run fixes, history; on secaudit-core"
+name = "omaphoenix-audit-gui"
+description = "OmaPhoenix Audit desktop app (Slint): scan, review, accept risks, run fixes, history; on phx-audit"
 version = "0.0.0"
 edition = "2024"
 rust-version = "1.89"

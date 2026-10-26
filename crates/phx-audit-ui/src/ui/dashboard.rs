@@ -81,7 +81,7 @@ impl Ui {
             rpad("WARN", 5),
             rpad("FAIL", 5)
         );
-        for sec in self.engine_sections() {
+        for sec in Self::engine_sections() {
             let of = |sev: &str| {
                 run.items
                     .iter()

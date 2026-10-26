@@ -9,11 +9,11 @@ use crate::tui::app::{App, Tab};
 use crate::tui::times::local_time;
 use crate::tui::view::{put_lines, w16, wrap_spans};
 use crate::tui::widgets::{self, badge, pad, wrap};
+use phx_audit::store::{Run, sev_name};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Modifier;
 use ratatui::text::{Line, Span};
-use phx_audit::store::{Run, sev_name};
 
 /// Detail lines, the row of the action buttons, and each button's (x, width, id).
 type DetailLines = (

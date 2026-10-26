@@ -11,16 +11,13 @@ use crate::state::{local, refresh, state, toast};
 use crate::terminal::{in_terminal, sq};
 use crate::ui::App;
 
-/// The engine: `secaudit` next to this binary, else on PATH.
+/// The engine: `omaphoenix audit`.
 pub(crate) fn engine() -> String {
-    env::current_exe()
-        .ok()
-        .and_then(|e| e.parent().map(|d| d.join("secaudit")))
-        .filter(|p| p.exists())
-        .map_or_else(
-            || "secaudit".to_owned(),
-            |p| p.to_string_lossy().into_owned(),
-        )
+    format!(
+        "{} {}",
+        sq(&phx_audit_ui::engine::exe().to_string_lossy()),
+        phx_audit_ui::engine::ARG
+    )
 }
 
 pub(crate) fn host() -> String {
@@ -105,7 +102,7 @@ pub(crate) fn scan(app: &App, mode: &str) {
     let deep = if mode == "deep" { " --deep" } else { "" };
     let script = format!(
         "echo; echo '  Security Audit · {mode} scan'; echo '  Reads root-only files; never changes anything. sudo is only used to look.'; echo; sudo {}{deep} --json {} --user {} 2>&1 | tee {}",
-        sq(&engine()),
+        engine(),
         sq(&dir.join("findings.jsonl").to_string_lossy()),
         sq(&env::var("USER").unwrap_or_default()),
         sq(&dir.join("output.txt").to_string_lossy()),
@@ -188,7 +185,7 @@ pub(crate) fn scan_done(app: &App) {
         let _ = Command::new("notify-send")
             .args([
                 "-a",
-                "secaudit",
+                "OmaPhoenix",
                 "-i",
                 "security-high-symbolic",
                 "Security audit finished",

@@ -2,8 +2,8 @@ use std::io::Write as _;
 use std::process::{Command, Stdio};
 use std::{env, fs};
 
-use phx_audit_ui::ai;
 use phx_audit::store::sev_name;
+use phx_audit_ui::ai;
 use slint::{ComponentHandle, SharedString};
 
 use super::Then;

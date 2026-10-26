@@ -42,7 +42,7 @@ pub(super) fn ai_view(buf: &mut Buffer, app: &App, area: Rect, v: &crate::tui::a
         area.y + 3,
         w,
         &Line::from(Span::styled(
-            "AI-generated. Review commands before running them; secaudit's own fixes are on the main screen.",
+            "AI-generated. Review commands before running them; the audit's own fixes are on the main screen.",
             p.fg_(p.muted).add_modifier(Modifier::ITALIC),
         )),
     );

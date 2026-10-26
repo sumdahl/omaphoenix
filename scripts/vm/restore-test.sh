@@ -46,7 +46,7 @@ stage_binary() {
   fi
   local tmp asset=omaphoenix_linux_amd64.tar.gz
   tmp=$(mktemp -d)
-  gh release download "$release" -R sumdahl/omaphoenix-secaudit -p "$asset" -p SHA256SUMS -D "$tmp"
+  gh release download "$release" -R sumdahl/omaphoenix -p "$asset" -p SHA256SUMS -D "$tmp"
   (cd "$tmp" && grep " $asset\$" SHA256SUMS | sha256sum -c --quiet -) || { echo "checksum mismatch"; exit 1; }
   tar -xzf "$tmp/$asset" -C "$tmp" omaphoenix
   install -m755 "$tmp/omaphoenix" "$out"

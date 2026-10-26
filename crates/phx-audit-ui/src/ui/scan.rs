@@ -3,9 +3,9 @@
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
+use phx_audit::store::{KEEP_RUNS, now};
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyModifiers};
 use ratatui::crossterm::terminal;
-use phx_audit::store::{KEEP_RUNS, now};
 
 use super::Ui;
 use super::format::{CLEAR, FRAMES, N, RED, YEL, counts, grade_of, print, score_of};
@@ -150,7 +150,7 @@ impl Ui {
             let _ = Command::new("notify-send")
                 .args([
                     "-a",
-                    "secaudit",
+                    "OmaPhoenix",
                     "-i",
                     "security-high-symbolic",
                     "Security audit finished",

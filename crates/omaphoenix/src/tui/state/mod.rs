@@ -18,11 +18,11 @@ use std::path::PathBuf;
 use std::sync::mpsc::{self, Receiver};
 use std::time::Instant;
 
+use phx_audit::store::{Accepted, Run, Store};
 use phx_contract::selection::Choice;
 use phx_core::doctor::Finding;
 use phx_core::store::Snapshot;
 use phx_core::{App, schedule};
-use phx_audit::store::{Accepted, Run, Store};
 
 use super::theme::Theme;
 
@@ -73,7 +73,7 @@ pub use phx_core::migrate::{Migration, STEPS as MIGRATE_STEPS};
 pub enum Suspend {
     Cli(Vec<String>),
     Fix(String),
-    SecauditTui,
+    AuditTui,
 }
 
 #[allow(

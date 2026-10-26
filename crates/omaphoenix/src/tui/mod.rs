@@ -74,15 +74,11 @@ fn hand_over(work: Suspend) {
             let _ = writeln!(out, "\n  \x1b[2m$ {fix}\x1b[0m");
             phx_core::sys::command("bash").arg("-c").arg(&fix).status()
         }
-        Suspend::SecauditTui => {
-            if phx_core::sys::has("secaudit") {
-                return drop(phx_core::sys::command("secaudit").arg("tui").status());
+        Suspend::AuditTui => {
+            if let Err(e) = phx_audit_ui::tui::run(None) {
+                let _ = writeln!(out, "\n  omaphoenix audit tui: {e}");
             }
-            let _ = writeln!(
-                out,
-                "\n  The Security Audit app (secaudit) is not installed; OmaPhoenix's Audit section covers the quick scan."
-            );
-            Ok(std::process::ExitStatus::default())
+            return;
         }
     };
     let ok = status.is_ok_and(|s| s.success());
@@ -101,12 +97,12 @@ fn hand_over(work: Suspend) {
 /// terminal is tiny.
 #[cfg(test)]
 mod tests {
+    use phx_audit::store::Store;
     use phx_core::App;
     use phx_core::store::Repo;
     use ratatui::Terminal;
     use ratatui::backend::TestBackend;
     use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-    use phx_audit::store::Store;
 
     use super::state::{Section, State};
     use super::view;

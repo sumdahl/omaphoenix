@@ -11,11 +11,11 @@
 
 use std::fmt::Write as _;
 
+use phx_audit::store::{KEEP_RUNS, sev_name, sev_order};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Modifier;
 use ratatui::text::{Line, Span};
-use phx_audit::store::{KEEP_RUNS, sev_name, sev_order};
 
 use crate::tui::app::App;
 use crate::tui::times::{ago, local_time};

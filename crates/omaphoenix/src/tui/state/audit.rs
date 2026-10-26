@@ -2,8 +2,8 @@
 
 use std::path::PathBuf;
 
-use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use phx_audit::store::{Accepted, Store};
+use ratatui::crossterm::event::{KeyCode, KeyEvent};
 
 use super::{Msg, State, Suspend};
 
@@ -39,13 +39,7 @@ impl State<'_> {
         .into_iter()
         .filter_map(|i| issues.get(i).copied())
         .collect();
-        items.sort_by_key(|i| {
-            (
-                i.accepted,
-                phx_audit::store::sev_order(i.finding.sev),
-                i.n,
-            )
-        });
+        items.sort_by_key(|i| (i.accepted, phx_audit::store::sev_order(i.finding.sev), i.n));
         items
     }
 
@@ -77,7 +71,7 @@ impl State<'_> {
                 }
             }
             KeyCode::Char('o') => {
-                self.suspend = Some(Suspend::SecauditTui);
+                self.suspend = Some(Suspend::AuditTui);
             }
             _ => {}
         }

@@ -1,6 +1,6 @@
-//! `secaudit-tui`: the exact Rust port of the Python Textual app of the
-//! same name: same screens, keys, layout, colours and messages, sharing its
-//! history in `$XDG_STATE_HOME/secaudit`.
+//! `omaphoenix audit tui`: the exact Rust port of the Python Textual `secaudit-tui`:
+//! same screens, keys, layout, colours and messages, on the same history
+//! (`$XDG_STATE_HOME/omaphoenix-audit`).
 
 mod ai_screen;
 mod app;
@@ -14,12 +14,12 @@ mod widgets;
 use std::io;
 use std::time::Duration;
 
+use phx_audit::store::Store;
 use ratatui::DefaultTerminal;
 use ratatui::crossterm::event::{
     self, DisableMouseCapture, EnableMouseCapture, Event, KeyEventKind,
 };
 use ratatui::crossterm::execute;
-use phx_audit::store::Store;
 
 use app::{App, Severity, Suspend};
 
@@ -98,10 +98,10 @@ fn event_loop(term: &mut DefaultTerminal, app: &mut App) -> io::Result<()> {
 /// Screen tests on ratatui's in-memory backend: keys in, text out.
 #[cfg(test)]
 mod tests {
+    use phx_audit::store::{Meta, Store};
     use ratatui::Terminal;
     use ratatui::backend::TestBackend;
     use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-    use phx_audit::store::{Meta, Store};
 
     use super::app::{App, Modal, Screen};
     use super::view;
@@ -137,7 +137,7 @@ mod tests {
     fn store_with_scan() -> (tempfile::TempDir, Store) {
         let t = tempfile::tempdir().unwrap_or_else(|e| unreachable!("{e}"));
         let store = Store {
-            dir: t.path().join("secaudit"),
+            dir: t.path().join("omaphoenix-audit"),
         };
         let mut meta = Meta {
             mode: "full".into(),

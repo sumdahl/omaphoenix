@@ -3,10 +3,10 @@
 For anyone running the Go OmaPhoenix or Manish's Bash/Python Security Audit today. One command does it, and nothing you have is lost.
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/sumdahl/omaphoenix-secaudit/<tag>/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/sumdahl/omaphoenix/<tag>/install.sh | bash
 ```
 
-(The repo is private, ADR-0022: with access, `gh release download -R sumdahl/omaphoenix-secaudit -p install.sh` then `bash install.sh`.)
+(The repo is private, ADR-0022: with access, `gh release download -R sumdahl/omaphoenix -p install.sh` then `bash install.sh`.)
 
 ## What carries over, unchanged
 

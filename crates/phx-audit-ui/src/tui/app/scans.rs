@@ -10,7 +10,10 @@ impl App {
     /// `start_scan()`: full and deep scans need sudo first.
     pub fn start_scan(&mut self, mode: &str) {
         if !self.engine.is_file() {
-            let msg = format!("the audit engine (omaphoenix) was not found at {}", self.engine.display());
+            let msg = format!(
+                "the audit engine (omaphoenix) was not found at {}",
+                self.engine.display()
+            );
             self.notify(&msg, Severity::Error, 5);
             return;
         }
@@ -73,7 +76,7 @@ impl App {
         let _ = Command::new("notify-send")
             .args([
                 "-a",
-                "secaudit",
+                "OmaPhoenix",
                 "-i",
                 "security-high-symbolic",
                 "Security audit finished",

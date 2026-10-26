@@ -12,11 +12,11 @@
 use crate::tui::app::{App, Focus};
 use crate::tui::view::{hline, scrolled, w16};
 use crate::tui::widgets::{self, clip, fill, pad, put};
+use phx_audit::store::{Run, sev_name};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Style;
 use ratatui::text::{Line, Span};
-use phx_audit::store::{Run, sev_name};
 
 pub(super) fn sidebar(buf: &mut Buffer, app: &App, r: Rect, run: &Run, narrow: bool) {
     let p = &app.pal;

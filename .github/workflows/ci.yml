@@ -47,11 +47,11 @@ jobs:
         env:
           RUSTDOCFLAGS: -D warnings
       # Memory budgets (RUST.md §9, ADR-0017): release builds, as users run them.
-      - run: cargo build --release -p omaphoenix -p secaudit
+      - run: cargo build --release -p omaphoenix
       - run: scripts/peak-rss
       # Real-terminal tests at release speed: first frame < 100 ms, no
       # terminal queries, clean exit (DESIGN.md §12).
-      - run: cargo test --release -p omaphoenix -p secaudit --test pty
+      - run: cargo test --release -p omaphoenix --test pty
 
   # The Slint desktop apps live outside the workspace (ADR-0020: the
   # workspace's cargo-deny policy stays strict); keep them building.
@@ -69,9 +69,9 @@ jobs:
         with:
           workspaces: |
             apps/omaphoenix-gui
-            apps/secaudit-gui
+            apps/omaphoenix-audit-gui
       - run: |
-          for app in omaphoenix-gui secaudit-gui; do
+          for app in omaphoenix-gui omaphoenix-audit-gui; do
             cargo fmt --check --manifest-path apps/$app/Cargo.toml
             cargo clippy --locked --all-targets --manifest-path apps/$app/Cargo.toml -- -D warnings
             cargo test --locked --manifest-path apps/$app/Cargo.toml
