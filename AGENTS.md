@@ -34,7 +34,7 @@ Each crate and app has its own `AGENTS.md` with the rules for that part: its con
 - **Secrets.** Never print a token, key or `.env` value: not in output, logs, errors, fixtures or docs. Name the file, never its content. Tests use generated fake keys only.
 - **The audit is read-only.** Nothing applies a fix without a human confirming it.
 - **Unattended runs never prompt.** The timer has no terminal: no sudo, no passphrase prompt, no blocking.
-- **Restores are tested in the VM or a temp `HOME`.** On the real home, only `--dry-run`.
+- **Restores are tested in the VM or a temp `HOME`.** On the real home, only `--dry-run`. The VM test and its rules are in docs/14.
 
 ## Rust: safe and idiomatic
 
@@ -78,6 +78,7 @@ cargo deny check
 scripts/peak-rss                                        # memory budgets
 ```
 
+- **Before a release that changes restore, capture or secrets:** the full-restore VM test. Build the test snapshots with `scripts/vm/make-test-snapshot`, then run `scripts/vm/restore-test.sh --release <rc>`. It's a local check only (GitHub's runners have no KVM); scenarios and results are in docs/14.
 - **Port or engine changes:** `scripts/secaudit-parity` and `scripts/omaphoenix-parity`. TUI screen changes are compared cell by cell against the original (`docs/10`).
 - **Behaviour is proven by a test**, using a fake `HOME`, a fake secret or a fake command runner. "It compiles" is not done.
 - **Pipe safety:** use `set -o pipefail` before piping any test command, or a failure gets hidden.
