@@ -6,7 +6,7 @@
 | Version | 0.1.0-rc.8 |
 | Found | 2026-10-23, the snapshot during `omarchy update` on the reference laptop |
 | Severity | medium: a copy of an opt-in secret can bypass the opt-in; here it held no keys |
-| Status | open |
+| Status | fixed in 0.1.0-rc.9; test `phx_core::category::files::names::tests::names` |
 
 ## What happens
 

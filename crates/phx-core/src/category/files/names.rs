@@ -27,6 +27,12 @@ pub const JUNK: &[&str] = &[
     "*.omarchy-upgrade-to-*",
     "*.pre-restore.*",
     ".DS_Store",
+    // Leftovers of a program saving a file: a temp copy, an editor swap or backup (F-016).
+    "*.tmp",
+    "*.tmp.*",
+    "*~",
+    ".#*",
+    "*.swp",
 ];
 
 /// Names skipped outright: encrypted secrets are a separate, opt-in category.
@@ -68,6 +74,11 @@ pub fn is_junk(name: &str) -> bool {
 #[must_use]
 pub fn is_secret(name: &str) -> bool {
     match_any(name, SECRET_NAMES)
+        // A copy of a secret is a secret: `.claude.json.tmp.1`, `.netrc.old` (F-016).
+        || SECRET_NAMES
+            .iter()
+            .filter(|p| !p.contains(['*', '?', '[']))
+            .any(|p| name.strip_prefix(p).is_some_and(|rest| rest.starts_with('.')))
 }
 
 #[cfg(test)]
@@ -85,6 +96,11 @@ mod tests {
             "a.bak1",
             "f.pre-restore.2026",
             "ad-state-storage.bnk",
+            ".claude.json.tmp.159014.3290931ff618",
+            "settings.json.tmp",
+            "init.lua~",
+            ".#notes.md",
+            ".bashrc.swp",
         ] {
             assert!(is_junk(j), "{j}");
         }
@@ -94,9 +110,16 @@ mod tests {
             "id_ed25519",
             "server.key",
             ".zcompdump-host",
+            ".claude.json.backup-copy",
+            ".netrc.old",
+            ".git-credentials.2",
         ] {
             assert!(is_secret(s), "{s}");
         }
         assert!(!is_junk("hyprland.conf") && !is_secret("hyprland.conf"));
+        assert!(
+            !is_secret(".claude.json5") && !is_junk("temperature.conf"),
+            "only real copies count"
+        );
     }
 }
