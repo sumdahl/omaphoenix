@@ -1,0 +1,23 @@
+name: advisories
+
+# Weekly, without a push: a new advisory against our dependencies fails this run, and so does an
+# exception in deny.toml that no longer matches anything (the day a fix lands upstream, e.g. age).
+on:
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  advisories:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+      # Resolve to the newest compatible versions first, so a fixed upstream release is seen.
+      - run: cargo update --workspace
+      - run: cargo deny check advisories

@@ -3,12 +3,14 @@
 all-features = true
 
 [advisories]
+# An exception that no longer matches fails the check, so it gets removed the day a fix lands.
+unused-ignored-advisory = "deny"
 version = 2
 yanked = "deny"
-# Unmaintained (not vulnerable) crates that come only through Tauri's Linux
-# stack; we can't drop them without dropping Tauri. Vulnerabilities are never
-# ignored here: upgrade instead. Revisit when Tauri moves to GTK4/WebKitGTK 6,
-# or if the GUI stack decision (issue #11) picks something else.
+# Every exception says why it's safe and when it goes. Unmaintained crates may be ignored when a
+# dependency we can't replace pulls them in. A vulnerability is ignored only when no fixed version
+# can be used and the affected code never runs on our data; the weekly advisories workflow fails
+# when such an exception stops matching, so it's removed as soon as the fix lands.
 ignore = [
   { id = "RUSTSEC-2026-0387", reason = "crypto-bigint 0.5 timing issue, via age 0.12.1 (latest) → p256/elliptic-curve 0.13, a non-optional dependency. OmaPhoenix only uses age's x25519 recipients and scrypt passphrases (secret/keys.rs, secret/mod.rs), never P-256, so the affected code never runs on our data. The fix (0.7.6) needs elliptic-curve 0.14; drop this when age moves to it." },
   { id = "RUSTSEC-2026-0374", reason = "basic-toml (unmaintained) via age's i18n-embed: a compile-time proc macro reading age's own i18n.toml, never user input; age 0.12.1 is the latest. Drop when age moves off i18n-embed-fl or basic-toml." },
