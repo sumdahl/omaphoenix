@@ -49,6 +49,16 @@ pub(crate) fn restore_tree(env: &Env<'_>, root: &Path, home: &Path) -> Outcome {
             res.failed.push(format!("{rel_s}: {e}"));
             return Walk::Continue;
         }
+        if !symlink && super::shell_init::is_shell_init(&rel_s) {
+            match super::shell_init::guard_missing_sources(&target, home) {
+                Ok(g) if !g.is_empty() => env.warn(&format!(
+                    "~/{rel_s} loads {}, not on this machine yet: those lines now run only once the file exists",
+                    g.join(", ")
+                )),
+                Ok(_) => {}
+                Err(e) => res.failed.push(format!("{rel_s}: {e}")),
+            }
+        }
         res.wrote_file(&target, backup.as_deref(), false);
         res.applied += 1;
         Walk::Continue

@@ -1,6 +1,7 @@
 //! `config`: every `~/.config` entry and top-level dotfile, minus Omarchy defaults, profiles and secrets.
 
 mod mirror;
+mod shell_init;
 
 use std::fs;
 use std::path::{Path, PathBuf};

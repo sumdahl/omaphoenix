@@ -6,7 +6,7 @@
 | Version | 0.1.0-rc.8 |
 | Found | 2026-10-24, VM restore test T4 (#33), fresh Omarchy 4.0.6 |
 | Severity | **high**: after a restore and a reboot, the desktop session never starts. The password is accepted, the screen flashes, and it's back at the login screen. A text console still works. |
-| Status | open |
+| Status | fixed in 0.1.0-rc.9; tests `category::config::shell_init::tests::*` (incl. `sh` loading the guarded profile) |
 
 ## What happens
 
@@ -57,3 +57,16 @@ From a text console (Ctrl+Alt+F2), `omaphoenix undo`, or create the missing file
 Test (phx-core):
 - Restore a fake home whose `.profile` sources a file not in the snapshot.
 - Assert the login-shell check fails, the original `.profile` is kept, and the report names the missing file.
+
+## What was done
+
+When the restore writes a shell init file (`.profile`, `.bash_profile`, `.bash_login`, `.bashrc`, `.zprofile`, `.zshenv`, `.zlogin`, `.zshrc`), every bare `. <home path>` / `source <home path>` line whose target is missing gets a guard:
+
+```sh
+[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+```
+
+- The guarded line does the same as before once the file exists, so installing rustup or uv later brings it back without any edit.
+- The restore warns, naming the guarded files.
+- The journal hashes the file after guarding, so `undo` still recognises it as the restore's.
+- Lines with other variables, or already guarded, are left alone.
