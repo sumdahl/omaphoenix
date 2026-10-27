@@ -6,14 +6,15 @@
   <img src="share/icons/omaphoenix-audit.svg" width="64" alt="OmaPhoenix Audit logo">
 </p>
 
-> **Status: release candidate `v0.1.0-rc.2` (2026-10-10).** Both products are ported to Rust and checked against the Go and Bash versions on a real machine. Every open question is now decided (ADR-0019 to 0023): Slint for the desktop, the repo stays private, handover after the migration. The Go OmaPhoenix is finished and waits on its freeze gate (G1–G7).
+> **Status: `v0.1.0`.** Both products are ported to Rust, checked against the Go and Bash versions on a real machine, and tested by full restores on a fresh Omarchy 4.0.6 VM (docs/14). Security Audit now ships inside OmaPhoenix as `omaphoenix audit`. The Go OmaPhoenix is frozen at `v0.3.0-rc.1` (`sumdahl/omaphoenix-go`).
 >
 > **Decided:**
 > - The integration is built **directly in Rust** (ADR-0011).
 > - The joint product is **OmaPhoenix** (ADR-0012).
-> - Security Audit also gets a **standalone Rust app on the shared engine, handed to Manish** (ADR-0013).
-> Owners: **Sumiran Dahal** (OmaPhoenix) and **Manish Karki** (Security Audit). Both agreed to integrate.
+> - ~~Security Audit gets a standalone Rust app, handed to Manish~~ (ADR-0013): superseded by the fold.
 > - **Security Audit is folded into OmaPhoenix** as `omaphoenix audit` (0.1.0; Manish agreed). The `secaudit` commands are gone; `install.sh` removes them.
+>
+> Owners: **Sumiran Dahal** (OmaPhoenix) and **Manish Karki** (Security Audit). Both agreed to integrate.
 
 **Security Audit by [Manish Karki](https://github.com/mnshchtri).** The audit engine, its 13 sections, the terminal app and the menus are his design, ported to Rust from [mnshchtri/secaudit](https://github.com/mnshchtri/secaudit).
 
@@ -68,7 +69,7 @@ gh api repos/sumdahl/omaphoenix/contents/install.sh -H "Accept: application/vnd.
 **Once the repo is public:**
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/sumdahl/omaphoenix/v0.1.0-rc.7/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/sumdahl/omaphoenix/v0.1.0/install.sh | bash
 ```
 
 The installer verifies the download against `SHA256SUMS` and refuses on a mismatch. It installs the static terminal binaries to `~/.local/bin`, asks whether to add the desktop apps, adds launchers with their icons, and links the agent skills. Then it offers to back this machine up or restore a snapshot. Options go after `bash -s --` (or `| bash -s --` with `gh api`): `--gui`, `--no-gui`, `--sysctl` (Manish's kernel hardening drop-in), `--uninstall`. `OMAPHOENIX_VERSION=v0.1.0-rc.7` pins a release.

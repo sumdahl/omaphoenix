@@ -4,7 +4,7 @@
 # and print the report.
 #
 #   restore-test.sh                     build the current tree (cargo, release)
-#   restore-test.sh --release v0.1.0-rc.8   the published tarball, checked against SHA256SUMS
+#   restore-test.sh --release v0.1.0   the published tarball, checked against SHA256SUMS
 #   restore-test.sh --dry-run           pass --dry-run to the restore (T1)
 #
 # Environment:
