@@ -76,7 +76,7 @@ New script: `scripts/vm/make-test-snapshot`.
   - Bundle a mirror of each private repo the snapshot references (from `plugins.json`/`themes.json`): `gh repo clone --mirror` on the host, handed in as a file.
 - **Secrets snapshot:**
   - A throwaway `HOME` with two generated `ssh-keygen` keys, `secrets init` with a test passphrase (`OMAPHOENIX_PASSPHRASE`), one config file, then snapshot.
-  - Manish's `f005-repro.sh` on #21 already does this; reuse it.
+  - Manish's `f005-repro.sh` (on the old repo's PR #21, now in the private `omaphoenix-archive`) already does this; reuse it.
 - **Check on the host before anything enters the VM:**
   - `grep -r` finds no `PRIVATE KEY`, no token shapes and no `.ssh/id_` file in the main snapshot;
   - the secrets snapshot holds only `vault.age`.
