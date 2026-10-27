@@ -55,6 +55,8 @@ pub struct Outcome {
     pub deferred: Vec<String>,
     /// What this restore changed, in order, for `undo`.
     pub changes: Vec<Change>,
+    /// Left out on purpose, worded for the user; not a failure.
+    pub notes: Vec<String>,
 }
 
 impl Outcome {

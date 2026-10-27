@@ -104,6 +104,11 @@ impl App<'_> {
         })
     }
 
+    /// The snapshot of the last restore, even when it was undone since (F-025).
+    pub(super) fn last_restored_snapshot(&self) -> Option<String> {
+        last_restored_in(&self.state_dir())
+    }
+
     /// Marks the journal done, keeping it under a name undo won't read again.
     pub fn retire_journal(&self) {
         let stamp = category::stamp();
@@ -111,6 +116,67 @@ impl App<'_> {
             self.journal_file(),
             self.state_dir()
                 .join(format!("last-restore.undone-{stamp}.json")),
+        );
+    }
+}
+
+/// The live journal's snapshot, else the newest retired one's; retired names sort by their time stamp.
+fn last_restored_in(state: &std::path::Path) -> Option<String> {
+    if let Ok(Some(j)) = read_json::<Journal>(&state.join("last-restore.json")) {
+        return Some(j.snapshot);
+    }
+    let mut retired: Vec<PathBuf> = fs::read_dir(state)
+        .into_iter()
+        .flatten()
+        .flatten()
+        .map(|e| e.path())
+        .filter(|p| {
+            p.file_name()
+                .is_some_and(|n| n.to_string_lossy().starts_with("last-restore.undone-"))
+        })
+        .collect();
+    retired.sort();
+    read_json::<Journal>(retired.last()?)
+        .ok()
+        .flatten()
+        .map(|j| j.snapshot)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Journal, last_restored_in};
+    use crate::category::write_json;
+
+    #[test]
+    fn the_last_restore_is_found_after_an_undo() {
+        let t = tempfile::tempdir().unwrap_or_else(|e| unreachable!("{e}"));
+        let state = t.path();
+        assert_eq!(last_restored_in(state), None, "no restore yet");
+        for (stamp, snap) in [
+            ("20261024-110000", "old1111"),
+            ("20261024-120000", "new2222"),
+        ] {
+            let j = Journal {
+                snapshot: snap.into(),
+                ..Journal::default()
+            };
+            write_json(&state.join(format!("last-restore.undone-{stamp}.json")), &j)
+                .unwrap_or_else(|e| unreachable!("{e}"));
+        }
+        assert_eq!(
+            last_restored_in(state).as_deref(),
+            Some("new2222"),
+            "newest undone restore"
+        );
+        let live = Journal {
+            snapshot: "live333".into(),
+            ..Journal::default()
+        };
+        write_json(&state.join("last-restore.json"), &live).unwrap_or_else(|e| unreachable!("{e}"));
+        assert_eq!(
+            last_restored_in(state).as_deref(),
+            Some("live333"),
+            "a live journal wins"
         );
     }
 }

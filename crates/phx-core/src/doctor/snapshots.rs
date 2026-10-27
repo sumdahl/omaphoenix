@@ -91,7 +91,7 @@ impl App<'_> {
 
 /// The last Security Audit scan, from the history both apps share.
 pub(super) fn check_audit(add: &mut dyn FnMut(&str, &str, String)) {
-    let Some(run) = secaudit_core::store::Store::from_env()
+    let Some(run) = phx_audit::store::Store::from_env()
         .runs()
         .into_iter()
         .next()
@@ -101,7 +101,7 @@ pub(super) fn check_audit(add: &mut dyn FnMut(&str, &str, String)) {
     };
     let c = run.counts();
     let level = if c.fail > 0 { "warn" } else { "ok" };
-    let age = go_duration(secaudit_core::store::now().saturating_sub(run.meta.started));
+    let age = go_duration(phx_audit::store::now().saturating_sub(run.meta.started));
     add(
         level,
         "audit",

@@ -7,12 +7,12 @@ How the Rust port of `bin/secaudit` is checked, and what it found in the Bash ve
 ## Keeping up with Manish's repo
 1. `git -C ~/personal/secaudit pull --ff-only` (read-only; nothing is pushed there).
 2. `git -C ~/personal/secaudit log --oneline <last base>..HEAD` and read the diff.
-3. Port it, then: `scripts/secaudit-parity` for the engine; tmux captures of his app against ours on a copy of the history (`XDG_STATE_HOME`), as done for each screen; for AI prompts, run his `cache_path`/`finding_block`/`plan_prompt` from his uv environment and compare with `SECAUDIT_PY_AI_JSON=… cargo test -p secaudit --test ai_parity`.
+3. Port it, then: `scripts/audit-parity` for the engine; tmux captures of his app against ours on a copy of the history (`XDG_STATE_HOME`), as done for each screen; for AI prompts, run his `cache_path`/`finding_block`/`plan_prompt` from his uv environment and compare with `OMAPHOENIX_AUDIT_PY_AI_JSON=… cargo test -p secaudit --test ai_parity`.
 4. Update the parity base above.
 
 ## How parity is checked
-- **Engine:** `crates/secaudit-core`. Each report section is a module in `src/checks/`, with Bash's messages kept word for word and a stable `id` plus `targets` on every finding (contract v1).
-- **Harness:** `scripts/secaudit-parity` runs both versions on the same machine and diffs `(section, sev, msg)` for every ported section. It needs the Bash checkout and `jq`, so it runs locally, not in CI.
+- **Engine:** `crates/phx-audit`. Each report section is a module in `src/checks/`, with Bash's messages kept word for word and a stable `id` plus `targets` on every finding (contract v1).
+- **Harness:** `scripts/audit-parity` runs both versions on the same machine and diffs `(section, sev, msg)` for every ported section. It needs the Bash checkout and `jq`, so it runs locally, not in CI.
 - **Unit tests:** each section runs against throwaway homes (`tempfile`), so behaviour is pinned without the real machine.
 
 ## Ported sections

@@ -3147,13 +3147,14 @@ dependencies = [
 
 [[package]]
 name = "omaphoenix"
-version = "0.1.0-rc.8"
+version = "0.1.0"
 dependencies = [
  "clap",
+ "phx-audit",
+ "phx-audit-ui",
  "phx-contract",
  "phx-core",
  "ratatui",
- "secaudit-core",
  "serde_json",
  "tempfile",
  "toml 1.1.8+spec-1.1.0",
@@ -3162,7 +3163,7 @@ dependencies = [
 
 [[package]]
 name = "omaphoenix-desktop"
-version = "0.1.0-rc.8"
+version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -3462,8 +3463,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "phx-audit"
+version = "0.1.0"
+dependencies = [
+ "regex",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "phx-audit-ui"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "phx-audit",
+ "ratatui",
+ "serde_json",
+ "sha2 0.11.0",
+ "tempfile",
+ "toml 1.1.8+spec-1.1.0",
+]
+
+[[package]]
 name = "phx-contract"
-version = "0.1.0-rc.8"
+version = "0.1.0"
 dependencies = [
  "proptest",
  "serde",
@@ -3473,12 +3498,12 @@ dependencies = [
 
 [[package]]
 name = "phx-core"
-version = "0.1.0-rc.8"
+version = "0.1.0"
 dependencies = [
  "age",
+ "phx-audit",
  "phx-contract",
  "regex",
- "secaudit-core",
  "serde",
  "serde_json",
  "sha2 0.11.0",
@@ -4236,30 +4261,6 @@ dependencies = [
  "generic-array",
  "subtle",
  "zeroize",
-]
-
-[[package]]
-name = "secaudit"
-version = "0.1.0-rc.8"
-dependencies = [
- "clap",
- "ratatui",
- "secaudit-core",
- "serde_json",
- "sha2 0.11.0",
- "tempfile",
- "toml 1.1.8+spec-1.1.0",
-]
-
-[[package]]
-name = "secaudit-core"
-version = "0.1.0-rc.8"
-dependencies = [
- "regex",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.21",
 ]
 
 [[package]]

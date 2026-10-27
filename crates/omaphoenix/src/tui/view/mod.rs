@@ -9,6 +9,7 @@ use crate::tui::state::{Section, State};
 
 mod audit;
 mod backup;
+mod backup_search;
 mod overlays;
 mod pulse;
 mod setup;

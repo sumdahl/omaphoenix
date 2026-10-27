@@ -8,6 +8,7 @@ mod motion;
 mod nav;
 mod pulse;
 mod run;
+mod search;
 mod settings;
 mod spring;
 mod state;
@@ -28,10 +29,10 @@ mod ui {
     slint::include_modules!();
 }
 
+use phx_audit::store::Store;
 use phx_core::App as Engine;
 use phx_core::migrate::Migration;
 use phx_core::sys;
-use secaudit_core::store::Store;
 use slint::ComponentHandle;
 
 use state::{quiet, ui_engine, ui_motion, ui_state, ui_timer};
@@ -81,6 +82,7 @@ fn main() -> Result<(), slint::PlatformError> {
     activity::refresh(&app);
 
     nav::wire(&app);
+    search::wire(&app);
     timeline::wire(&app);
     pulse::wire(&app);
     audit::wire(&app);

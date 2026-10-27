@@ -3,11 +3,11 @@
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
+use phx_audit::audit::{self, Ctx, Section};
+use phx_audit::checks::SECTIONS;
+use phx_audit::store::{Store, accept_key};
+use phx_audit::{Severity, Target};
 use phx_contract::{AuditSummary, GateItem};
-use secaudit_core::audit::{self, Ctx, Section};
-use secaudit_core::checks::SECTIONS;
-use secaudit_core::store::{Store, accept_key};
-use secaudit_core::{Severity, Target};
 
 /// Sections in gate scope: what could carry a risk into a backup.
 const GATE_SECTIONS: &[&str] = &[
@@ -26,7 +26,7 @@ const DAY: u64 = 24 * 60 * 60;
 #[derive(serde::Serialize, serde::Deserialize)]
 struct DailyCache {
     at: u64,
-    findings: Vec<secaudit_core::Finding>,
+    findings: Vec<phx_audit::Finding>,
 }
 
 /// What the gate decided for one snapshot.
@@ -97,7 +97,7 @@ pub fn run(home: &Path, cache: Option<&Path>, log: &dyn Fn(&str, &str)) -> Gate 
     let accepted = Store::from_env().accepted();
     let (score, grade) = report.score();
     let mut summary = AuditSummary::new(
-        "omaphoenix (secaudit-core)",
+        "omaphoenix (phx-audit)",
         env!("CARGO_PKG_VERSION"),
         score,
         grade,
@@ -158,9 +158,9 @@ fn daily_findings(
     ctx: &Ctx,
     sections: &[Section],
     cache: Option<&Path>,
-) -> Vec<secaudit_core::Finding> {
+) -> Vec<phx_audit::Finding> {
     let file = cache.map(|d| d.join("gate-daily.json"));
-    let now = secaudit_core::store::now();
+    let now = phx_audit::store::now();
     if let Some(f) = &file
         && let Ok(Some(c)) = crate::category::read_json::<DailyCache>(f)
         && now.saturating_sub(c.at) < DAY
@@ -188,9 +188,9 @@ mod tests {
     #[test]
     fn the_daily_sections_are_reused_for_a_day_then_rerun() {
         use super::{DAY, DailyCache, daily_findings};
-        use secaudit_core::Finding;
+        use phx_audit::Finding;
         let dir = tempfile::tempdir().unwrap_or_else(|e| unreachable!("{e}"));
-        let ctx = secaudit_core::audit::Ctx::for_home(dir.path());
+        let ctx = phx_audit::audit::Ctx::for_home(dir.path());
         let cached: Finding = serde_json::from_str(
             r#"{"sev":"warn","section":"Filesystem permissions","msg":"cached"}"#,
         )
@@ -205,7 +205,7 @@ mod tests {
             )
             .unwrap_or_else(|e| unreachable!("{e}"));
         };
-        let now = secaudit_core::store::now();
+        let now = phx_audit::store::now();
         write(now - 60);
         assert_eq!(
             daily_findings(&ctx, &[], Some(dir.path())),

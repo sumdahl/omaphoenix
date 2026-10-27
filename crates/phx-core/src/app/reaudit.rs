@@ -9,23 +9,26 @@ impl App<'_> {
     /// # Errors
     /// When no restore is recorded, or its snapshot carries no audit.
     pub fn reaudit(&self) -> Result<(String, crate::gate::Reaudit), AppError> {
-        let j = self.journal()?;
+        let snapshot = self.last_restored_snapshot().ok_or_else(|| {
+            AppError::Other(
+                "nothing to re-audit: no restore has been recorded on this machine".into(),
+            )
+        })?;
         let text = sys::output(
             Some(&self.repo.dir),
-            &["git", "show", &format!("{}:manifest.json", j.snapshot)],
+            &["git", "show", &format!("{snapshot}:manifest.json")],
         )
-        .map_err(|e| AppError::Other(format!("read snapshot {}: {e}", j.snapshot)))?;
+        .map_err(|e| AppError::Other(format!("read snapshot {snapshot}: {e}")))?;
         let m =
             Manifest::parse(&text).map_err(|e| AppError::Other(format!("read manifest: {e}")))?;
         let before = m.audit.ok_or_else(|| {
             AppError::Other(format!(
-                "snapshot {} has no audit record (taken with the gate off, or by the Go version)",
-                j.snapshot
+                "snapshot {snapshot} has no audit record (taken with the gate off, or by the Go version)"
             ))
         })?;
         let now = crate::gate::run(&self.home, None, &|_, _| {})
             .summary
             .unwrap_or_default();
-        Ok((j.snapshot, crate::gate::compare(&before, &now)))
+        Ok((snapshot, crate::gate::compare(&before, &now)))
     }
 }

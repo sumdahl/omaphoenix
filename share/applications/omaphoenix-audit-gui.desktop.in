@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=OmaPhoenix Audit (Desktop)
+GenericName=System Security Audit
+Comment=Scan this machine, review findings and apply fixes, in a window
+Exec=@BINDIR@/omaphoenix-audit-gui
+Icon=omaphoenix-audit
+StartupWMClass=omaphoenix-audit-gui
+Categories=System;Security;
+Keywords=security;audit;omaphoenix;secaudit;hardening;scan;
+Terminal=false

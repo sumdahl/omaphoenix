@@ -91,17 +91,14 @@ impl State<'_> {
         self.run_captured("Snapshot", &["snapshot"]);
     }
 
+    /// Snapshots matching the search, newest first.
     pub fn snap_view(&self) -> Vec<&Snapshot> {
-        let q = self.search.to_lowercase();
-        self.snaps
-            .iter()
-            .filter(|s| {
-                q.is_empty()
-                    || format!("{} {}", s.id, s.subject)
-                        .to_lowercase()
-                        .contains(&q)
-            })
-            .collect()
+        phx_core::fuzzy::filter(&self.search, &self.snaps, |s| {
+            format!("{} {}", s.id, s.subject)
+        })
+        .into_iter()
+        .filter_map(|i| self.snaps.get(i))
+        .collect()
     }
 
     pub(super) fn ask_undo(&mut self) {

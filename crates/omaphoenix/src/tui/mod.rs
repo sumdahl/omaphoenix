@@ -74,15 +74,11 @@ fn hand_over(work: Suspend) {
             let _ = writeln!(out, "\n  \x1b[2m$ {fix}\x1b[0m");
             phx_core::sys::command("bash").arg("-c").arg(&fix).status()
         }
-        Suspend::SecauditTui => {
-            if phx_core::sys::has("secaudit") {
-                return drop(phx_core::sys::command("secaudit").arg("tui").status());
+        Suspend::AuditTui => {
+            if let Err(e) = phx_audit_ui::tui::run(None) {
+                let _ = writeln!(out, "\n  omaphoenix audit tui: {e}");
             }
-            let _ = writeln!(
-                out,
-                "\n  The Security Audit app (secaudit) is not installed; OmaPhoenix's Audit section covers the quick scan."
-            );
-            Ok(std::process::ExitStatus::default())
+            return;
         }
     };
     let ok = status.is_ok_and(|s| s.success());
@@ -101,12 +97,12 @@ fn hand_over(work: Suspend) {
 /// terminal is tiny.
 #[cfg(test)]
 mod tests {
+    use phx_audit::store::Store;
     use phx_core::App;
     use phx_core::store::Repo;
     use ratatui::Terminal;
     use ratatui::backend::TestBackend;
     use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-    use secaudit_core::store::Store;
 
     use super::state::{Section, State};
     use super::view;
@@ -184,7 +180,7 @@ mod tests {
 
     #[test]
     fn unified_keymap_confirms_searches_and_names_every_action() {
-        use secaudit_core::store::Meta;
+        use phx_audit::store::Meta;
         let t = tempfile::tempdir().unwrap_or_else(|e| unreachable!("{e}"));
         let app = App {
             home: t.path().into(),
@@ -373,6 +369,111 @@ mod tests {
         assert!(
             !after.contains("Settings → e first"),
             "after setup, it doesn't:\n{after}"
+        );
+    }
+
+    #[test]
+    fn backup_search_finds_and_unticks_an_item_across_categories() {
+        use phx_contract::selection::Choice;
+        let t = tempfile::tempdir().unwrap_or_else(|e| unreachable!("{e}"));
+        std::fs::create_dir_all(t.path().join("repo/.git")).unwrap_or_else(|e| unreachable!("{e}"));
+        let app = App {
+            home: t.path().into(),
+            repo: Repo {
+                dir: t.path().join("repo"),
+            },
+            log: &quiet,
+            passphrase: None,
+        };
+        let mut st = State::with_store(
+            &app,
+            Store {
+                dir: t.path().join("audit"),
+            },
+        );
+        let mut config: Vec<(String, bool)> = (0..100)
+            .map(|i| (format!(".config/app-{i}/settings.conf"), true))
+            .collect();
+        config.push((".claude.json.tmp.159014.3290931ff618".into(), true));
+        let choice = |category: &str, items: Vec<(String, bool)>| {
+            let notes = vec![String::new(); items.len()];
+            (
+                Choice {
+                    category: category.into(),
+                    items,
+                },
+                notes,
+            )
+        };
+        st.choices = Some(vec![
+            choice("config", config),
+            choice("bin", vec![(".local/bin/fpl-engine".into(), true)]),
+        ]);
+        st.section = Section::Backup;
+        key(&mut st, KeyCode::Char('/'));
+        assert!(st.searching, "/ searches Backup");
+        for c in "claude tmp".chars() {
+            key(&mut st, KeyCode::Char(c));
+        }
+        let hits = st.backup_hits();
+        assert_eq!(
+            hits.first().map(|h| h.key.as_str()),
+            Some("config:.claude.json.tmp.159014.3290931ff618")
+        );
+        assert_eq!(hits.len(), 1, "both terms must match");
+        let s = screen(&st, 120, 24);
+        assert!(
+            s.contains("1 match(es)") && s.contains("[x] config:.claude.json.tmp"),
+            "{s}"
+        );
+        key(&mut st, KeyCode::Tab);
+        let off = |st: &State<'_>| {
+            st.choices
+                .as_ref()
+                .and_then(|c| c.first())
+                .and_then(|(c, _)| c.items.last())
+                .is_some_and(|(_, on)| !*on)
+        };
+        assert!(off(&st) && st.dirty, "tab unticks while typing");
+        key(&mut st, KeyCode::Enter);
+        assert!(
+            !st.searching && !st.search.is_empty(),
+            "enter keeps the results"
+        );
+        key(&mut st, KeyCode::Char(' '));
+        assert!(!off(&st), "space ticks it again");
+        key(&mut st, KeyCode::Char(' '));
+        assert!(screen(&st, 120, 24).contains("[ ] config:.claude.json.tmp"));
+        key(&mut st, KeyCode::Esc);
+        assert!(st.search.is_empty(), "esc clears");
+        assert!(
+            screen(&st, 120, 24).contains("config"),
+            "back to the categories"
+        );
+        assert!(off(&st), "the choice survives clearing the search");
+
+        key(&mut st, KeyCode::Char('/'));
+        for c in "zzzz".chars() {
+            key(&mut st, KeyCode::Char(c));
+        }
+        assert!(screen(&st, 120, 24).contains("No item matches"));
+        key(&mut st, KeyCode::Esc);
+        key(&mut st, KeyCode::Char('/'));
+        for c in "app 9".chars() {
+            key(&mut st, KeyCode::Char(c));
+        }
+        let n = st.backup_hits().len();
+        key(&mut st, KeyCode::Enter);
+        key(&mut st, KeyCode::Char('a'));
+        let unticked = st
+            .choices
+            .as_ref()
+            .and_then(|c| c.first())
+            .map_or(0, |(c, _)| c.items.iter().filter(|(_, on)| !*on).count());
+        assert_eq!(
+            unticked,
+            n + 1,
+            "a unticks every result (plus the .claude one)"
         );
     }
 }

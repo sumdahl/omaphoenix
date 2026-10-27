@@ -1,0 +1,594 @@
+// OmaPhoenix Audit desktop (Slint), the third front end of phx-audit next
+// to `omaphoenix audit tui` and `omaphoenix audit menu`: same history, same accepted risks, same
+// keys where they exist. Colours only from the Theme global, filled from the
+// live Omarchy theme by Rust (DESIGN.md §5.1).
+
+import { ListView, LineEdit, ScrollView, AboutSlint } from "std-widgets.slint";
+
+export global Theme {
+    in-out property <color> surface-base: #1e1e2e;
+    in-out property <color> surface-sunken: #181825;
+    in-out property <color> surface-deep: #11111b;
+    in-out property <color> surface-raised: #313244;
+    in-out property <color> text-primary: #cdd6f4;
+    in-out property <color> text-secondary: #bac2de;
+    in-out property <color> text-muted: #7f849c;
+    in-out property <color> accent: #74aeff;
+    in-out property <color> selection: #45475a;
+    in-out property <color> state-risk: #f38ba8;
+    in-out property <color> state-attention: #f9e2af;
+    in-out property <color> state-fine: #a6e3a1;
+    in-out property <color> state-info: #89dceb;
+    in-out property <string> font: "monospace";
+}
+
+export struct Row { sev: string, title: string, section: string, detail: string, fix: string, hint: string, accepted: bool, applied: bool }
+export struct Past { label: string, score: int, grade: string, mode: string, change: string }
+// AI answer blocks: "h" heading, "p" paragraph, "li" list item, "code", "q" a question you asked.
+export struct AiBlock { kind: string, text: string }
+
+component KeyHint inherits Rectangle {
+    in property <string> key;
+    width: hint.preferred-width + 10px;
+    height: 18px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: Theme.text-muted.with-alpha(0.4);
+    accessible-role: none;
+    hint := Text { text: key; font-size: 12px; color: Theme.text-muted; accessible-role: none; }
+}
+
+component Button inherits Rectangle {
+    in property <string> label;
+    in property <string> key;
+    in property <bool> primary;
+    in property <bool> enabled: true;
+    in property <bool> active;
+    callback clicked();
+    min-height: 32px;
+    border-radius: 6px;
+    background: primary ? Theme.accent : (active ? Theme.selection : (touch.has-hover ? Theme.surface-raised : transparent));
+    opacity: enabled ? 1 : 0.45;
+    accessible-role: button;
+    accessible-label: label;
+    accessible-enabled: enabled;
+    accessible-action-default => { if (enabled) { clicked(); } }
+    forward-focus: focus;
+    focus := FocusScope {
+        key-pressed(e) => {
+            if (enabled && (e.text == Key.Return || e.text == " ")) { root.clicked(); return accept; }
+            reject
+        }
+    }
+    Rectangle {
+        border-width: focus.has-focus ? 2px : 0px;
+        border-color: Theme.accent;
+        border-radius: 8px;
+        x: -3px; y: -3px; width: parent.width + 6px; height: parent.height + 6px;
+    }
+    HorizontalLayout {
+        padding-left: 14px; padding-right: 14px; spacing: 10px; alignment: start;
+        if key != "" : KeyHint { key: root.key; y: (parent.height - self.height) / 2; }
+        Text {
+            text: label;
+            vertical-alignment: center;
+            color: primary ? Theme.surface-deep : Theme.text-primary;
+            font-weight: primary ? 600 : 400;
+            accessible-role: none;
+        }
+    }
+    touch := TouchArea { enabled: root.enabled; clicked => { focus.focus(); root.clicked(); } }
+}
+
+component ScoreRing inherits Rectangle {
+    in property <float> value;
+    in property <int> score;
+    in property <string> grade;
+    width: 120px;
+    height: 120px;
+    property <float> p: Math.max(0.0001, Math.min(0.9999, value / 100));
+    property <color> tone: score >= 80 ? Theme.state-fine : (score >= 60 ? Theme.state-attention : Theme.state-risk);
+    accessible-role: progress-indicator;
+    accessible-label: "Audit score";
+    accessible-value: score;
+    accessible-description: "grade " + grade;
+    accessible-value-minimum: 0;
+    accessible-value-maximum: 100;
+    Path {
+        width: 100%; height: 100%;
+        viewbox-width: 120; viewbox-height: 120;
+        fill: transparent; stroke: Theme.surface-sunken; stroke-width: 9px;
+        MoveTo { x: 60; y: 8; }
+        ArcTo { x: 60; y: 112; radius-x: 52; radius-y: 52; sweep: true; }
+        ArcTo { x: 60; y: 8; radius-x: 52; radius-y: 52; sweep: true; }
+    }
+    Path {
+        width: 100%; height: 100%;
+        viewbox-width: 120; viewbox-height: 120;
+        fill: transparent; stroke: tone; stroke-width: 9px;
+        MoveTo { x: 60; y: 8; }
+        ArcTo {
+            x: 60 + 52 * Math.sin(p * 360deg);
+            y: 60 - 52 * Math.cos(p * 360deg);
+            radius-x: 52; radius-y: 52; large-arc: p > 0.5; sweep: true;
+        }
+    }
+    VerticalLayout {
+        alignment: center;
+        Text { text: score; font-size: 36px; font-weight: 600; horizontal-alignment: center; color: Theme.text-primary; accessible-role: none; }
+        Text { text: grade; horizontal-alignment: center; color: tone; font-weight: 600; accessible-role: none; }
+    }
+}
+
+component Card inherits Rectangle {
+    background: Theme.surface-raised;
+    border-radius: 10px;
+}
+
+component Muted inherits Text {
+    color: Theme.text-secondary;
+    wrap: word-wrap;
+}
+
+component Caption inherits Text {
+    color: Theme.text-muted;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+component SevTag inherits Rectangle {
+    in property <string> sev;
+    in property <bool> accepted;
+    property <color> tone: sev == "fail" ? Theme.state-risk : sev == "warn" ? Theme.state-attention : sev == "pass" ? Theme.state-fine : sev == "skip" ? Theme.text-muted : Theme.state-info;
+    width: 74px;
+    height: 20px;
+    border-radius: 4px;
+    background: accepted ? Theme.surface-sunken : tone.with-alpha(0.18);
+    Text {
+        text: accepted ? "ACCEPTED" : (sev == "fail" ? "✗ FAIL" : sev == "warn" ? "! WARN" : sev == "pass" ? "✓ PASS" : sev == "skip" ? "– SKIP" : "i NOTE");
+        font-size: 11px;
+        font-weight: 600;
+        color: accepted ? Theme.text-muted : tone;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}
+
+// What's running, with how far along (DESIGN.md: progress is always shown).
+// value 0..1; below 0 means "can't tell yet", shown as a moving bar.
+component ProgressStrip inherits Rectangle {
+    in property <string> label;
+    in property <float> value: -1;
+    height: 50px;
+    background: Theme.surface-raised;
+    accessible-role: progress-indicator;
+    accessible-label: label;
+    accessible-value: value >= 0 ? Math.round(value * 100) : 0;
+    accessible-value-minimum: 0;
+    accessible-value-maximum: 100;
+    VerticalLayout {
+        padding-left: 16px; padding-right: 16px; padding-top: 9px; padding-bottom: 9px; spacing: 7px;
+        HorizontalLayout {
+            Text { text: root.label; color: Theme.text-primary; overflow: elide; horizontal-stretch: 1; accessible-role: none; }
+            Text { text: root.value >= 0 ? Math.round(root.value * 100) + "%" : ""; color: Theme.text-muted; accessible-role: none; }
+        }
+        track := Rectangle {
+            height: 6px;
+            border-radius: 3px;
+            background: Theme.surface-sunken;
+            clip: true;
+            Rectangle {
+                y: 0;
+                height: parent.height;
+                border-radius: 3px;
+                background: Theme.accent;
+                width: root.value >= 0 ? track.width * Math.max(0.02, root.value) : track.width * 0.3;
+                x: root.value >= 0 ? 0 : (track.width * 0.7) * (0.5 + 0.5 * Math.sin(animation-tick() / 1ms * 0.2deg));
+                animate width { duration: 250ms; easing: ease-out; }
+            }
+        }
+    }
+}
+
+export component App inherits Window {
+    title: "Security Audit";
+    icon: @image-url("../../../share/icons/omaphoenix-audit.svg");
+    preferred-width: 1100px;
+    preferred-height: 720px;
+    min-width: 760px;
+    min-height: 520px;
+    background: Theme.surface-base;
+    default-font-family: Theme.font;
+
+    in property <string> host;
+    in property <bool> has-run;
+    in property <string> when;
+    in property <int> score;
+    in property <string> grade;
+    in property <float> ring;
+    in property <int> fails;
+    in property <int> warns;
+    in property <int> passes;
+    in property <int> notes;
+    in property <int> accepted;
+    in property <string> since;
+    in property <[string]> tabs: ["Issues", "Accepted", "Notes", "Passed", "All"];
+    in property <[Row]> rows;
+    in property <[Past]> history;
+    in property <string> busy;
+    in property <float> progress: -1;
+    in-out property <string> toast;
+    in-out property <int> tab;
+    in-out property <int> sel;
+    in-out property <string> query;
+    in-out property <bool> show-history;
+    in-out property <bool> show-about;
+
+    // AI explanations (Manish's i / I), on phx_audit_ui::ai.
+    in property <bool> ai-open;
+    in property <string> ai-title;
+    in property <string> ai-via;
+    in property <[AiBlock]> ai-blocks;
+    in property <string> ai-status;
+    in property <bool> ai-error;
+    in property <bool> ai-busy;
+    in property <bool> setup-open;
+    in property <string> setup-mode;
+    in property <bool> setup-asks-key;
+    in property <bool> setup-alt;
+    in property <string> setup-error;
+    in property <string> setup-key-path;
+    in property <string> ai-model;
+
+    callback set-tab(int);
+    callback search(string);
+    callback scan(string);
+    callback toggle-accept(int);
+    callback copy(int);
+    callback run-fix(int);
+    callback export();
+    callback open-run(int);
+    callback delete-run(int);
+    callback explain();
+    callback plan();
+    callback ai-send(string);
+    callback ai-regenerate();
+    callback ai-copy();
+    callback ai-close();
+    callback setup-enable(string);
+    callback setup-switch(string);
+    callback setup-cancel();
+
+    forward-focus: keys;
+    keys := FocusScope {
+        key-pressed(e) => {
+            if (e.text == Key.Escape && root.setup-open) { root.setup-cancel(); return accept; }
+            if (e.text == Key.Escape && root.ai-open) { root.ai-close(); return accept; }
+            if (root.ai-open || root.setup-open) { return reject; }
+            if (e.text == "i" && root.rows.length > 0 && root.rows[root.sel].sev != "pass") { root.explain(); return accept; }
+            if (e.text == "I" && root.has-run) { root.plan(); return accept; }
+            if (e.text == Key.Escape) {
+                if (root.show-history || root.show-about) { root.show-history = false; root.show-about = false; return accept; }
+                if (root.query != "") { root.search(""); search-box.text = ""; return accept; }
+                return reject;
+            }
+            if (e.text >= "1" && e.text <= "5") { root.set-tab(e.text.to-float() - 1); return accept; }
+            if (e.text == "s") { root.scan("quick"); return accept; }
+            if (e.text == "f") { root.scan("full"); return accept; }
+            if (e.text == "d") { root.scan("deep"); return accept; }
+            if (e.text == "R") { root.scan("again"); return accept; }
+            if (e.text == "h") { root.show-history = !root.show-history; return accept; }
+            if (e.text == "e") { root.export(); return accept; }
+            if (e.text == "/") { search-box.focus(); return accept; }
+            if (e.text == "a" && root.rows.length > 0) { root.toggle-accept(root.sel); return accept; }
+            if (e.text == "c" && root.rows.length > 0) { root.copy(root.sel); return accept; }
+            if (e.text == "x" && root.rows.length > 0) { root.run-fix(root.sel); return accept; }
+            if ((e.text == Key.DownArrow || e.text == "j") && root.sel < root.rows.length - 1) { root.sel += 1; return accept; }
+            if ((e.text == Key.UpArrow || e.text == "k") && root.sel > 0) { root.sel -= 1; return accept; }
+            reject
+        }
+    }
+
+    VerticalLayout {
+        // Header: the product, the machine, the scans.
+        Rectangle {
+            height: 64px;
+            background: Theme.surface-sunken;
+            HorizontalLayout {
+                padding-left: 20px; padding-right: 20px; padding-top: 14px; padding-bottom: 14px; spacing: 12px;
+                Image { source: @image-url("../../../share/icons/omaphoenix-audit.svg"); width: 32px; height: 32px; y: (parent.height - 32px) / 2; accessible-role: none; }
+                VerticalLayout {
+                    alignment: center;
+                    Text { text: "Security Audit"; font-size: 17px; font-weight: 600; color: Theme.text-primary; accessible-role: text; }
+                    Text { text: root.host + (root.when != "" ? " · " + root.when : ""); font-size: 12px; color: Theme.text-muted; }
+                }
+                Rectangle { horizontal-stretch: 1; }
+                if root.busy != "" : Text { text: root.busy; color: Theme.accent; vertical-alignment: center; }
+                Button { label: "Quick scan"; key: "s"; primary: true; enabled: root.busy == ""; clicked => { root.scan("quick"); } }
+                Button { label: "Full scan"; key: "f"; enabled: root.busy == ""; clicked => { root.scan("full"); } }
+                Button { label: "Deep scan"; key: "d"; enabled: root.busy == ""; clicked => { root.scan("deep"); } }
+                Button { label: "History"; key: "h"; active: root.show-history; enabled: root.history.length > 0; clicked => { root.show-history = !root.show-history; } }
+                Button { label: "About"; active: root.show-about; clicked => { root.show-about = !root.show-about; } }
+            }
+        }
+
+        // No scans yet: what this is, and the one next step.
+        if !root.has-run : VerticalLayout {
+            vertical-stretch: 1;
+            alignment: center;
+            padding: 40px;
+            spacing: 14px;
+            HorizontalLayout {
+                alignment: center;
+                Card {
+                    width: 620px;
+                    VerticalLayout {
+                        padding: 28px; spacing: 12px;
+                        Text { text: "No scans yet"; font-size: 20px; font-weight: 600; color: Theme.text-primary; }
+                        Muted { text: "Security Audit checks packages, boot and disk encryption, kernel hardening, firewall, network exposure, SSH, accounts, permissions, persistence, containers, secrets in your home folder and rootkit indicators."; }
+                        Muted { text: "Everything is read-only. A full scan uses sudo only to read root-owned files, and asks in a terminal window."; color: Theme.text-muted; }
+                        HorizontalLayout {
+                            spacing: 10px; alignment: start;
+                            Button { label: "Quick scan"; key: "s"; primary: true; enabled: root.busy == ""; clicked => { root.scan("quick"); } }
+                            Button { label: "Full scan"; key: "f"; enabled: root.busy == ""; clicked => { root.scan("full"); } }
+                            Button { label: "Deep scan"; key: "d"; enabled: root.busy == ""; clicked => { root.scan("deep"); } }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Always present (the key handler focuses its search box); hidden
+        // until there is a scan.
+        HorizontalLayout {
+            visible: root.has-run;
+            vertical-stretch: root.has-run ? 1 : 0;
+            max-height: root.has-run ? 100000px : 0px;
+            padding: 20px;
+            spacing: 20px;
+
+            // Left: the score and what changed.
+            VerticalLayout {
+                width: 220px;
+                spacing: 12px;
+                alignment: start;
+                HorizontalLayout { alignment: center; ScoreRing { value: root.ring; score: root.score; grade: root.grade; } }
+                Text { text: "✗ " + root.fails + " fail"; color: root.fails > 0 ? Theme.state-risk : Theme.text-muted; }
+                Text { text: "! " + root.warns + " warn"; color: root.warns > 0 ? Theme.state-attention : Theme.text-muted; }
+                Text { text: "✓ " + root.passes + " pass"; color: Theme.state-fine; }
+                Text { text: "i " + root.notes + " notes"; color: Theme.text-muted; }
+                if root.accepted > 0 : Text { text: "≈ " + root.accepted + " accepted"; color: Theme.text-muted; }
+                Muted { text: root.since; font-size: 12px; }
+                Button { label: "Export report"; key: "e"; clicked => { root.export(); } }
+                Button { label: "AI action plan"; key: "I"; clicked => { root.plan(); } }
+            }
+
+            // Middle: tabs, search, the findings.
+            VerticalLayout {
+                horizontal-stretch: 3;
+                spacing: 10px;
+                HorizontalLayout {
+                    spacing: 4px;
+                    for t[i] in root.tabs : Button { label: t; key: i + 1; active: i == root.tab; clicked => { root.set-tab(i); } }
+                    Rectangle { horizontal-stretch: 1; }
+                    search-box := LineEdit {
+                        width: 220px;
+                        placeholder-text: "Search findings…  /";
+                        accessible-label: "Search findings";
+                        edited(text) => { root.search(text); }
+                        accepted => { keys.focus(); }
+                    }
+                }
+                if root.rows.length == 0 : Muted { text: root.query != "" ? "No matching findings. Try another tab or search." : root.tab == 0 ? "✓ No issues here. Nothing to fix in this view." : root.tab == 1 ? "No accepted risks. Press a on an issue you've decided to live with; it stops counting against your score." : "Nothing in this view."; }
+                ListView {
+                    vertical-stretch: 1;
+                    for r[i] in root.rows : Rectangle {
+                        height: 36px;
+                        background: i == root.sel ? Theme.selection : (ta.has-hover ? Theme.surface-raised : transparent);
+                        border-radius: 6px;
+                        accessible-role: list-item;
+                        accessible-label: (r.accepted ? "accepted: " : r.sev + ": ") + r.title;
+                        HorizontalLayout {
+                            padding-left: 8px; padding-right: 8px; spacing: 10px;
+                            SevTag { sev: r.sev; accepted: r.accepted; y: (parent.height - self.height) / 2; }
+                            Text { text: r.section; width: 170px; vertical-alignment: center; color: Theme.text-muted; overflow: elide; }
+                            Text { text: r.title; horizontal-stretch: 1; vertical-alignment: center; color: r.accepted ? Theme.text-muted : Theme.text-primary; overflow: elide; }
+                            Text { text: r.applied ? "✓ done" : (r.fix != "" && !r.accepted ? "● fix" : ""); width: 52px; vertical-alignment: center; color: r.applied ? Theme.state-fine : Theme.accent; }
+                        }
+                        ta := TouchArea { clicked => { root.sel = i; keys.focus(); } }
+                    }
+                }
+            }
+
+            // Right: the selected finding.
+            if root.rows.length > 0 : Card {
+                width: 38%;
+                // Long detail lists scroll inside the card, never the page.
+                detail-scroll := ScrollView {
+                VerticalLayout {
+                    width: detail-scroll.visible-width;
+                    padding: 18px; spacing: 10px; alignment: start;
+                    HorizontalLayout { spacing: 10px; alignment: start; SevTag { sev: root.rows[root.sel].sev; accepted: root.rows[root.sel].accepted; } }
+                    Text { text: root.rows[root.sel].title; font-size: 15px; font-weight: 600; color: Theme.text-primary; wrap: word-wrap; }
+                    Muted { text: root.rows[root.sel].section + (root.rows[root.sel].accepted ? " · accepted risk, not scored" : "") + (root.rows[root.sel].applied ? " · ✓ fix applied, rescan (R) to verify" : ""); color: Theme.text-muted; }
+                    HorizontalLayout {
+                        spacing: 8px; alignment: start;
+                        if root.rows[root.sel].fix != "" && !root.rows[root.sel].accepted : Button { label: "Run fix"; key: "x"; primary: true; clicked => { root.run-fix(root.sel); } }
+                        if root.rows[root.sel].fix != "" || root.rows[root.sel].hint != "" : Button { label: root.rows[root.sel].fix != "" ? "Copy fix" : "Copy advice"; key: "c"; clicked => { root.copy(root.sel); } }
+                        if root.rows[root.sel].sev == "fail" || root.rows[root.sel].sev == "warn" : Button { label: root.rows[root.sel].accepted ? "Un-accept" : "Accept risk"; key: "a"; clicked => { root.toggle-accept(root.sel); } }
+                        if root.rows[root.sel].sev != "pass" : Button { label: "Explain"; key: "i"; clicked => { root.explain(); } }
+                    }
+                    if root.rows[root.sel].detail != "" : Caption { text: "DETAILS"; }
+                    if root.rows[root.sel].detail != "" : Text { text: root.rows[root.sel].detail; color: Theme.text-secondary; wrap: char-wrap; }
+                    if root.rows[root.sel].fix != "" : Caption { text: "SUGGESTED FIX"; }
+                    if root.rows[root.sel].fix != "" : Rectangle {
+                        background: Theme.surface-sunken;
+                        border-radius: 6px;
+                        height: fix-text.preferred-height + 16px;
+                        fix-text := Text { x: 8px; width: parent.width - 16px; text: "$ " + root.rows[root.sel].fix; color: Theme.accent; wrap: char-wrap; }
+                    }
+                    if root.rows[root.sel].hint != "" : Caption { text: "HOW TO ADDRESS"; }
+                    if root.rows[root.sel].hint != "" : Text { text: root.rows[root.sel].hint; color: Theme.text-secondary; font-italic: true; wrap: word-wrap; }
+                }
+                }
+            }
+        }
+
+        if root.busy != "" : ProgressStrip { label: root.busy; value: root.progress; }
+
+        // Toasts and the keys, one line.
+        Rectangle {
+            height: 30px;
+            background: Theme.surface-sunken;
+            Text {
+                x: 16px;
+                text: root.toast != "" ? root.toast : "s quick · f full · d deep · R rescan · 1-5 tabs · / search · a accept · c copy · x fix · h history · e export";
+                color: root.toast != "" ? Theme.accent : Theme.text-muted;
+                vertical-alignment: center;
+                height: parent.height;
+                accessible-role: text;
+            }
+        }
+    }
+
+    // History: past scans, newest first; open or delete.
+    if root.show-history : Rectangle {
+        background: Theme.surface-deep.with-alpha(0.6);
+        TouchArea { clicked => { root.show-history = false; } }
+        Card {
+            width: min(720px, parent.width - 80px);
+            height: min(520px, parent.height - 80px);
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            TouchArea { }
+            VerticalLayout {
+                padding: 20px; spacing: 10px;
+                Text { text: "Scan history"; font-size: 18px; font-weight: 600; color: Theme.text-primary; }
+                Muted { text: "Newest first. Each scan compared with the one before it."; color: Theme.text-muted; }
+                ListView {
+                    for p[i] in root.history : Rectangle {
+                        height: 38px;
+                        border-radius: 6px;
+                        background: hta.has-hover ? Theme.selection : transparent;
+                        accessible-role: list-item;
+                        accessible-label: p.label + ", score " + p.score + " " + p.grade;
+                        HorizontalLayout {
+                            padding-left: 10px; padding-right: 10px; spacing: 12px;
+                            Text { text: p.label; width: 200px; vertical-alignment: center; color: Theme.text-primary; }
+                            Text { text: p.mode; width: 50px; vertical-alignment: center; color: Theme.text-muted; }
+                            Text { text: p.score + " " + p.grade; width: 60px; vertical-alignment: center; font-weight: 600; color: p.score >= 80 ? Theme.state-fine : p.score >= 60 ? Theme.state-attention : Theme.state-risk; }
+                            Text { text: p.change; horizontal-stretch: 1; vertical-alignment: center; color: Theme.text-secondary; overflow: elide; }
+                            Button { label: "Delete"; clicked => { root.delete-run(i); } }
+                        }
+                        hta := TouchArea { clicked => { root.open-run(i); root.show-history = false; } }
+                    }
+                }
+            }
+        }
+    }
+
+    // AI consent (the original's AISetupScreen): asked once.
+    if root.setup-open : Rectangle {
+        background: Theme.surface-deep.with-alpha(0.6);
+        TouchArea { }
+        Card {
+            width: min(640px, parent.width - 80px);
+            height: setup-layout.preferred-height;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            setup-layout := VerticalLayout {
+                padding: 22px; spacing: 12px;
+                Text { text: "Explain findings with Claude"; font-size: 18px; font-weight: 600; color: Theme.text-primary; }
+                if root.setup-mode == "claude-code" : Muted { text: "Explanations come from Claude Code using your existing sign-in, so no API key is needed. It runs with every tool, MCP server and hook turned off, so it can only answer."; }
+                Muted { text: root.setup-mode == "claude-code" ? "When you ask, the finding (section, message, details and suggested fix) is sent to Claude. Your username, hostname and home path are replaced first, and the scan never collects secret values." : "When you ask, the finding (section, message, details and suggested fix) is sent to Anthropic's API so Claude can explain it. Your username, hostname and home path are replaced first, and the scan never collects secret values."; }
+                Muted { color: Theme.text-muted; text: root.setup-mode == "claude-code" ? "Nothing is sent until you press i or I. Usage counts toward your Claude plan." : "Nothing is sent until you press i or I. Model: " + root.ai-model + ". API usage is billed to your Anthropic account."; }
+                if root.setup-asks-key : Muted { text: "Paste an API key from console.anthropic.com → API keys. It's saved to " + root.setup-key-path + " readable only by you. Setting ANTHROPIC_API_KEY instead also works."; }
+                key-box := LineEdit { visible: root.setup-asks-key; height: root.setup-asks-key ? self.preferred-height : 0px; input-type: password; placeholder-text: "sk-ant-…"; accessible-label: "Anthropic API key"; accepted => { root.setup-enable(self.text); } }
+                if root.setup-error != "" : Text { text: root.setup-error; color: Theme.state-risk; wrap: word-wrap; }
+                HorizontalLayout {
+                    spacing: 8px; alignment: end;
+                    Button { label: "Cancel"; clicked => { root.setup-cancel(); } }
+                    if root.setup-mode == "claude-code" : Button { label: "Use an API key instead"; clicked => { root.setup-switch("api"); } }
+                    if root.setup-mode == "api" && root.setup-alt : Button { label: "Use Claude Code instead"; clicked => { root.setup-switch("claude-code"); } }
+                    Button { label: root.setup-mode == "claude-code" ? "Use Claude Code" : "Enable"; primary: true; clicked => { root.setup-enable(key-box.text); } }
+                }
+            }
+        }
+    }
+
+    // The AI answer (the original's AIScreen): streams in; follow-ups below.
+    if root.ai-open : Rectangle {
+        background: Theme.surface-deep.with-alpha(0.6);
+        TouchArea { }
+        Card {
+            width: parent.width - 80px;
+            height: parent.height - 60px;
+            x: 40px;
+            y: 30px;
+            VerticalLayout {
+                padding: 20px; spacing: 10px;
+                HorizontalLayout {
+                    spacing: 10px;
+                    Text { text: root.ai-title; font-size: 15px; font-weight: 600; color: Theme.text-primary; overflow: elide; horizontal-stretch: 1; vertical-alignment: center; }
+                    Text { text: "AI · " + root.ai-via; color: Theme.text-muted; vertical-alignment: center; }
+                }
+                Text { text: "AI-generated. Review commands before running them; the audit's own fixes are in the main window."; color: Theme.text-muted; font-italic: true; wrap: word-wrap; }
+                ai-scroll := ScrollView {
+                    vertical-stretch: 1;
+                    VerticalLayout {
+                        width: ai-scroll.visible-width;
+                        padding: 8px; spacing: 8px;
+                        for b in root.ai-blocks : Rectangle {
+                            background: b.kind == "code" ? Theme.surface-sunken : transparent;
+                            border-radius: 6px;
+                            height: block-text.preferred-height + (b.kind == "code" ? 16px : 0px) + (b.kind == "h" ? 6px : 0px);
+                            block-text := Text {
+                                x: b.kind == "code" ? 10px : (b.kind == "li" ? 16px : 0px);
+                                y: b.kind == "code" ? 8px : (b.kind == "h" ? 6px : 0px);
+                                width: parent.width - self.x * 2;
+                                text: b.kind == "q" ? "You  " + b.text : b.text;
+                                wrap: b.kind == "code" ? char-wrap : word-wrap;
+                                color: b.kind == "h" || b.kind == "q" ? Theme.accent : (b.kind == "code" ? Theme.text-primary : Theme.text-secondary);
+                                font-weight: b.kind == "h" || b.kind == "q" ? 600 : 400;
+                                font-size: b.kind == "h" ? 15px : 13px;
+                            }
+                        }
+                    }
+                }
+                Text { text: root.ai-status; color: root.ai-error ? Theme.state-risk : Theme.text-muted; wrap: word-wrap; }
+                HorizontalLayout {
+                    spacing: 8px;
+                    follow-up := LineEdit {
+                        horizontal-stretch: 1;
+                        enabled: !root.ai-busy;
+                        placeholder-text: "Ask a follow-up, e.g. \"what breaks if I do this?\"  (enter to send)";
+                        accessible-label: "Follow-up question";
+                        accepted => { root.ai-send(self.text); self.text = ""; }
+                    }
+                    Button { label: "Ask again"; enabled: !root.ai-busy; clicked => { root.ai-regenerate(); } }
+                    Button { label: "Copy answer"; clicked => { root.ai-copy(); } }
+                    Button { label: "Close"; key: "esc"; clicked => { root.ai-close(); } }
+                }
+            }
+        }
+    }
+
+    // About: what this is, and the Slint attribution (ADR-0020).
+    if root.show-about : Rectangle {
+        background: Theme.surface-deep.with-alpha(0.6);
+        TouchArea { clicked => { root.show-about = false; } }
+        Card {
+            width: 460px;
+            height: 330px;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            TouchArea { }
+            VerticalLayout {
+                padding: 22px; spacing: 10px;
+                Text { text: "Security Audit"; font-size: 18px; font-weight: 600; color: Theme.text-primary; }
+                Muted { text: "A read-only security audit for Arch and Omarchy, by Manish Karki, in Rust. The same history as omaphoenix audit tui and omaphoenix audit menu. MIT OR Apache-2.0."; }
+                HorizontalLayout { alignment: start; AboutSlint { width: 180px; height: 80px; } }
+            }
+        }
+    }
+}

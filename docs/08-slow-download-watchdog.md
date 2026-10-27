@@ -22,6 +22,7 @@ The first fresh-VM rehearsal stalled on one JDK download running at **10 kB/s**:
 
 - Sample every **5 s**.
 - Progress = the sum of `rchar` (bytes read by syscalls, sockets included) from `/proc/<pid>/io` over the installer's **whole process tree**, found through parent links in `/proc/*/stat`.
+- **A tree that can't be fully measured is never stopped.** The user can't read `/proc/<pid>/io` of another user's process, such as pacman as root under `sudo`. While any process in the tree is like that, the time counts as neither stalled nor slow, and the window starts afresh afterwards (`Watchdog::unmeasured`). Stopping pacman mid-transaction leaves a half-installed system and a stale `db.lck` (F-018); pacman has its own download timeouts.
 - This counts network *and* disk reads, so a long **compile is progress**, not a stall.
 - Processes we may not read (root, under sudo) are skipped. The count is then conservative, never inflated.
 - The child stays in our process group so it can still prompt (sudo from yay).

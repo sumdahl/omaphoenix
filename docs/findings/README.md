@@ -17,8 +17,21 @@ Bugs and surprises found while testing or using the products, one file each. A f
 | [F-007](F-007-timeline-says-only-the-time.md) | The timeline says when each snapshot was taken, not what changed | OmaPhoenix | low | fixed in rc.8 |
 | [F-008](F-008-doctor-says-keys-not-backed-up.md) | `doctor` says the SSH keys aren't backed up after saving in Backup | OmaPhoenix | medium | fixed in rc.8 |
 | [F-009](F-009-restore-fails-with-sigpipe.md) | A restore can fail with `git archive … signal: 13 (SIGPIPE)` when the machine is busy | OmaPhoenix | high | fixed in rc.8 |
-| [F-010](F-010-list-before-setup-says-no-such-file.md) | `omaphoenix list` before setup says "No such file or directory" | OmaPhoenix | low | open |
+| [F-010](F-010-list-before-setup-says-no-such-file.md) | `omaphoenix list` before setup says "No such file or directory" | OmaPhoenix | low | fixed in rc.9 |
 | [F-011](F-011-secrets-init-reincludes-excluded-key.md) | `secrets init` can include a key you excluded | OmaPhoenix | low | open |
 | [F-012](F-012-doctor-unreadable-selection.md) | `doctor` doesn't say when `selection.conf` can't be read | OmaPhoenix | low | open |
+| [F-013](F-013-runtime-files-make-daily-snapshots.md) | Files programs rewrite at startup make a snapshot after every boot | OmaPhoenix | low | open |
+| [F-014](F-014-summary-after-failed-snapshot.md) | After a failed snapshot, the next one's summary compares against the wrong "before" | OmaPhoenix | low | open |
+| [F-015](F-015-raw-git-lock-error.md) | When git's lock is held, a snapshot shows git's raw error | OmaPhoenix | low | open |
+| [F-016](F-016-temp-copy-of-secret-captured.md) | A program's temp file (e.g. a copy of `.claude.json`) is backed up as config | OmaPhoenix | medium | fixed in rc.9 |
+| [F-017](F-017-dry-run-counts-lines-not-packages.md) | A dry run's "planned" counts plan lines for packages, not packages | OmaPhoenix | low | open |
+| [F-018](F-018-watchdog-kills-pacman-under-sudo.md) | The watchdog kills pacman mid-install when an install under sudo runs past 3 minutes | OmaPhoenix | **high** | fixed in rc.9 |
+| [F-019](F-019-skipped-service-reported-failed.md) | A service skipped as "other hardware" is also reported as failed | OmaPhoenix | medium | fixed in rc.9 |
+| [F-020](F-020-npm-restore-uses-system-npm.md) | On a fresh machine, npm tools are installed with the system npm and fail | OmaPhoenix | medium | fixed in rc.9 |
+| [F-021](F-021-uv-tools-need-uv-first.md) | uv tools fail on a fresh machine because uv itself isn't restored | OmaPhoenix | medium | fixed in rc.9 |
+| [F-022](F-022-local-aur-package-reported-as-error.md) | A locally built package that isn't on the AUR shows as a raw failure | OmaPhoenix | low | fixed in rc.9 |
+| [F-023](F-023-restored-profile-locks-out-desktop.md) | A restored shell profile that sources a missing file stops the desktop from starting | OmaPhoenix | **high** | fixed in rc.9 |
+| [F-024](F-024-folder-restore-pulls-hardware-files.md) | Restoring a folder pulls in the hardware-specific files inside it | OmaPhoenix | medium | fixed in rc.9 |
+| [F-025](F-025-reaudit-after-undo.md) | After an undo, `reaudit` says "nothing to undo" | OmaPhoenix | low | fixed in rc.9 |
 
 **Severity:** `high` loses or leaks data, or breaks a restore. `medium` is wrong behaviour with no data at risk. `low` is a wrong message or a cosmetic problem.

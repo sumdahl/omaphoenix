@@ -19,11 +19,11 @@
 
 | Crate / app | What | Owner |
 |---|---|---|
-| `secaudit-core` | Audit engine (checks as modules), finding contract types, scoring, accepted-risk store | Manish Karki after the handover |
+| `phx-audit` | Audit engine (checks as modules), finding contract types, scoring, accepted-risk store | Manish Karki after the handover |
 | `secaudit` | Standalone Security Audit: CLI, TUI, desktop app | Manish Karki after the handover |
-| `omaphoenix` | Joint product: snapshot/restore, slow-download watchdog, hardware-aware restore, undo, **audit-before-backup** via `secaudit-core` | Sumiran Dahal |
+| `omaphoenix` | Joint product: snapshot/restore, slow-download watchdog, hardware-aware restore, undo, **audit-before-backup** via `phx-audit` | Sumiran Dahal |
 
-Build both in **one workspace until the handover**, so parity work and the shared contract evolve together. Then move the two `secaudit*` crates to Manish's repo, publish `secaudit-core`, and have OmaPhoenix depend on the published version (RUST.md forbids git dependencies in releases). Keep the crate boundary clean from day one: `secaudit-core` must not depend on any OmaPhoenix crate.
+Build both in **one workspace until the handover**, so parity work and the shared contract evolve together. Then move the two `secaudit*` crates to Manish's repo, publish `phx-audit`, and have OmaPhoenix depend on the published version (RUST.md forbids git dependencies in releases). Keep the crate boundary clean from day one: `phx-audit` must not depend on any OmaPhoenix crate.
 
 Both apps follow [DESIGN.md](../DESIGN.md) and [RUST.md](../RUST.md). The standalone Security Audit keeps its own name and identity but shares the design language and keymap, so a person using both feels one family.
 
@@ -38,10 +38,10 @@ omaphoenix-secaudit/            (this repo; built 2026-10-10, ADR-0018)
 │  │                            sys, store, category/*, app, doctor, undo, schedule, gate
 │  ├─ omaphoenix/               binary: CLI (Go's commands) + TUI         ← cmd/omaphoenix + internal/tui
 │  ├─ omaphoenix-desktop/       desktop app (spike; Slint chosen by measurements, Q9)
-│  ├─ secaudit-core/            audit engine + contract + store (→ Manish) ← bin/secaudit
+│  ├─ phx-audit/            audit engine + contract + store (→ Manish) ← bin/secaudit
 │  └─ secaudit/                 binary: CLI + TUI (→ Manish)              ← bin/secaudit, secaudit-tui
 ├─ tests/fixtures/              behaviour captured from the Go and Bash versions
-└─ scripts/                     secaudit-parity, omaphoenix-parity, peak-rss
+└─ scripts/                     audit-parity, omaphoenix-parity, peak-rss
 ```
 
 ## Crate choices

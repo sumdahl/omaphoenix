@@ -103,8 +103,11 @@ fn detect_other(home: &std::path::Path) -> Vec<OtherPkg> {
     out
 }
 
-/// The install command for one tool, via mise when its manager isn't on a fresh PATH yet.
-fn install_args(o: &OtherPkg) -> Result<Vec<String>, String> {
+/// The install command for one tool; `has` says whether a program is on `PATH`.
+///
+/// On a fresh machine the system npm installs into root-owned `/usr` (F-020) and uv isn't there yet
+/// (F-021), so with mise around, npm runs under mise's node and uv comes from mise.
+fn install_args(o: &OtherPkg, has: &dyn Fn(&str) -> bool) -> Result<Vec<String>, String> {
     let argv: Vec<String> = match o.manager.as_str() {
         "mise" => {
             return Ok(vec![
@@ -137,17 +140,15 @@ fn install_args(o: &OtherPkg) -> Result<Vec<String>, String> {
         m => return Err(format!("unknown manager {m:?}")),
     };
     let tool = argv.first().map_or("", String::as_str);
-    if sys::has(tool) {
-        return Ok(argv);
-    }
-    if !sys::has("mise") {
-        return Err(format!("{tool} is not installed"));
-    }
-    Ok(["mise", "exec", "--"]
-        .iter()
-        .map(|s| (*s).to_owned())
-        .chain(argv)
-        .collect())
+    let prefix: &[&str] = match (o.manager.as_str(), has("mise"), has(tool)) {
+        ("npm", true, _) => &["mise", "exec", "--"],
+        // mise's uv shim can be on PATH with no uv version behind it, so `has("uv")` proves nothing.
+        ("uv", true, _) => &["mise", "exec", "uv@latest", "--"],
+        (_, _, true) => &[],
+        (_, true, false) => &["mise", "exec", "--"],
+        (_, false, false) => return Err(format!("{tool} is not installed")),
+    };
+    Ok(prefix.iter().map(|s| (*s).to_owned()).chain(argv).collect())
 }
 
 impl Category for PkgOther {
@@ -206,7 +207,7 @@ impl Category for PkgOther {
             return Ok(res);
         }
         for o in todo {
-            match install_args(&o) {
+            match install_args(&o, &sys::has) {
                 Ok(argv) => {
                     let argv: Vec<&str> = argv.iter().map(String::as_str).collect();
                     if res.install(&o.id(), &argv) {
@@ -231,8 +232,58 @@ mod tests {
 
     #[test]
     fn install_commands_by_manager() {
-        let a = install_args(&OtherPkg::new("mise", "node", "22.1.0", "")).unwrap_or_default();
+        let all = |_: &str| true;
+        let a =
+            install_args(&OtherPkg::new("mise", "node", "22.1.0", ""), &all).unwrap_or_default();
         assert_eq!(a, ["mise", "install", "--yes", "node@22.1.0"]);
-        assert!(install_args(&OtherPkg::new("brew", "x", "1", "")).is_err());
+        assert!(install_args(&OtherPkg::new("brew", "x", "1", ""), &all).is_err());
+    }
+
+    #[test]
+    fn on_a_fresh_machine_npm_and_uv_go_through_mise() {
+        // Fresh Omarchy: system npm on PATH, no uv, mise present.
+        let fresh = |p: &str| matches!(p, "npm" | "mise" | "cargo");
+        let npm =
+            install_args(&OtherPkg::new("npm", "cline", "3.0.61", ""), &fresh).unwrap_or_default();
+        assert_eq!(
+            npm,
+            ["mise", "exec", "--", "npm", "install", "-g", "cline@3.0.61"]
+        );
+        let uv =
+            install_args(&OtherPkg::new("uv", "spotdl", "4.5.2", ""), &fresh).unwrap_or_default();
+        assert_eq!(
+            uv,
+            [
+                "mise",
+                "exec",
+                "uv@latest",
+                "--",
+                "uv",
+                "tool",
+                "install",
+                "spotdl==4.5.2"
+            ]
+        );
+        let cargo =
+            install_args(&OtherPkg::new("cargo", "ncal", "0.1.0", ""), &fresh).unwrap_or_default();
+        assert_eq!(
+            cargo.first().map(String::as_str),
+            Some("cargo"),
+            "cargo worked as is"
+        );
+        let shim = |p: &str| matches!(p, "npm" | "mise" | "uv");
+        let uv =
+            install_args(&OtherPkg::new("uv", "spotdl", "4.5.2", ""), &shim).unwrap_or_default();
+        assert_eq!(
+            uv.get(..4).map(<[String]>::to_vec),
+            Some(
+                ["mise", "exec", "uv@latest", "--"]
+                    .map(String::from)
+                    .to_vec()
+            ),
+            "a uv shim on PATH still goes through mise"
+        );
+        let none = |_: &str| false;
+        assert!(install_args(&OtherPkg::new("uv", "x", "1", ""), &none).is_err());
     }
 }

@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# OmaPhoenix and Security Audit installer (the Rust versions).
+# OmaPhoenix installer (the Rust version; the audit is `omaphoenix audit`).
 #
-#   curl -fsSL https://raw.githubusercontent.com/sumdahl/omaphoenix-secaudit/<tag>/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/sumdahl/omaphoenix/<tag>/install.sh | bash
 #   ... | bash -s -- --gui         also install the desktop apps (asked otherwise)
 #   ... | bash -s -- --no-gui      terminal apps only
 #   ... | bash -s -- --sysctl      also apply the kernel hardening drop-in (sudo)
 #   ... | bash -s -- --uninstall   remove the commands, launchers, icons and agent skills
 #
 # Downloads a release, verifies it against SHA256SUMS, installs `omaphoenix`
-# (CLI and terminal app), `secaudit`, `secaudit-tui` and `secaudit-ui` to
-# ~/.local/bin, optionally the `omaphoenix-gui` and `secaudit-gui` desktop
+# (CLI, terminal apps and the audit) to ~/.local/bin, optionally the `omaphoenix-gui` and `omaphoenix-audit-gui` desktop
 # apps, adds launcher entries with their icons, links the coding-agent skills
 # (share/skills) into ~/.claude, ~/.agents and ~/.hermes where they exist,
+# removes the pre-0.1.0 `secaudit` commands, launchers and icon,
 # then offers to back this machine up or restore a snapshot. The terminal binaries are static; the desktop app uses the
 # system's graphics libraries. Everything lives in main(), so a download cut
 # off mid-way runs nothing.
@@ -32,12 +32,12 @@ die() {
 main() {
   set -euo pipefail
 
-  local repo=sumdahl/omaphoenix-secaudit
+  local repo=sumdahl/omaphoenix
   local version=${OMAPHOENIX_VERSION:-latest}
   local bin_dir=${OMAPHOENIX_BIN_DIR:-$HOME/.local/bin}
   local data_dir=${XDG_DATA_HOME:-$HOME/.local/share}
   local gui=${OMAPHOENIX_GUI:-} sysctl=0
-  local bins=(omaphoenix secaudit secaudit-tui secaudit-ui)
+  local bins=(omaphoenix)
 
   while (($#)); do
     case $1 in
@@ -82,6 +82,7 @@ main() {
     install -m 0755 "$tmp/$b" "$bin_dir/$b"
     say "✓ installed $b → $bin_dir/$b"
   done
+  remove_old "$bin_dir" "$data_dir"
 
   # The desktop app: asked in a graphical session, unless --gui, --no-gui or
   # OMAPHOENIX_GUI decided. The terminal app is always there.
@@ -91,7 +92,7 @@ main() {
       gui=1
       if { exec 4</dev/tty; } 2>/dev/null; then
         local reply=''
-        read -r -p "Install the desktop apps (OmaPhoenix, Security Audit) too? The terminal apps are always installed. [Y/n] " reply <&4 || true
+        read -r -p "Install the desktop apps (OmaPhoenix, OmaPhoenix Audit) too? The terminal apps are always installed. [Y/n] " reply <&4 || true
         [[ $reply == [nN]* ]] && gui=0
         exec 4<&-
       fi
@@ -99,10 +100,10 @@ main() {
   fi
   if [[ $gui == 1 ]]; then
     if [[ $arch != amd64 ]]; then
-      echo "  note: the desktop apps are built for amd64 only; use 'omaphoenix tui' and 'secaudit-tui'"
+      echo "  note: the desktop apps are built for amd64 only; use 'omaphoenix tui' and 'omaphoenix audit tui'"
     else
       local g
-      for g in omaphoenix-gui secaudit-gui; do
+      for g in omaphoenix-gui omaphoenix-audit-gui; do
         fetch "${g}_linux_${arch}.tar.gz" "$tmp" "$repo" "$version"
         tar -xzf "$tmp/${g}_linux_${arch}.tar.gz" -C "$tmp" "$g"
         install -m 0755 "$tmp/$g" "$bin_dir/$g"
@@ -126,11 +127,11 @@ main() {
   esac
   local dep missing=()
   for dep in ss pacman; do command -v "$dep" >/dev/null || missing+=("$dep"); done
-  ((${#missing[@]})) && echo "  note: missing ${missing[*]} (some Security Audit checks need them)"
+  ((${#missing[@]})) && echo "  note: missing ${missing[*]} (some audit checks need them)"
   local apps="omaphoenix tui"
   [[ -x $bin_dir/omaphoenix-gui ]] && apps+=" · omaphoenix gui"
-  apps+=" · secaudit-tui · secaudit-ui"
-  [[ -x $bin_dir/secaudit-gui ]] && apps+=" · secaudit-gui"
+  apps+=" · omaphoenix audit tui"
+  [[ -x $bin_dir/omaphoenix-audit-gui ]] && apps+=" · omaphoenix-audit-gui"
   echo "  apps: $apps"
 
   [[ -n ${OMAPHOENIX_NO_MENU:-} ]] && return
@@ -172,14 +173,14 @@ launchers() {
   local share=$1 bin_dir=$2 data_dir=$3
   local apps="$data_dir/applications" icons="$data_dir/icons/hicolor/scalable/apps"
   mkdir -p "$apps" "$icons"
-  install -m 0644 "$share/icons/omaphoenix.svg" "$share/icons/secaudit.svg" "$icons/"
+  install -m 0644 "$share/icons/omaphoenix.svg" "$share/icons/omaphoenix-audit.svg" "$icons/"
   local entry launch terminal id title
-  for entry in secaudit secaudit-gui omaphoenix-tui omaphoenix; do
+  for entry in omaphoenix-audit omaphoenix-audit-gui omaphoenix-tui omaphoenix; do
     [[ $entry == omaphoenix && ! -x $bin_dir/omaphoenix-gui ]] && continue
-    [[ $entry == secaudit-gui && ! -x $bin_dir/secaudit-gui ]] && continue
+    [[ $entry == omaphoenix-audit-gui && ! -x $bin_dir/omaphoenix-audit-gui ]] && continue
     launch='' terminal=true
     if command -v uwsm-app >/dev/null && command -v xdg-terminal-exec >/dev/null; then
-      id=org.secaudit.tui title="Security Audit"
+      id=org.omaphoenix.audit title="OmaPhoenix Audit"
       [[ $entry == omaphoenix-tui ]] && id=org.omaphoenix.tui title=OmaPhoenix
       launch="uwsm-app -- xdg-terminal-exec --app-id=$id --title=\"$title\" -e" terminal=false
     fi
@@ -204,7 +205,7 @@ agent_skill_dirs() {
   return 0
 }
 
-# skills SHARE DATA_DIR: the omaphoenix and secaudit agent skills, copied to
+# skills SHARE DATA_DIR: the omaphoenix and omaphoenix-audit agent skills, copied to
 # DATA_DIR/omaphoenix-skills and linked into each agent's skills directory, as
 # Omarchy links its own. A real directory of the same name is left alone.
 skills() {
@@ -217,6 +218,10 @@ skills() {
   mapfile -t dirs < <(agent_skill_dirs)
   for dir in "${dirs[@]}"; do
     mkdir -p "$dir"
+    # A skill renamed since the last install (secaudit) leaves a dead link.
+    for s in "$dir"/*; do
+      if [[ -L $s && ! -e $s && $(readlink "$s") == "$dest"/* ]]; then rm -f -- "$s"; fi
+    done
     for s in "$dest"/*/; do
       name=$(basename "$s")
       if [[ -e $dir/$name && ! -L $dir/$name ]]; then
@@ -235,19 +240,20 @@ skills() {
 uninstall() {
   local bin_dir=${1:?} data_dir=${2:?} b f
   if [[ -x $bin_dir/omaphoenix ]]; then "$bin_dir/omaphoenix" timer off >/dev/null 2>&1 || true; fi
-  for b in omaphoenix omaphoenix-gui secaudit secaudit-tui secaudit-ui secaudit-gui; do
+  for b in omaphoenix omaphoenix-gui omaphoenix-audit-gui; do
     if [[ -e ${bin_dir:?}/$b ]]; then
       rm -f -- "${bin_dir:?}/$b"
       say "removed $bin_dir/$b"
     fi
   done
-  for f in applications/secaudit.desktop applications/secaudit-gui.desktop applications/omaphoenix.desktop applications/omaphoenix-tui.desktop \
-    icons/hicolor/scalable/apps/omaphoenix.svg icons/hicolor/scalable/apps/secaudit.svg; do
+  for f in applications/omaphoenix-audit.desktop applications/omaphoenix-audit-gui.desktop applications/omaphoenix.desktop applications/omaphoenix-tui.desktop \
+    icons/hicolor/scalable/apps/omaphoenix.svg icons/hicolor/scalable/apps/omaphoenix-audit.svg; do
     if [[ -e ${data_dir:?}/$f ]]; then
       rm -f -- "${data_dir:?}/$f"
       say "removed $data_dir/$f"
     fi
   done
+  remove_old "$bin_dir" "$data_dir"
   local skills_dir=${data_dir:?}/omaphoenix-skills dir link dirs=()
   mapfile -t dirs < <(agent_skill_dirs)
   for dir in "${dirs[@]}"; do
@@ -265,7 +271,20 @@ uninstall() {
   if [[ -f /etc/sysctl.d/99-zz-hardening.conf ]]; then
     echo "  kept /etc/sysctl.d/99-zz-hardening.conf (remove with: sudo rm /etc/sysctl.d/99-zz-hardening.conf && sudo sysctl --system)"
   fi
-  echo "  kept your snapshots and scan history (${XDG_STATE_HOME:-$HOME/.local/state}/secaudit)"
+  echo "  kept your snapshots and scan history (${XDG_STATE_HOME:-$HOME/.local/state}/omaphoenix-audit)"
+}
+
+# remove_old BIN_DIR DATA_DIR: what releases before 0.1.0 installed as
+# Security Audit (`secaudit`, now `omaphoenix audit`). Scan history moves by itself.
+remove_old() {
+  local bin_dir=${1:?} data_dir=${2:?} f
+  for f in "$bin_dir"/{secaudit,secaudit-tui,secaudit-ui,secaudit-gui} \
+    "$data_dir"/applications/{secaudit,secaudit-gui}.desktop "$data_dir"/icons/hicolor/scalable/apps/secaudit.svg; do
+    if [[ -e $f || -L $f ]]; then
+      rm -f -- "$f"
+      say "removed $f (now omaphoenix audit)"
+    fi
+  done
 }
 
 ask() {

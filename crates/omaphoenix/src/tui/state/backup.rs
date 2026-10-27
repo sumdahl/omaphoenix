@@ -39,6 +39,10 @@ impl State<'_> {
             }
             return;
         }
+        if !self.search.is_empty() {
+            self.backup_search_key(key);
+            return;
+        }
         let n_cats = choices.len();
         let Some((cat, _)) = choices.get_mut(self.cat_sel) else {
             return;

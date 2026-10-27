@@ -4,7 +4,7 @@
 // Components below the structs are reused from the measured spike
 // (spikes/slint-desktop): accessible buttons, the score ring.
 
-import { ListView, ScrollView, AboutSlint } from "std-widgets.slint";
+import { ListView, LineEdit, ScrollView, AboutSlint } from "std-widgets.slint";
 
 export global Theme {
     in-out property <color> surface-base: #1e1e2e;
@@ -288,6 +288,7 @@ export component App inherits Window {
 
     // Timeline
     in property <[Snap]> snaps;
+    in property <bool> snaps-filtered;
     in property <length> drop: 0px;
     in property <length> sheet-y: 460px;
     in property <bool> sheet-visible;
@@ -304,6 +305,7 @@ export component App inherits Window {
     in-out property <int> cat-sel: -1;
     in property <[ItemRow]> items;
     in property <bool> backup-dirty;
+    in property <string> backup-search-note;
 
     // Migrate
     in property <[StepRow]> steps;
@@ -331,6 +333,8 @@ export component App inherits Window {
     callback toggle-cat(int);
     callback toggle-item(int);
     callback save-backup();
+    // Section (1 Timeline, 2 Audit, 3 Backup) and its search text.
+    callback search(int, string);
     callback migrate-step(int);
     callback set-interval(string);
     callback setup-secrets();
@@ -356,6 +360,12 @@ export component App inherits Window {
             if (e.text == "4") { root.go(3); return accept; }
             if (e.text == "5") { root.go(4); return accept; }
             if (e.text == "6") { root.go(5); return accept; }
+            if (e.text == "/" && root.section == 1) { timeline-search.focus(); return accept; }
+            if (e.text == "/" && root.section == 2) { audit-search.focus(); return accept; }
+            if (e.text == "/" && root.section == 3) { backup-search.focus(); return accept; }
+            if (e.text == Key.Escape && root.section == 1 && timeline-search.text != "") { timeline-search.text = ""; root.search(1, ""); keys.focus(); return accept; }
+            if (e.text == Key.Escape && root.section == 2 && audit-search.text != "") { audit-search.text = ""; root.search(2, ""); keys.focus(); return accept; }
+            if (e.text == Key.Escape && root.section == 3 && backup-search.text != "") { backup-search.text = ""; root.search(3, ""); keys.focus(); return accept; }
             if (e.text == "s" && (root.section == 0 || root.section == 1)) { root.take-snapshot(); return accept; }
             if (e.text == "s" && root.section == 2) { root.scan(); return accept; }
             reject
@@ -414,9 +424,16 @@ export component App inherits Window {
                     HorizontalLayout {
                         Heading { text: "Timeline"; }
                         Rectangle { horizontal-stretch: 1; }
+                        timeline-search := LineEdit {
+                            width: 260px;
+                            placeholder-text: "Search snapshots  /";
+                            accessible-label: "Search snapshots";
+                            edited(text) => { root.search(1, text); }
+                            accepted => { keys.focus(); }
+                        }
                         Button { label: root.busy != "" ? "Working…" : "Take snapshot"; key: "s"; primary: true; enabled: root.set-up && root.busy == ""; clicked => { root.take-snapshot(); } }
                     }
-                    if root.snaps.length == 0 : Muted { text: root.set-up ? "No snapshots yet. Take the first one." : "Not set up yet: Settings → Set up snapshots."; }
+                    if root.snaps.length == 0 : Muted { text: root.snaps-filtered ? "No snapshot matches the search. Esc clears it." : root.set-up ? "No snapshots yet. Take the first one." : "Not set up yet: Settings → Set up snapshots."; }
                     Rectangle {
                         vertical-stretch: 1;
                         clip: true;
@@ -453,6 +470,13 @@ export component App inherits Window {
                         Heading { text: "Audit"; }
                         if root.audited : Muted { text: "Score " + root.score + " · " + root.fails + " fail · " + root.warns + " warn · " + root.accepted + " accepted"; vertical-alignment: center; }
                         Rectangle { horizontal-stretch: 1; }
+                        audit-search := LineEdit {
+                            width: 260px;
+                            placeholder-text: "Search findings  /";
+                            accessible-label: "Search findings";
+                            edited(text) => { root.search(2, text); }
+                            accepted => { keys.focus(); }
+                        }
                         Button { label: root.busy != "" ? "Working…" : "Scan now"; key: "s"; primary: true; enabled: root.busy == ""; clicked => { root.scan(); } }
                     }
                     if !root.audited : Muted { text: "A quick audit runs as you, without sudo, and never changes anything."; }
@@ -509,6 +533,13 @@ export component App inherits Window {
                     HorizontalLayout {
                         Heading { text: "Backup"; }
                         Rectangle { horizontal-stretch: 1; }
+                        backup-search := LineEdit {
+                            width: 260px;
+                            placeholder-text: "Search all items  /";
+                            accessible-label: "Search all items";
+                            edited(text) => { root.search(3, text); }
+                            accepted => { keys.focus(); }
+                        }
                         Button { label: "Save"; primary: true; enabled: root.backup-dirty; clicked => { root.save-backup(); } }
                     }
                     Text {
@@ -521,6 +552,7 @@ export component App inherits Window {
                         font-weight: root.needs-choice || root.new-count > 0 ? 600 : 400;
                         color: root.needs-choice || root.new-count > 0 ? Theme.state-attention : Theme.text-muted;
                     }
+                    if root.backup-search-note != "" : Text { text: root.backup-search-note; color: Theme.accent; wrap: word-wrap; }
                     if root.cats.length == 0 : Muted { text: "Detecting what is on this machine…"; }
                     HorizontalLayout {
                         vertical-stretch: 1;

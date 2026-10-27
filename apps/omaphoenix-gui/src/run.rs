@@ -68,7 +68,7 @@ pub(crate) fn ago(iso: &str) -> String {
     let then = sys::output(None, &["date", "-d", iso, "+%s"])
         .ok()
         .and_then(|s| s.parse::<u64>().ok());
-    let now = secaudit_core::store::now();
+    let now = phx_audit::store::now();
     match then.map(|t| now.saturating_sub(t)) {
         None => iso.to_owned(),
         Some(0..60) => "just now".into(),

@@ -21,6 +21,9 @@ pub fn run(app: &App<'_>) -> Result<(), String> {
 }
 
 pub fn list(app: &App<'_>) -> Result<(), String> {
+    if !app.repo.exists() {
+        return Err("not set up yet; run: omaphoenix init".into());
+    }
     for s in app.repo.list().map_err(|e| e.to_string())? {
         let changes = phx_core::app::changes(&s.subject);
         if changes.is_empty() {

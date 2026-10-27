@@ -8,5 +8,5 @@ Behaviour the Rust crates must reproduce, captured from the Go and Bash versions
   - `selection/selected.json`: `Parse` + `Selected` + `Machine` over rule sets.
   - `selection/build.json`: `Build` output for TUI choices.
   - `snapshot.bundle`: a whole snapshot repo (format 1) from a FAKE home: two config files, a fake SSH key in an age vault sealed with the throwaway passphrase `fixture-passphrase-not-secret`. Regenerate with `scripts/gen-go-snapshot-fixture`, which refuses anything beyond the fake home. Its manifest names the generating machine (host, hardware model, user), as every manifest does. `crates/omaphoenix/tests/go_snapshot.rs` restores it.
-- `secaudit/legacy.jsonl`: today's Bash `secaudit --json` lines (schema 0). Taken from a real run, with machine-specific lines replaced.
-- `secaudit/v1.jsonl`: contract v1 (docs/04, ADR-0016).
+- `audit/legacy.jsonl`: today's Bash `secaudit --json` lines (schema 0). Taken from a real run, with machine-specific lines replaced.
+- `audit/v1.jsonl`: contract v1 (docs/04, ADR-0016).

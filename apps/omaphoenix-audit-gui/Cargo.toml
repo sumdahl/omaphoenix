@@ -1,0 +1,42 @@
+[package]
+name = "omaphoenix-audit-gui"
+description = "OmaPhoenix Audit desktop app (Slint): scan, review, accept risks, run fixes, history; on phx-audit"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.89"
+license = "MIT OR Apache-2.0"
+publish = false
+
+# Its own workspace (ADR-0020): Slint ships under its Royalty-free
+# license, which the workspace cargo-deny policy is kept strict against.
+[workspace]
+
+[dependencies]
+phx-audit = { path = "../../crates/phx-audit" }
+# The AI assistant (prompts, redaction, backends), shared with the audit TUI.
+phx-audit-ui = { path = "../../crates/phx-audit-ui" }
+serde_json = "1"
+slint = "1.18"
+toml = "1"
+
+[build-dependencies]
+slint-build = "1.18"
+
+[lints.rust]
+# deny, not forbid: Slint's generated code allows unsafe internally, and
+# forbid can't be overridden even there. Our own code still can't use it.
+unsafe_code = "deny"
+unused_must_use = "deny"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+unwrap_used = "deny"
+panic = "deny"
+dbg_macro = "deny"
+print_stdout = "deny"
+module_name_repetitions = "allow"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true

@@ -2,6 +2,9 @@
 
 mod audit;
 mod backup;
+mod backup_search;
+
+pub use backup_search::Hit;
 mod jobs;
 mod keys;
 mod migrate;
@@ -15,11 +18,11 @@ use std::path::PathBuf;
 use std::sync::mpsc::{self, Receiver};
 use std::time::Instant;
 
+use phx_audit::store::{Accepted, Run, Store};
 use phx_contract::selection::Choice;
 use phx_core::doctor::Finding;
 use phx_core::store::Snapshot;
 use phx_core::{App, schedule};
-use secaudit_core::store::{Accepted, Run, Store};
 
 use super::theme::Theme;
 
@@ -70,7 +73,7 @@ pub use phx_core::migrate::{Migration, STEPS as MIGRATE_STEPS};
 pub enum Suspend {
     Cli(Vec<String>),
     Fix(String),
-    SecauditTui,
+    AuditTui,
 }
 
 #[allow(
@@ -98,6 +101,8 @@ pub struct State<'a> {
     /// `/`: filter text for the current list, and whether keys type into it.
     pub search: String,
     pub searching: bool,
+    /// Highlighted row in Backup's search results.
+    pub search_sel: usize,
     /// `:` or `⌃k`: the command palette's query and highlighted row.
     pub palette: Option<(String, usize)>,
     pub output: Vec<String>,
@@ -161,6 +166,7 @@ impl<'a> State<'a> {
             help: false,
             search: String::new(),
             searching: false,
+            search_sel: 0,
             palette: None,
             audit_progress: None,
             output: Vec::new(),

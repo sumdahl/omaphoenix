@@ -11,6 +11,10 @@ use crate::tui::state::State;
 
 pub(super) fn backup(f: &mut Frame, st: &State<'_>, area: Rect) {
     let t = &st.theme;
+    if !st.search.is_empty() && st.choices.is_some() {
+        super::backup_search::results(f, st, area);
+        return;
+    }
     let Some(choices) = &st.choices else {
         let msg = if st.jobs.contains("choices") {
             "detecting what is on this machine…"
@@ -20,55 +24,66 @@ pub(super) fn backup(f: &mut Frame, st: &State<'_>, area: Rect) {
         f.render_widget(Paragraph::new(Span::styled(msg, t.fg(t.muted))), area);
         return;
     };
-    let count = |c: &phx_contract::selection::Choice| c.items.iter().filter(|(_, on)| *on).count();
-    if !st.in_items {
-        let rows: Vec<ListItem> = choices
-            .iter()
-            .map(|(c, _)| {
-                let n = count(c);
-                let box_ = if n == c.items.len() && n > 0 {
-                    "[x]"
-                } else if n > 0 {
-                    "[-]"
-                } else {
-                    "[ ]"
-                };
-                let mut spans = vec![Span::raw(format!(
-                    "{box_} {:<10} {n} of {}",
-                    c.category,
-                    c.items.len()
-                ))];
-                let new = new_in(st, &c.category, c.items.iter().map(|(id, _)| id));
-                if new > 0 {
-                    spans.push(Span::styled(
-                        format!("  ● {new} new"),
-                        t.bold().fg(t.yellow),
-                    ));
-                }
-                if c.category == "secret" {
-                    spans.push(Span::styled(
-                        if phx_core::category::secret::secrets_ready(&st.app.repo.dir) {
-                            "  encrypted"
-                        } else {
-                            "  encrypted; 6 Settings → e first"
-                        },
-                        t.fg(t.muted),
-                    ));
-                }
-                ListItem::new(Line::from(spans))
-            })
-            .collect();
-        let [head, list_area] =
-            Layout::vertical([Constraint::Length(3), Constraint::Min(3)]).areas(area);
-        f.render_widget(Paragraph::new(banner(st)).wrap(Wrap { trim: true }), head);
-        let mut ls = ListState::default().with_selected(Some(st.cat_sel));
-        f.render_stateful_widget(
-            List::new(rows).highlight_style(t.selected()),
-            list_area,
-            &mut ls,
-        );
-        return;
+    if st.in_items {
+        items(f, st, choices, area);
+    } else {
+        categories(f, st, choices, area);
     }
+}
+
+type Choices = [(phx_contract::selection::Choice, Vec<String>)];
+
+fn categories(f: &mut Frame, st: &State<'_>, choices: &Choices, area: Rect) {
+    let t = &st.theme;
+    let rows: Vec<ListItem> = choices
+        .iter()
+        .map(|(c, _)| {
+            let n = count(c);
+            let box_ = if n == c.items.len() && n > 0 {
+                "[x]"
+            } else if n > 0 {
+                "[-]"
+            } else {
+                "[ ]"
+            };
+            let mut spans = vec![Span::raw(format!(
+                "{box_} {:<10} {n} of {}",
+                c.category,
+                c.items.len()
+            ))];
+            let new = new_in(st, &c.category, c.items.iter().map(|(id, _)| id));
+            if new > 0 {
+                spans.push(Span::styled(
+                    format!("  ● {new} new"),
+                    t.bold().fg(t.yellow),
+                ));
+            }
+            if c.category == "secret" {
+                spans.push(Span::styled(
+                    if phx_core::category::secret::secrets_ready(&st.app.repo.dir) {
+                        "  encrypted"
+                    } else {
+                        "  encrypted; 6 Settings → e first"
+                    },
+                    t.fg(t.muted),
+                ));
+            }
+            ListItem::new(Line::from(spans))
+        })
+        .collect();
+    let [head, list_area] =
+        Layout::vertical([Constraint::Length(3), Constraint::Min(3)]).areas(area);
+    f.render_widget(Paragraph::new(banner(st)).wrap(Wrap { trim: true }), head);
+    let mut ls = ListState::default().with_selected(Some(st.cat_sel));
+    f.render_stateful_widget(
+        List::new(rows).highlight_style(t.selected()),
+        list_area,
+        &mut ls,
+    );
+}
+
+fn items(f: &mut Frame, st: &State<'_>, choices: &Choices, area: Rect) {
+    let t = &st.theme;
     let Some((c, notes)) = choices.get(st.cat_sel) else {
         return;
     };
@@ -108,6 +123,10 @@ pub(super) fn backup(f: &mut Frame, st: &State<'_>, area: Rect) {
         list_area,
         &mut ls,
     );
+}
+
+fn count(c: &phx_contract::selection::Choice) -> usize {
+    c.items.iter().filter(|(_, on)| *on).count()
 }
 
 fn banner(st: &State<'_>) -> Line<'static> {

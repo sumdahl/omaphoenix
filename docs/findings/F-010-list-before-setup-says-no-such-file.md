@@ -6,7 +6,7 @@
 | Version | 0.1.0-rc.7 |
 | Found | 2026-10-10, checking status on a laptop where OmaPhoenix was installed but not set up |
 | Severity | low: wrong message |
-| Status | open |
+| Status | fixed in 0.1.0-rc.9; test `omaphoenix::tests::before_setup::list_before_setup_says_to_run_init` |
 
 ## What happens
 

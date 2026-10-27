@@ -1,11 +1,11 @@
 //! Audit: the last scan's findings.
 
+use phx_audit::Severity;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::Modifier;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph, Wrap};
-use secaudit_core::Severity;
 
 use crate::tui::state::State;
 

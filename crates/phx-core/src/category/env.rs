@@ -74,8 +74,13 @@ impl<'a> Env<'a> {
         if !self.items.is_empty() && !explicit {
             return false;
         }
+        // A folder doesn't choose the hardware-specific files in it; only naming the file does (F-024).
+        let named = self
+            .items
+            .iter()
+            .any(|p| p == id || phx_contract::glob::path_match(p, id) == Some(true));
         if self.foreign
-            && !explicit
+            && !named
             && self
                 .machine
                 .get(&self.category)
@@ -152,5 +157,14 @@ mod tests {
             "named explicitly, so restored anyway"
         );
         assert!(!env.want(".config/hypr/bindings.lua"), "not named");
+        env.items = vec![".config/hypr".into()];
+        assert!(
+            !env.want(".config/hypr/monitors.lua"),
+            "naming the folder doesn't choose the hardware file in it"
+        );
+        assert!(
+            env.want(".config/hypr/bindings.lua"),
+            "the rest of the folder is restored"
+        );
     }
 }

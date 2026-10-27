@@ -1,18 +1,22 @@
-# OmaPhoenix × Security Audit: integration project
+# OmaPhoenix
 
 <p>
   <img src="share/icons/omaphoenix.svg" width="64" alt="OmaPhoenix logo">
   &nbsp;
-  <img src="share/icons/secaudit.svg" width="64" alt="Security Audit logo">
+  <img src="share/icons/omaphoenix-audit.svg" width="64" alt="OmaPhoenix Audit logo">
 </p>
 
-> **Status: release candidate `v0.1.0-rc.2` (2026-10-10).** Both products are ported to Rust and checked against the Go and Bash versions on a real machine. Every open question is now decided (ADR-0019 to 0023): Slint for the desktop, the repo stays private, handover after the migration. The Go OmaPhoenix is finished and waits on its freeze gate (G1–G7).
+> **Status: `v0.1.0`.** Both products are ported to Rust, checked against the Go and Bash versions on a real machine, and tested by full restores on a fresh Omarchy 4.0.6 VM (docs/14). Security Audit now ships inside OmaPhoenix as `omaphoenix audit`. The Go OmaPhoenix is frozen at `v0.3.0-rc.1` (`sumdahl/omaphoenix-go`).
 >
 > **Decided:**
 > - The integration is built **directly in Rust** (ADR-0011).
 > - The joint product is **OmaPhoenix** (ADR-0012).
-> - Security Audit also gets a **standalone Rust app on the shared engine, handed to Manish** (ADR-0013).
+> - ~~Security Audit gets a standalone Rust app, handed to Manish~~ (ADR-0013): superseded by the fold.
+> - **Security Audit is folded into OmaPhoenix** as `omaphoenix audit` (0.1.0; Manish agreed). The `secaudit` commands are gone; `install.sh` removes them.
+>
 > Owners: **Sumiran Dahal** (OmaPhoenix) and **Manish Karki** (Security Audit). Both agreed to integrate.
+
+**Security Audit by [Manish Karki](https://github.com/mnshchtri).** The audit engine, its 13 sections, the terminal app and the menus are his design, ported to Rust from [mnshchtri/secaudit](https://github.com/mnshchtri/secaudit).
 
 ## One paragraph
 
@@ -22,33 +26,33 @@
 
 | Binary | What | Crates |
 |---|---|---|
-| `omaphoenix` | Snapshot and restore an Omarchy setup; every snapshot is audited first, and risky files stay out of it. CLI (the Go version's commands) and the terminal app (`omaphoenix tui`) with DESIGN.md's six sections | `phx-core`, `phx-contract`, `secaudit-core` |
-| `omaphoenix-gui` | The desktop app (Slint), `omaphoenix gui`; optional at install. In `apps/` until Q9/Q10 are decided | `phx-core`, `secaudit-core` |
-| `secaudit` | Security Audit's engine: the Bash engine's 13 sections, same messages | `secaudit-core` (→ Manish) |
-| `secaudit-tui` | Exact port of Manish's Python Textual app: same screens, keys, layout and colours | `secaudit` |
-| `secaudit-ui` | Exact port of Manish's gum/Bash front end, gum built in | `secaudit` |
-| `secaudit-gui` | Security Audit desktop app (Slint): scan, review, accept, fix, history; optional at install | `secaudit-core` |
+| `omaphoenix` | Snapshot and restore an Omarchy setup; every snapshot is audited first, and risky files stay out of it. CLI (the Go version's commands) and the terminal app (`omaphoenix tui`) with DESIGN.md's six sections | `phx-core`, `phx-contract`, `phx-audit` |
+| `omaphoenix-gui` | The desktop app (Slint), `omaphoenix gui`; optional at install. In `apps/` until Q9/Q10 are decided | `phx-core`, `phx-audit` |
+| `omaphoenix audit` | The audit report: the Bash engine's 13 sections, same messages | `phx-audit`, `phx-audit-ui` |
+| `omaphoenix audit tui` | Exact port of Manish's Python Textual app: same screens, keys, layout and colours | `phx-audit-ui` |
+| `omaphoenix audit menu` | Exact port of Manish's gum/Bash front end, gum built in | `phx-audit-ui` |
+| `omaphoenix-audit-gui` | OmaPhoenix Audit desktop app (Slint): scan, review, accept, fix, history; optional at install | `phx-audit` |
 
 **Nothing is backed up until you choose what.** `init` opens the Backup screen; both apps open on it until a choice is saved, and anything found later is marked new and asked about before a snapshot. Snapshots are automatic on a schedule you pick, or manual only.
 
-**Coding-agent skills.** `share/skills/omaphoenix` and `share/skills/secaudit` teach coding agents (Claude Code, Hermes, anything reading `~/.agents/skills`) to operate both tools safely: dry-run before any restore, never choose what to back up for the user, never run a fix without confirmation. `install.sh` links them in, as Omarchy does with its own skill.
+**Coding-agent skills.** `share/skills/omaphoenix` and `share/skills/omaphoenix-audit` teach coding agents (Claude Code, Hermes, anything reading `~/.agents/skills`) to operate both tools safely: dry-run before any restore, never choose what to back up for the user, never run a fix without confirmation. `install.sh` links them in, as Omarchy does with its own skill.
 
-OmaPhoenix gives a choice of **terminal or desktop app**: both launchers ("OmaPhoenix (Terminal)" and "OmaPhoenix") appear in the app menu, and Security Audit likewise has "Security Audit" (terminal) and "Security Audit (Desktop)", and `omaphoenix tui` / `omaphoenix gui` open them directly.
+OmaPhoenix gives a choice of **terminal or desktop app**: both launchers ("OmaPhoenix (Terminal)" and "OmaPhoenix") appear in the app menu, and the audit likewise has "OmaPhoenix Audit" (terminal) and "OmaPhoenix Audit (Desktop)", and `omaphoenix tui` / `omaphoenix gui` open them directly.
 
 ```sh
-cargo build --release -p omaphoenix -p secaudit   # target/release/{omaphoenix,secaudit,secaudit-tui,secaudit-ui}
+cargo build --release -p omaphoenix                # target/release/omaphoenix
 omaphoenix tui                                    # terminal app (bare `omaphoenix` too); or init, snapshot, list, restore, …
 omaphoenix gui                                    # desktop app (needs omaphoenix-gui beside it)
 omaphoenix select                                 # choose what is backed up (--all keeps everything detected)
 omaphoenix timer on 1h                            # automatic snapshots (15m, 30m, 1h, 6h, daily); timer off = manual only
-secaudit                                          # report
-secaudit-tui                                      # Security Audit terminal app (Textual port)
-secaudit-ui                                       # Security Audit menus (gum port)
-(cd apps/omaphoenix-gui && cargo run --release)   # desktop apps from source (also apps/secaudit-gui)
+omaphoenix audit                                  # security report (sudo for full coverage)
+omaphoenix audit tui                              # audit terminal app (Textual port)
+omaphoenix audit menu                             # audit menus (gum port)
+(cd apps/omaphoenix-gui && cargo run --release)   # desktop apps from source (also apps/omaphoenix-audit-gui)
 ```
 
 **How we know it matches the old versions** (run them yourself):
-- `scripts/secaudit-parity`: Bash vs Rust audit on this machine. Result: 82/82 findings and every detail list identical.
+- `scripts/audit-parity`: Bash vs Rust audit on this machine. Result: 82/82 findings and every detail list identical.
 - `scripts/omaphoenix-parity`: Go vs Rust snapshot of the real home. Result: identical tree, byte-identical manifest. It also restores across implementations, including each other's encrypted vaults.
 - `scripts/peak-rss`: every path's own memory, against RUST.md §9. All within budget; a snapshot peaks at ~9 MB.
 
@@ -59,13 +63,13 @@ secaudit-ui                                       # Security Audit menus (gum po
 ```sh
 sudo pacman -S --needed github-cli
 gh auth login
-gh api repos/sumdahl/omaphoenix-secaudit/contents/install.sh -H "Accept: application/vnd.github.raw" | bash
+gh api repos/sumdahl/omaphoenix/contents/install.sh -H "Accept: application/vnd.github.raw" | bash
 ```
 
 **Once the repo is public:**
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/sumdahl/omaphoenix-secaudit/v0.1.0-rc.7/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/sumdahl/omaphoenix/v0.1.0/install.sh | bash
 ```
 
 The installer verifies the download against `SHA256SUMS` and refuses on a mismatch. It installs the static terminal binaries to `~/.local/bin`, asks whether to add the desktop apps, adds launchers with their icons, and links the agent skills. Then it offers to back this machine up or restore a snapshot. Options go after `bash -s --` (or `| bash -s --` with `gh api`): `--gui`, `--no-gui`, `--sysctl` (Manish's kernel hardening drop-in), `--uninstall`. `OMAPHOENIX_VERSION=v0.1.0-rc.7` pins a release.
@@ -87,7 +91,7 @@ It asks for the secrets passphrase if SSH keys were backed up encrypted.
 | | OmaPhoenix | Security Audit (`secaudit`) |
 |---|---|---|
 | Owner | Sumiran Dahal | Manish Karki |
-| Repo | `github.com/sumdahl/omaphoenix` (**private**) | `github.com/mnshchtri/secaudit` (**public, no LICENSE file yet**) |
+| Repo | `github.com/sumdahl/omaphoenix-go` (**private**, the Go version) | `github.com/mnshchtri/secaudit` (**public, no LICENSE file yet**) |
 | Local path | `~/personal/omaphoenix` | `~/personal/secaudit` |
 | Language today | Go (single static binary) | Bash engine + Python Textual TUI + gum UI |
 | What it does | Timestamped snapshots of packages, plugins, themes, config, `/etc`, services, encrypted SSH keys, stored in the user's private git repo; one-command restore | Read-only audit of ~14 areas (packages, boot, sysctl, firewall, network, SSH, users, lock, filesystem, persistence, containers, secrets, rootkit); score + grade; fix commands run only on confirmation |
@@ -110,6 +114,7 @@ It asks for the secrets passphrase if SSH keys were backed up encrypted.
 | 11 | [docs/11-omaphoenix-port-notes.md](docs/11-omaphoenix-port-notes.md) | OmaPhoenix port: parity method and results, deliberate differences from Go |
 | 12 | [docs/12-secaudit-handover.md](docs/12-secaudit-handover.md) | Handing Security Audit to Manish: what moves, how, what's left |
 | 13 | [docs/13-migration.md](docs/13-migration.md) | Moving from the Go and Bash/Python versions: what carries over, what changes, going back |
+| 14 | [docs/14-vm-restore-test.md](docs/14-vm-restore-test.md) | Full restore on a fresh Omarchy VM: the plan to build the test and the scenarios that prove it (T1–T12) |
 | — | [docs/findings/](docs/findings/README.md) | **Bugs and testing findings**, one file each: how to reproduce, cause, workaround, fix and its test |
 | — | [RUST.md](RUST.md) | **Engineering standards for the Rust codebase:** safe, idiomatic, modern; lints, errors, testing, deps, release |
 | — | [DESIGN.md](DESIGN.md) | **Single source of truth for UI/UX:** feel, voice, theme tokens from Omarchy, spring physics, keymap, consent patterns, definition of done |
@@ -121,7 +126,7 @@ It asks for the secrets passphrase if SSH keys were backed up encrypted.
 ~/personal/joint-omaphoenix-secaudit/     the joint workspace (home of this project)
 ├── omaphoenix-secaudit/                  this design folder: README, AGENTS, DESIGN, RUST, docs/
 └── secaudit/                             clone of github.com/mnshchtri/secaudit (Manish's repo)
-~/personal/omaphoenix/                    the Go OmaPhoenix (private repo sumdahl/omaphoenix)
+~/personal/omaphoenix/                    the Go OmaPhoenix (private repo sumdahl/omaphoenix-go)
 ~/personal/project-ideas/omaphoenix-secaudit → symlink to the design folder (old path)
 ```
 

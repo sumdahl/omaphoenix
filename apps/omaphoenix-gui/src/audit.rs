@@ -4,7 +4,7 @@ use std::cell::RefCell;
 use std::fs;
 use std::rc::Rc;
 
-use secaudit_core::store::{Accepted, Store};
+use phx_audit::store::{Accepted, Store};
 use slint::{ComponentHandle, SharedString, Timer};
 
 use crate::migrate::refresh_migrate;
@@ -14,6 +14,25 @@ use crate::run::{background, in_terminal, set_busy, sq};
 use crate::spring::GLIDE;
 use crate::state::{Shared, model, ui_engine, ui_motion, ui_state, ui_timer};
 use crate::ui::{App, AuditRow};
+
+/// Issues on screen: matching the Audit search, accepted last, worst first.
+fn shown_issues<'a>(
+    run: &'a phx_audit::store::Run,
+    query: &str,
+) -> Vec<&'a phx_audit::store::Item> {
+    let issues: Vec<&phx_audit::store::Item> = run.items.iter().filter(|i| i.is_issue()).collect();
+    let mut items: Vec<&phx_audit::store::Item> = phx_core::fuzzy::filter(query, &issues, |i| {
+        format!(
+            "{} {} {}",
+            i.finding.msg, i.finding.section, i.finding.detail
+        )
+    })
+    .into_iter()
+    .filter_map(|i| issues.get(i).copied())
+    .collect();
+    items.sort_by_key(|i| (i.accepted, phx_audit::store::sev_order(i.finding.sev), i.n));
+    items
+}
 
 pub(crate) fn refresh_audit(
     app: &App,
@@ -32,20 +51,12 @@ pub(crate) fn refresh_audit(
     app.set_fails(i32::try_from(c.fail).unwrap_or(0));
     app.set_warns(i32::try_from(c.warn).unwrap_or(0));
     app.set_accepted(i32::try_from(c.accepted).unwrap_or(0));
-    let mut items: Vec<&secaudit_core::store::Item> =
-        run.items.iter().filter(|i| i.is_issue()).collect();
-    items.sort_by_key(|i| {
-        (
-            i.accepted,
-            secaudit_core::store::sev_order(i.finding.sev),
-            i.n,
-        )
-    });
+    let items = shown_issues(run, &s.query.audit);
     app.set_findings(model(
         items
             .iter()
             .map(|i| AuditRow {
-                sev: secaudit_core::store::sev_name(i.finding.sev).into(),
+                sev: phx_audit::store::sev_name(i.finding.sev).into(),
                 title: i.title().into(),
                 section: i.finding.section.as_str().into(),
                 detail: i.finding.detail.as_str().into(),
@@ -81,7 +92,7 @@ pub(crate) fn wire(app: &App) {
             background(
                 &app,
                 move || {
-                    let ctx = secaudit_core::audit::Ctx::from_env();
+                    let ctx = phx_audit::audit::Ctx::from_env();
                     let host = fs::read_to_string("/proc/sys/kernel/hostname").unwrap_or_default();
                     let kernel =
                         fs::read_to_string("/proc/sys/kernel/osrelease").unwrap_or_default();
@@ -147,15 +158,7 @@ fn wire_findings(app: &App) {
             {
                 let mut s = state.borrow_mut();
                 let Some(run) = &s.audit else { return };
-                let mut items: Vec<&secaudit_core::store::Item> =
-                    run.items.iter().filter(|x| x.is_issue()).collect();
-                items.sort_by_key(|x| {
-                    (
-                        x.accepted,
-                        secaudit_core::store::sev_order(x.finding.sev),
-                        x.n,
-                    )
-                });
+                let items = shown_issues(run, &s.query.audit);
                 let Some(item) = items.get(i) else { return };
                 let (key, was, title, section) = (
                     item.accept_key(),
@@ -171,7 +174,7 @@ fn wire_findings(app: &App) {
                         Accepted {
                             section,
                             msg: title,
-                            at: secaudit_core::store::now(),
+                            at: phx_audit::store::now(),
                         },
                     );
                 }

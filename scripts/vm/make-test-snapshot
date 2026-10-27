@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+# Builds the two test snapshots for the VM restore test (docs/14, phase 4) and checks them for leaks.
+#
+#   main:    this machine's home, with the owner's own choices plus `!secret:*`, audit gate on
+#            → $OMAPHOENIX_VM_DIR/snap, plus file mirrors of the private repos it references
+#   secrets: a throwaway HOME with two generated keys and a test passphrase
+#            → $OMAPHOENIX_VM_DIR/snap-secrets
+#
+# Nothing real that is secret may reach the VM: the leak check below must print nothing.
+# Uses the installed omaphoenix (or $OMAPHOENIX_BIN). Never writes to the real snapshot repo.
+set -euo pipefail
+
+dir=${OMAPHOENIX_VM_DIR:-$HOME/.cache/omaphoenix-vm}
+bin=${OMAPHOENIX_BIN:-$(command -v omaphoenix)}
+real=${XDG_DATA_HOME:-$HOME/.local/share}/omaphoenix/repo
+pass=fake-test-passphrase-123
+export OMAPHOENIX_NO_NOTIFY=1
+
+fail() { echo "FAIL: $*" >&2; exit 1; }
+
+main_snapshot() {
+  local snap=$dir/snap
+  rm -rf "${snap:?}"
+  OMAPHOENIX_REPO=$snap "$bin" init >/dev/null
+  [[ -f $real/selection.conf ]] && cp "$real/selection.conf" "$snap/selection.conf"
+  [[ -f $real/reviewed.txt ]] && cp "$real/reviewed.txt" "$snap/reviewed.txt"
+  echo '!secret:*' >>"$snap/selection.conf"
+  OMAPHOENIX_REPO=$snap "$bin" snapshot >"$dir/snap.log" 2>&1 || { tail -5 "$dir/snap.log"; fail "snapshot"; }
+  grep -E '^✓ snapshot' "$dir/snap.log"
+}
+
+private_mirrors() {
+  local snap=$dir/snap url repo
+  rm -rf "${dir:?}"/transfer/*.git
+  mkdir -p "$dir/transfer"
+  python3 -I - "$snap" <<'EOF' | while read -r url; do
+import json, sys
+urls = set()
+for f in ("plugins.json", "themes.json"):
+    try:
+        d = json.load(open(f"{sys.argv[1]}/{f}"))
+    except FileNotFoundError:
+        continue
+    if d.get("root"):
+        urls.add(d["root"]["url"])
+    urls.update(e["ref"]["url"] for e in d.get("entries", []) if (e.get("ref") or {}).get("url"))
+print("\n".join(sorted(urls)))
+EOF
+    [[ $url == https://github.com/* ]] || continue
+    repo=${url#https://github.com/}
+    repo=${repo%.git}
+    [[ $(gh repo view "$repo" --json isPrivate -q .isPrivate 2>/dev/null) == true ]] || continue
+    git clone -q --mirror "$url" "$dir/transfer/${repo//\//-}.git"
+    git -C "$dir/transfer/${repo//\//-}.git" config remote.origin.url "$url"
+    echo "mirrored private $repo"
+  done
+}
+
+secrets_snapshot() {
+  local h snap=$dir/snap-secrets
+  h=$(mktemp -d)
+  rm -rf "${snap:?}"
+  mkdir -p "$h/.ssh" "$h/.config/phx-test" && chmod 700 "$h/.ssh"
+  for k in id_a id_b; do ssh-keygen -q -t ed25519 -N '' -C fake-vm-test -f "$h/.ssh/$k"; done
+  echo "fake test config" >"$h/.config/phx-test/settings.conf"
+  local run=(env -i HOME="$h" PATH=/usr/bin:/bin LANG=C.UTF-8 OMAPHOENIX_REPO="$snap" OMAPHOENIX_AUDIT=off OMAPHOENIX_NO_NOTIFY=1)
+  "${run[@]}" "$bin" init >/dev/null
+  "${run[@]}" OMAPHOENIX_PASSPHRASE=$pass "$bin" secrets init >/dev/null
+  "${run[@]}" "$bin" select --all >/dev/null
+  "${run[@]}" "$bin" snapshot >/dev/null 2>&1 || fail "secrets snapshot"
+  # The VM test compares restored keys with these.
+  rm -rf "${dir:?}/snap-secrets-keys"
+  cp -a "$h/.ssh" "$dir/snap-secrets-keys"
+  rm -rf "${h:?}"
+  echo "secrets snapshot: $(git -C "$snap" log --oneline -1)"
+}
+
+leak_check() {
+  local snap=$dir/snap shapes='BEGIN (RSA |OPENSSH |EC |DSA |PGP )?PRIVATE KEY|gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{40,}|sk-ant-[A-Za-z0-9_-]{40,}|AKIA[0-9A-Z]{16}|xox[baprs]-[A-Za-z0-9-]{10,}|glpat-[A-Za-z0-9_-]{20,}'
+  local found=0
+  grep -rIlE --exclude-dir=.git "$shapes" "$snap" && found=1
+  find "$snap" -path "$snap/.git" -prune -o \( -name 'id_*' -o -path '*/secret-plain/*' -o -path '*/secrets/*' \) -print | grep . && found=1
+  find "$dir/snap-secrets" -path "$dir/snap-secrets/.git" -prune -o -type f -print |
+    grep -E '/\.ssh/id_[ab]$' && found=1
+  ((found == 0)) || fail "leak check found the files above"
+  echo "leak check: clean"
+}
+
+main_snapshot
+private_mirrors
+secrets_snapshot
+leak_check

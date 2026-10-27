@@ -1,4 +1,4 @@
-//! A copy of `secaudit`'s TUI theme (that crate must not depend on OmaPhoenix
+//! A copy of the audit TUI's theme (`phx-audit-ui` must not depend on OmaPhoenix
 //! crates, ADR-0013). Colours from the live Omarchy theme (DESIGN.md §5.1, §12): truecolor when
 //! the terminal says it has it, else the 16-colour palette Omarchy themes
 //! also set. `NO_COLOR` turns colour off; nothing relies on colour alone.

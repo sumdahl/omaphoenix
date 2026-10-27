@@ -50,6 +50,35 @@ impl Pkg {
     }
 }
 
+/// Of `names`, those the AUR doesn't know (built locally, or removed); empty when yay can't tell.
+fn not_on_aur(names: &[&str]) -> Vec<String> {
+    if names.is_empty() || !sys::has("yay") {
+        return Vec::new();
+    }
+    // timeout(1): a hung AUR lookup must never hold up the restore.
+    let Ok(out) = sys::command("timeout")
+        .args(["30", "yay", "-Si", "--"])
+        .args(names)
+        .output()
+    else {
+        return Vec::new();
+    };
+    let text = format!(
+        "{}{}",
+        String::from_utf8_lossy(&out.stdout),
+        String::from_utf8_lossy(&out.stderr)
+    );
+    missing_from_yay(&text)
+}
+
+/// The names in yay's "No AUR package found for <name>" lines.
+fn missing_from_yay(text: &str) -> Vec<String> {
+    text.lines()
+        .filter_map(|l| l.trim().strip_prefix("-> No AUR package found for "))
+        .map(|n| n.trim().to_owned())
+        .collect()
+}
+
 /// Whether every configured repo has a sync database (a fresh install has only offline.db).
 fn db_synced() -> bool {
     match sys::lines(None, &["pacman-conf", "--repo-list"]) {
@@ -134,6 +163,18 @@ impl Category for Pkg {
         if missing.is_empty() {
             return Ok(res);
         }
+        if !self.repo {
+            let local = not_on_aur(&missing);
+            missing.retain(|n| !local.iter().any(|l| l == n));
+            res.notes.extend(
+                local
+                    .iter()
+                    .map(|n| format!("{n}: not on the AUR (built locally on the source machine): reinstall it by hand")),
+            );
+            if missing.is_empty() {
+                return Ok(res);
+            }
+        }
         if env.dry_run {
             res.planned.push(format!("install {}", missing.join(" ")));
             return Ok(res);
@@ -165,5 +206,15 @@ impl Category for Pkg {
             }
         }
         Ok(res)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn reads_the_packages_yay_cannot_find() {
+        let out = " -> No AUR package found for omaphoto\nName            : ngrok\n -> No AUR package found for my-local-pkg\n";
+        assert_eq!(super::missing_from_yay(out), ["omaphoto", "my-local-pkg"]);
+        assert!(super::missing_from_yay("Name : ngrok\n").is_empty());
     }
 }

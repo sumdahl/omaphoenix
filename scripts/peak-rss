@@ -31,14 +31,13 @@ PATHS = [
     ("omaphoenix", ["list"], 16),
     ("omaphoenix", ["snapshot"], 48),
     ("omaphoenix", ["restore", "--dry-run"], 48),
-    ("secaudit", ["--version"], 16),
-    ("secaudit", [], 48),
+    ("omaphoenix", ["audit"], 48),
 ]
 
-# Both binaries report their own peak (VmHWM) when asked: wait4's figure
+# The binary reports its own peak (VmHWM) when asked: wait4's figure
 # also counts children, and a snapshot runs `npm ls`, which alone peaks at
 # ~126 MB. --version exits inside clap before reporting, so it reads 0.
-SELF_REPORTING = {"omaphoenix": "OMAPHOENIX_REPORT_HWM", "secaudit": "SECAUDIT_REPORT_HWM"}
+SELF_REPORTING = {"omaphoenix": "OMAPHOENIX_REPORT_HWM"}
 # ponytail: TUI idle (≤ 24 MB) needs a pty; add it with the TUI.
 # ponytail: the fixture home is empty; give it a real machine's shape
 # (configs, plugins, themes) when snapshot is ported.
