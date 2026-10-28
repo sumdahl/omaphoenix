@@ -1,6 +1,6 @@
 # ADR-0023: Handover after the migration is finished
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0024
 - **Date:** 2026-10-10
 - **Decided by:** Sumiran Dahal ("I will invite him later after finishing migration"). Answers Q7 (#16).
 

@@ -1,6 +1,6 @@
 # ADR-0022: The repo stays private
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0024
 - **Date:** 2026-10-10
 - **Decided by:** Sumiran Dahal ("make it private, I will later invite Manish"). Answers Q2 (#17).
 

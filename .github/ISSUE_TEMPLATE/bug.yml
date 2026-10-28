@@ -1,0 +1,46 @@
+name: Bug report
+description: Something went wrong in a snapshot, restore, audit or the terminal app
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Security problems go to [SECURITY.md](https://github.com/sumdahl/omaphoenix/blob/main/SECURITY.md), not here.
+        **Before pasting anything, check it holds no tokens, keys or private paths you'd rather not share.**
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you ran, what you expected, what you saw. Paste the exact message.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to reproduce
+      placeholder: |
+        1. omaphoenix restore --dry-run
+        2. …
+  - type: input
+    id: version
+    attributes:
+      label: omaphoenix --version
+    validations:
+      required: true
+  - type: input
+    id: omarchy
+    attributes:
+      label: Omarchy version
+      description: "`omarchy-version`"
+  - type: textarea
+    id: doctor
+    attributes:
+      label: omaphoenix doctor --json
+      description: What OmaPhoenix sees on this machine. It names folders, repos and packages, never file contents; delete any line you would rather not share.
+      render: json
+  - type: textarea
+    id: log
+    attributes:
+      label: Restore or snapshot output
+      description: For a failed restore, the ✓/✗ summary at the end and the lines around the failure.
+      render: text
