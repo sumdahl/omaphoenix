@@ -2,6 +2,7 @@
 
 mod copy;
 mod names;
+mod private;
 mod scan;
 #[cfg(test)]
 mod tests;
@@ -12,6 +13,7 @@ use std::path::Path;
 
 pub use copy::{copy_file, copy_tree, same_file, set_reuse};
 pub use names::{JUNK, SECRET_NAMES, is_junk, is_secret, match_any};
+pub use private::{PRIVATE, apply_private, less_private, record_private};
 pub use scan::{SECRET_SHAPE, has_secret_shape, is_binary};
 pub use walk::{Walk, dir_size, has_files, walk};
 

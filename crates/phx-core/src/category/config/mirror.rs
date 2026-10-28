@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::category::files::{Walk, copy_file, exists, same_file, walk};
+use crate::category::files::{Walk, copy_file, exists, less_private, same_file, walk};
 use crate::category::{Env, Outcome, stamp};
 
 /// Mirrors a captured tree into `home`, keeping replaced files as `.pre-restore.<stamp>`.
@@ -24,7 +24,10 @@ pub(crate) fn restore_tree(env: &Env<'_>, root: &Path, home: &Path) -> Outcome {
         }
         let target = home.join(rel);
         let symlink = meta.file_type().is_symlink();
-        if same(path, &target, symlink) {
+        let shell_init = !symlink && super::shell_init::is_shell_init(&rel_s);
+        if same(path, &target, symlink)
+            || (shell_init && super::shell_init::same_once_guarded(path, &target, home))
+        {
             res.present += 1;
             return Walk::Continue;
         }
@@ -49,7 +52,7 @@ pub(crate) fn restore_tree(env: &Env<'_>, root: &Path, home: &Path) -> Outcome {
             res.failed.push(format!("{rel_s}: {e}"));
             return Walk::Continue;
         }
-        if !symlink && super::shell_init::is_shell_init(&rel_s) {
+        if shell_init {
             match super::shell_init::guard_missing_sources(&target, home) {
                 Ok(g) if !g.is_empty() => env.warn(&format!(
                     "~/{rel_s} loads {}, not on this machine yet: those lines now run only once the file exists",
@@ -70,7 +73,9 @@ fn same(src: &Path, target: &Path, symlink: bool) -> bool {
     if symlink {
         return matches!((fs::read_link(src), fs::read_link(target)), (Ok(a), Ok(b)) if a == b);
     }
-    fs::symlink_metadata(target).is_ok_and(|m| m.is_file()) && same_file(src, target)
+    fs::symlink_metadata(target).is_ok_and(|m| m.is_file())
+        && same_file(src, target)
+        && !less_private(src, target)
 }
 
 fn place(src: &Path, target: &Path, meta: &fs::Metadata, symlink: bool) -> std::io::Result<()> {

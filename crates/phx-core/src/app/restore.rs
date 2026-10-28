@@ -22,6 +22,7 @@ impl App<'_> {
         self.repo
             .extract(&snap.id, tree.path())
             .map_err(|e| AppError::Other(format!("extract {}: {e}", snap.id)))?;
+        category::files::apply_private(tree.path());
         let text = fs::read_to_string(tree.path().join("manifest.json"))?;
         let m =
             Manifest::parse(&text).map_err(|e| AppError::Other(format!("read manifest: {e}")))?;

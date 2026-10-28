@@ -99,20 +99,24 @@ fn tree_progress(root: u32) -> (u64, bool) {
     let mut blind = false;
     for pid in descendants(root) {
         match std::fs::read_to_string(format!("/proc/{pid}/io")) {
-            Ok(io) => {
-                bytes += io
-                    .lines()
-                    .find_map(|l| {
-                        l.strip_prefix("rchar: ")
-                            .and_then(|v| v.trim().parse::<u64>().ok())
-                    })
-                    .unwrap_or(0);
-            }
+            Ok(io) => bytes += io_bytes(&io),
             Err(e) if e.kind() == std::io::ErrorKind::PermissionDenied => blind = true,
             Err(_) => {} // exited between listing and reading
         }
     }
     (bytes, blind)
+}
+
+/// Bytes read plus bytes written: a download read with `recv` (mise, Rust's std) leaves `rchar` flat
+/// while the file it writes grows (F-032).
+fn io_bytes(io: &str) -> u64 {
+    io.lines()
+        .filter_map(|l| {
+            l.strip_prefix("rchar: ")
+                .or_else(|| l.strip_prefix("wchar: "))
+                .and_then(|v| v.trim().parse::<u64>().ok())
+        })
+        .sum()
 }
 
 fn descendants(root: u32) -> Vec<u32> {
@@ -166,8 +170,17 @@ fn stop_tree(root: u32, child: &mut Child) {
 
 #[cfg(test)]
 mod tests {
-    use super::{Watchdog, interactive_watched};
+    use super::{Watchdog, interactive_watched, io_bytes};
     use std::time::Duration;
+
+    #[test]
+    fn a_download_that_only_writes_still_counts_as_progress() {
+        // /proc/<pid>/io of `mise install` mid-download: rchar flat, wchar growing.
+        let before = "rchar: 1112061\nwchar: 126669\nsyscr: 90\n";
+        let after = "rchar: 1112061\nwchar: 919115\nsyscr: 90\n";
+        assert!(io_bytes(after) > io_bytes(before));
+        assert_eq!(io_bytes(before), 1_112_061 + 126_669);
+    }
 
     #[test]
     fn a_tree_with_another_users_process_counts_as_unmeasured() {

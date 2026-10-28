@@ -74,6 +74,7 @@ Every command has `--help`; read it before using a flag you haven't seen here.
 | `repo/selection.conf` | What is captured (see snapshot.md) |
 | `repo/reviewed.txt` | Items the user has reviewed; anything else is "new" |
 | `repo/manifest.json` | The latest snapshot's items and audit summary |
+| `repo/private.txt` | Files that were owner-only when captured; a restore makes them owner-only again (git keeps no modes) |
 | `~/.local/state/omaphoenix/` | Local state: notifications, the daily audit cache, undo trash |
 | `~/.config/systemd/user/omaphoenix-snapshot.{timer,service}` | The automatic snapshot units |
 
