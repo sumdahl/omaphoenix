@@ -9,7 +9,7 @@
 
 > **v0.1.0, early.** Tested by full restores on a fresh Omarchy 4.0.6 VM before every release (below), but so far against one person's setup. Expect rough edges on yours, and please [report them](https://github.com/sumdahl/omaphoenix/issues/new/choose).
 
-![OmaPhoenix in the terminal: the backup overview, search, the timeline and the migrate steps](docs/img/demo.gif)
+https://github.com/user-attachments/assets/58d0a1ee-e6e2-4993-8d62-57181aa6f827
 
 | Fresh Omarchy 4.0.6 | After `omaphoenix restore` |
 |---|---|
