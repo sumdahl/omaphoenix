@@ -15,6 +15,8 @@
 |---|---|
 | ![A fresh Omarchy install](docs/img/before.png) | ![The same VM after the restore](docs/img/after.png) |
 
+The same VM. The right shot was taken when the v0.1.0 restore test finished (11:35); the VM was then reset to the clean 4.0.6 checkpoint every test starts from and shot again (11:38), so the left clock is later. The 24-hour clock becoming `11:35 AM` is the restored bar config.
+
 **Security Audit by [Manish Karki](https://github.com/mnshchtri).** The audit engine, its 13 sections and the audit's terminal app are his design, ported to Rust from [mnshchtri/secaudit](https://github.com/mnshchtri/secaudit).
 
 ## Install
