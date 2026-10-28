@@ -4,7 +4,7 @@ description = "OmaPhoenix desktop app (Slint): the joint product's six sections,
 version = "0.0.0"
 edition = "2024"
 rust-version = "1.89"
-license = "MIT OR Apache-2.0"
+license = "MIT"
 publish = false
 
 # Its own workspace until Q9/Q10 are decided (docs/07): Slint is

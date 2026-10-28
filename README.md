@@ -9,9 +9,13 @@
 
 > **v0.1.0, early.** Tested by full restores on a fresh Omarchy 4.0.6 VM before every release (below), but so far against one person's setup. Expect rough edges on yours, and please [report them](https://github.com/sumdahl/omaphoenix/issues/new/choose).
 
+https://github.com/user-attachments/assets/58d0a1ee-e6e2-4993-8d62-57181aa6f827
+
 | Fresh Omarchy 4.0.6 | After `omaphoenix restore` |
 |---|---|
 | ![A fresh Omarchy install](docs/img/before.png) | ![The same VM after the restore](docs/img/after.png) |
+
+The same VM. The right shot was taken when the v0.1.0 restore test finished (11:35); the VM was then reset to the clean 4.0.6 checkpoint every test starts from and shot again (11:38), so the left clock is later. The 24-hour clock becoming `11:35 AM` is the restored bar config.
 
 **Security Audit by [Manish Karki](https://github.com/mnshchtri).** The audit engine, its 13 sections and the audit's terminal app are his design, ported to Rust from [mnshchtri/secaudit](https://github.com/mnshchtri/secaudit).
 
@@ -105,4 +109,4 @@ Rust 1.95 (`rust-toolchain.toml`). How the codebase is held together: [RUST.md](
 
 ## License
 
-MIT OR Apache-2.0, at your option ([LICENSE-MIT](LICENSE-MIT), [LICENSE-APACHE](LICENSE-APACHE)).
+[MIT](LICENSE). Copyright (c) 2026 Sumiran Dahal and Manish Karki.

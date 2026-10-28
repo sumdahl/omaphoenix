@@ -4,7 +4,7 @@ description = "OmaPhoenix Audit desktop app (Slint): scan, review, accept risks,
 version = "0.0.0"
 edition = "2024"
 rust-version = "1.89"
-license = "MIT OR Apache-2.0"
+license = "MIT"
 publish = false
 
 # Its own workspace (ADR-0020): Slint ships under its Royalty-free
