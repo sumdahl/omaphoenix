@@ -57,10 +57,14 @@ omaphoenix audit                 # the security report (sudo for full coverage);
   ✓ config    applied 1432 · already present 30
   ✓ local     applied 147 · already present 1
   ✓ bin       applied 20 · already present 3
+  ✗ pkg-other applied 12 · already present 12
+      ✗ npm:@pencil.dev/cli: exit status 1
   ✓ etc       applied 19 · already present 13
   ✓ service   applied 1 · already present 50
-  restore took 45 min · peak memory 9 MB
+  restore took 54 min · peak memory 8.6 MB
   ```
+
+  The one failure is an upstream bug (`@pencil.dev/cli`'s `sharp` dependency doesn't build on Node 25); the restore kept going and listed it, as it does for any package that fails to build.
 - **Every bug we found is written up** ([docs/findings](docs/findings/README.md)): how to reproduce it, the cause, the fix and the test that fails without the fix. Most were found by the VM test before anyone hit them.
 - **CI on every change:** clippy with warnings as errors, unit and real-terminal tests, `cargo deny` (advisories and licenses), and memory budgets ([RUST.md](RUST.md)).
 - **Checked against the versions it replaces:** the Rust audit gives the same findings as Manish's Bash engine (`scripts/audit-parity`), and snapshots match the earlier Go OmaPhoenix byte for byte (`scripts/omaphoenix-parity`).
