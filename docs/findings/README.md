@@ -33,5 +33,7 @@ Bugs and surprises found while testing or using the products, one file each. A f
 | [F-023](F-023-restored-profile-locks-out-desktop.md) | A restored shell profile that sources a missing file stops the desktop from starting | OmaPhoenix | **high** | fixed in rc.9 |
 | [F-024](F-024-folder-restore-pulls-hardware-files.md) | Restoring a folder pulls in the hardware-specific files inside it | OmaPhoenix | medium | fixed in rc.9 |
 | [F-025](F-025-reaudit-after-undo.md) | After an undo, `reaudit` says "nothing to undo" | OmaPhoenix | low | fixed in rc.9 |
+| [F-026](F-026-uv-shim-skips-mise.md) | uv tools fail to restore when a uv shim is on PATH | OmaPhoenix | medium | fixed in 0.1.0 |
+| [F-027](F-027-mise-exec-installs-whole-config.md) | One blocked mise tool makes every npm tool fail to restore | OmaPhoenix | medium | fixed in 0.1.0 |
 
 **Severity:** `high` loses or leaks data, or breaks a restore. `medium` is wrong behaviour with no data at risk. `low` is a wrong message or a cosmetic problem.
