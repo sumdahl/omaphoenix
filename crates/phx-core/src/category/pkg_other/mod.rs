@@ -140,12 +140,14 @@ fn install_args(o: &OtherPkg, has: &dyn Fn(&str) -> bool) -> Result<Vec<String>,
         m => return Err(format!("unknown manager {m:?}")),
     };
     let tool = argv.first().map_or("", String::as_str);
+    // Always name the tool: a bare `mise exec` first installs every missing tool in the
+    // config, and one mise refuses (F-027) then fails the command.
     let prefix: &[&str] = match (o.manager.as_str(), has("mise"), has(tool)) {
-        ("npm", true, _) => &["mise", "exec", "--"],
+        ("npm", true, _) => &["mise", "exec", "node", "--"],
         // mise's uv shim can be on PATH with no uv version behind it, so `has("uv")` proves nothing.
         ("uv", true, _) => &["mise", "exec", "uv@latest", "--"],
         (_, _, true) => &[],
-        (_, true, false) => &["mise", "exec", "--"],
+        (_, true, false) => &["mise", "exec", "rust", "--"],
         (_, false, false) => return Err(format!("{tool} is not installed")),
     };
     Ok(prefix.iter().map(|s| (*s).to_owned()).chain(argv).collect())
@@ -247,7 +249,16 @@ mod tests {
             install_args(&OtherPkg::new("npm", "cline", "3.0.61", ""), &fresh).unwrap_or_default();
         assert_eq!(
             npm,
-            ["mise", "exec", "--", "npm", "install", "-g", "cline@3.0.61"]
+            [
+                "mise",
+                "exec",
+                "node",
+                "--",
+                "npm",
+                "install",
+                "-g",
+                "cline@3.0.61"
+            ]
         );
         let uv =
             install_args(&OtherPkg::new("uv", "spotdl", "4.5.2", ""), &fresh).unwrap_or_default();
@@ -282,6 +293,14 @@ mod tests {
                     .to_vec()
             ),
             "a uv shim on PATH still goes through mise"
+        );
+        let no_cargo = |p: &str| p == "mise";
+        let cargo = install_args(&OtherPkg::new("cargo", "ncal", "0.1.0", ""), &no_cargo)
+            .unwrap_or_default();
+        assert_eq!(
+            cargo.get(..4).map(<[String]>::to_vec),
+            Some(["mise", "exec", "rust", "--"].map(String::from).to_vec()),
+            "mise is always told which tool, never left to install the whole config"
         );
         let none = |_: &str| false;
         assert!(install_args(&OtherPkg::new("uv", "x", "1", ""), &none).is_err());
