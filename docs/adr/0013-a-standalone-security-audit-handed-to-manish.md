@@ -1,6 +1,6 @@
 # ADR-0013: A standalone Security Audit, handed to Manish
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0024
 - **Date:** 2026-10-09
 - **Decided by:** Sumiran
 
