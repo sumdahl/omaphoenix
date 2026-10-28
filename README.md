@@ -68,7 +68,7 @@ omaphoenix audit                 # the security report (sudo for full coverage);
   restore took 54 min · peak memory 8.6 MB
   ```
 
-  The one failure is an upstream bug (`@pencil.dev/cli`'s `sharp` dependency doesn't build on Node 25); the restore kept going and listed it, as it does for any package that fails to build.
+  The one failure is upstream: `@pencil.dev/cli` is deprecated by its makers (they point to `@pen.dev/cli`) and its `sharp` dependency no longer builds, the same way by hand on Node 24 and 25. The restore kept going and listed it, as it does for any package that fails to build.
 - **Every bug we found is written up** ([docs/findings](docs/findings/README.md)): how to reproduce it, the cause, the fix and the test that fails without the fix. Most were found by the VM test before anyone hit them.
 - **CI on every change:** clippy with warnings as errors, unit and real-terminal tests, `cargo deny` (advisories and licenses), and memory budgets ([RUST.md](RUST.md)).
 - **Checked against the versions it replaces:** the Rust audit gives the same findings as Manish's Bash engine (`scripts/audit-parity`), and snapshots match the earlier Go OmaPhoenix byte for byte (`scripts/omaphoenix-parity`).

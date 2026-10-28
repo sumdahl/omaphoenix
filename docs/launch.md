@@ -49,7 +49,7 @@ Every claim comes from our own tests (docs/14). Fill in the two handles before p
 >
 > Audit engine by @MANISH_HANDLE 🙏
 
-> 4/ Tested end to end before release: fresh Omarchy 4.0.6 VM → full restore of a real daily-driver setup (221 packages, 41 plugins, 57 themes, 1,400+ config files) in under an hour, under 10 MB of RAM.
+> 4/ Tested end to end before release: fresh Omarchy 4.0.6 VM → full restore of a real daily-driver setup (221 packages, 41 plugins, 57 themes, 1,400+ config files) in about an hour, under 10 MB of RAM.
 >
 > All in the terminal.
 >
