@@ -43,6 +43,9 @@ impl OtherPkg {
 struct MiseVersion {
     #[serde(default)]
     version: String,
+    /// `mise ls` also lists tools the config asks for but nothing installed yet (F-028).
+    #[serde(default)]
+    installed: Option<bool>,
 }
 
 #[derive(Deserialize, Default)]
@@ -51,19 +54,26 @@ struct Crates2 {
     installs: BTreeMap<String, serde_json::Value>,
 }
 
+/// The installed tools in `mise ls --global --json`.
+fn mise_tools(json: &str) -> Vec<OtherPkg> {
+    let tools: BTreeMap<String, Vec<MiseVersion>> = serde_json::from_str(json).unwrap_or_default();
+    tools
+        .iter()
+        .flat_map(|(name, versions)| {
+            versions
+                .iter()
+                .filter(|v| v.installed != Some(false))
+                .map(move |v| OtherPkg::new("mise", name, &v.version, ""))
+        })
+        .collect()
+}
+
 fn detect_other(home: &std::path::Path) -> Vec<OtherPkg> {
     let mut out = Vec::new();
     if sys::has("mise")
         && let Ok(s) = sys::output(None, &["mise", "ls", "--global", "--json"])
-        && let Ok(tools) = serde_json::from_str::<BTreeMap<String, Vec<MiseVersion>>>(&s)
     {
-        for (name, versions) in tools {
-            out.extend(
-                versions
-                    .iter()
-                    .map(|v| OtherPkg::new("mise", &name, &v.version, "")),
-            );
-        }
+        out.extend(mise_tools(&s));
     }
     for (name, version) in npm::globals(home) {
         if name == "npm" || name == "corepack" {
@@ -92,7 +102,18 @@ fn detect_other(home: &std::path::Path) -> Vec<OtherPkg> {
         }
     }
     if sys::has("uv") {
-        for l in sys::lines(None, &["uv", "tool", "list"]).unwrap_or_default() {
+        // mise's uv shim fails when no uv version is set; the tools restore installed are still there (F-029).
+        let list = sys::lines(None, &["uv", "tool", "list"]).or_else(|e| {
+            if sys::has("mise") {
+                sys::lines(
+                    None,
+                    &["mise", "exec", "uv@latest", "--", "uv", "tool", "list"],
+                )
+            } else {
+                Err(e)
+            }
+        });
+        for l in list.unwrap_or_default() {
             let f: Vec<&str> = l.split_whitespace().collect();
             if let (false, Some(name), Some(v)) = (l.starts_with('-'), f.first(), f.get(1)) {
                 out.push(OtherPkg::new("uv", name, v.trim_start_matches('v'), ""));
@@ -208,10 +229,12 @@ impl Category for PkgOther {
             );
             return Ok(res);
         }
+        let mut retry = Vec::new();
         for o in todo {
             match install_args(&o, &sys::has) {
                 Ok(argv) => {
                     let argv: Vec<&str> = argv.iter().map(String::as_str).collect();
+                    let failed = res.failed.len();
                     if res.install(&o.id(), &argv) {
                         res.changed(
                             "package",
@@ -219,9 +242,25 @@ impl Category for PkgOther {
                             &o.manager,
                             false,
                         );
+                    } else if o.manager == "mise" && res.failed.len() > failed {
+                        retry.push((o, argv.iter().map(|a| (*a).to_owned()).collect::<Vec<_>>()));
                     }
                 }
                 Err(e) => res.failed.push(format!("{}: {e}", o.id())),
+            }
+        }
+        // A mise tool can need another from the list that sorts after it (elixir needs erlang): once more, last.
+        for (o, argv) in retry {
+            let prefix = format!("{}: ", o.id());
+            res.failed.retain(|f| !f.starts_with(&prefix));
+            let argv: Vec<&str> = argv.iter().map(String::as_str).collect();
+            if res.install(&o.id(), &argv) {
+                res.changed(
+                    "package",
+                    &format!("{}@{}", o.name, o.version),
+                    &o.manager,
+                    false,
+                );
             }
         }
         Ok(res)
@@ -230,7 +269,20 @@ impl Category for PkgOther {
 
 #[cfg(test)]
 mod tests {
-    use super::{OtherPkg, install_args};
+    use super::{OtherPkg, install_args, mise_tools};
+
+    #[test]
+    fn a_mise_tool_the_config_names_but_nothing_installed_is_not_present() {
+        let json = r#"{"node":[{"version":"25.9.0","installed":true}],
+            "gh":[{"version":"2.103.3","installed":false}],
+            "go":[{"version":"1.27.3"}]}"#;
+        let got: Vec<String> = mise_tools(json).iter().map(OtherPkg::id).collect();
+        assert_eq!(
+            got,
+            ["mise:go", "mise:node"],
+            "older mise without the field counts as installed"
+        );
+    }
 
     #[test]
     fn install_commands_by_manager() {

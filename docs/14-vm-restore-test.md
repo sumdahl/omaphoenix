@@ -137,3 +137,13 @@ Each scenario starts from the clean checkpoint (`vm.sh revert fresh-<version>`) 
 | 2026-10-24 | rc.9 branch | T8 | pass, one bug | — | Single file and `--only theme` restore exactly that. Naming a folder pulled in hardware-specific `monitors.lua` (F-024) |
 | 2026-10-24 | rc.9 branch | T9 | pass | — | Undo puts the edited file back; restored theme goes to the undo trash |
 | 2026-10-24 | rc.9 branch | T10 | partial | — | `doctor` clean; a new snapshot matches (gaps explained). `reaudit` after undo can't find the restore (F-025) |
+| 2026-10-28 | 0.1.0 (`707f031`) | T1 | pass | 0 min | Changes nothing but the harness's own `/etc` files; peak 6.4 MB |
+| 2026-10-28 | 0.1.0 (`707f031`) | T2 | pass with known failure | 47 min | Every stage ✓ but pkg-other: `@pencil.dev/cli` (upstream `sharp` build on Node 25). Peak 8.5 MB |
+| 2026-10-28 | 0.1.0 (`707f031`) | T3 | **fail** | 26 s | Reinstalls npm and uv tools (F-029), rewrites `.profile`/`.zshrc` (F-030) |
+| 2026-10-28 | 0.1.0 (`707f031`) | T4, T5 | pass | — | Desktop after reboot as on the laptop; 51/54 services (3 skipped as other hardware); `/etc` matches but for the harness's ufw rule |
+| 2026-10-28 | 0.1.0 (`707f031`) | T6 | **fail** | — | 10 of 12 mise tools never installed (F-028); cargo 5/5, uv 4/4, npm 4/5 |
+| 2026-10-28 | 0.1.0 (`707f031`) | T7, T8, T9 | pass | — | Keys byte-identical, 700/600/644; wrong passphrase restores no private key; partial restore and undo exact |
+| 2026-10-28 | 0.1.0 (`707f031`) | T10 | **fail** | — | `reaudit`: `gh/hosts.yml` now world-readable (F-031); a new snapshot drops 9 npm/uv tools (F-029) |
+| 2026-10-28 | F-028–F-031 branch | T2 | pass with known failures | 61 min | mise tools install (22 applied). ✗ elixir before erlang, ⏸ maven deferred while downloading (F-032). Peak 8.5 MB |
+| 2026-10-28 | F-028–F-031 branch | T3 | pass | 4 min | config, packages, services `applied 0`; elixir installs now erlang is there; maven deferred again (F-032) |
+| 2026-10-28 | F-028–F-032 branch | T6, T10 | pass | 5 min | erlang, elixir, maven removed, then `--only pkg-other`: all three install in one run. 0 mise tools missing; `reaudit` "no new risks" (90 → 100); `hosts.yml` 600; a new snapshot keeps every tool but the two expected |

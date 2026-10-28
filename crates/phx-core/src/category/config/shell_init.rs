@@ -24,7 +24,22 @@ pub(super) fn is_shell_init(rel: &str) -> bool {
 /// Guards each `. <home path>` / `source <home path>` line in `file` whose target is missing in `home`,
 /// so it runs only when the file exists. Returns the guarded targets, as `~/…`.
 pub(super) fn guard_missing_sources(file: &Path, home: &Path) -> std::io::Result<Vec<String>> {
-    let text = fs::read_to_string(file)?;
+    let (out, guarded) = guard(&fs::read_to_string(file)?, home);
+    if !guarded.is_empty() {
+        fs::write(file, out)?;
+    }
+    Ok(guarded)
+}
+
+/// Whether `target` already holds `src` as a restore writes it, guards included, so a rerun leaves it (F-030).
+pub(super) fn same_once_guarded(src: &Path, target: &Path, home: &Path) -> bool {
+    match (fs::read_to_string(src), fs::read_to_string(target)) {
+        (Ok(s), Ok(t)) => guard(&s, home).0 == t,
+        _ => false,
+    }
+}
+
+fn guard(text: &str, home: &Path) -> (String, Vec<String>) {
     let mut guarded = Vec::new();
     let mut out = String::with_capacity(text.len() + 64);
     for line in text.split_inclusive('\n') {
@@ -38,10 +53,7 @@ pub(super) fn guard_missing_sources(file: &Path, home: &Path) -> std::io::Result
             _ => out.push_str(line),
         }
     }
-    if !guarded.is_empty() {
-        fs::write(file, out)?;
-    }
-    Ok(guarded)
+    (out, guarded)
 }
 
 /// The home-relative path of a bare `. file` or `source file` line, if that's all the line does.
@@ -121,5 +133,11 @@ mod tests {
             .status()
             .is_ok_and(|s| s.success());
         assert!(ok, "sh can now load the restored profile");
+        let src = home.join("snapshot-profile");
+        fs::write(&src, original).unwrap_or_else(|e| unreachable!("{e}"));
+        assert!(
+            super::same_once_guarded(&src, &profile, home),
+            "a rerun sees the guarded profile as already restored"
+        );
     }
 }

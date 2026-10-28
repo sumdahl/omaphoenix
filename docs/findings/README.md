@@ -35,5 +35,10 @@ Bugs and surprises found while testing or using the products, one file each. A f
 | [F-025](F-025-reaudit-after-undo.md) | After an undo, `reaudit` says "nothing to undo" | OmaPhoenix | low | fixed in rc.9 |
 | [F-026](F-026-uv-shim-skips-mise.md) | uv tools fail to restore when a uv shim is on PATH | OmaPhoenix | medium | fixed in 0.1.0 |
 | [F-027](F-027-mise-exec-installs-whole-config.md) | One blocked mise tool makes every npm tool fail to restore | OmaPhoenix | medium | fixed in 0.1.0 |
+| [F-028](F-028-mise-tools-counted-before-installed.md) | mise tools report "already present" but are never installed | OmaPhoenix | high | fixed in 0.1.0 |
+| [F-029](F-029-npm-uv-tools-invisible-after-restore.md) | npm and uv tools restored through mise look missing, and drop out of the next snapshot | OmaPhoenix | high | fixed in 0.1.0 |
+| [F-030](F-030-shell-init-rewritten-every-restore.md) | Every restore rewrites `~/.profile` and `~/.zshrc` | OmaPhoenix | low | fixed in 0.1.0 |
+| [F-031](F-031-private-files-restored-world-readable.md) | Owner-only files come back readable by everyone | OmaPhoenix | medium | fixed in 0.1.0 |
+| [F-032](F-032-watchdog-defers-working-mise-downloads.md) | A slow but working mise download is deferred as "no progress" | OmaPhoenix | medium | fixed in 0.1.0 |
 
 **Severity:** `high` loses or leaks data, or breaks a restore. `medium` is wrong behaviour with no data at risk. `low` is a wrong message or a cosmetic problem.

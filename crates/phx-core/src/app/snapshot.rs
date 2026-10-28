@@ -70,6 +70,7 @@ impl App<'_> {
         let _ = fs::remove_dir_all(&prev);
         let m = captured?;
         write_json(&self.repo.dir.join("manifest.json"), &m)?;
+        category::files::record_private(&self.repo.dir)?;
         (self.log)("step", "saving the snapshot");
         let message = super::summary::commit_message(&rfc3339_now(), before.as_ref(), &m);
         if !self.repo.commit(&message)? {
