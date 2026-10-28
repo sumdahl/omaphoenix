@@ -13,7 +13,7 @@ edition = "2024"
 # repo lock) without a libc-wrapping crate.
 rust-version = "1.89"
 repository = "https://github.com/sumdahl/omaphoenix"
-license = "MIT OR Apache-2.0" # ADR-0015
+license = "MIT" # ADR-0026
 # Unpublished until the handover (ADR-0013).
 publish = false
 

@@ -18,7 +18,7 @@ One file per decision. Records are never edited after acceptance, only **superse
 | [0012](0012-the-joint-product-is-named-omaphoenix.md) | The joint product is named OmaPhoenix | Accepted |
 | [0013](0013-a-standalone-security-audit-handed-to-manish.md) | A standalone Security Audit, handed to Manish | Superseded by 0024 |
 | [0014](0014-a-private-monorepo-for-the-joint-work.md) | A private monorepo for the joint work | Accepted |
-| [0015](0015-manish-agrees-license-mit-or-apache.md) | Manish agrees to the rewrite; dual MIT OR Apache-2.0 | Accepted |
+| [0015](0015-manish-agrees-license-mit-or-apache.md) | Manish agrees to the rewrite; dual MIT OR Apache-2.0 | Accepted; license superseded by 0026 |
 | [0016](0016-finding-contract-v1-adopted.md) | Finding contract v1 adopted as proposed | Accepted |
 | [0017](0017-memory-budgets-are-binding.md) | Memory budgets are binding | Accepted |
 | [0018](0018-one-engine-crate.md) | One engine crate, modules per Go package | Accepted |
@@ -29,3 +29,4 @@ One file per decision. Records are never edited after acceptance, only **superse
 | [0023](0023-handover-after-the-migration.md) | Handover after the migration is finished | Superseded by 0024 |
 | [0024](0024-security-audit-folds-in-and-the-repo-goes-public.md) | Security Audit folds into OmaPhoenix, and the repo goes public | Accepted |
 | [0025](0025-terminal-first.md) | The terminal app first; the desktop apps are frozen | Proposed |
+| [0026](0026-mit-only.md) | MIT only | Accepted |

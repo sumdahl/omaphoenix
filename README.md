@@ -9,6 +9,8 @@
 
 > **v0.1.0, early.** Tested by full restores on a fresh Omarchy 4.0.6 VM before every release (below), but so far against one person's setup. Expect rough edges on yours, and please [report them](https://github.com/sumdahl/omaphoenix/issues/new/choose).
 
+![OmaPhoenix in the terminal: the backup overview, search, the timeline and the migrate steps](docs/img/demo.gif)
+
 | Fresh Omarchy 4.0.6 | After `omaphoenix restore` |
 |---|---|
 | ![A fresh Omarchy install](docs/img/before.png) | ![The same VM after the restore](docs/img/after.png) |
@@ -105,4 +107,4 @@ Rust 1.95 (`rust-toolchain.toml`). How the codebase is held together: [RUST.md](
 
 ## License
 
-MIT OR Apache-2.0, at your option ([LICENSE-MIT](LICENSE-MIT), [LICENSE-APACHE](LICENSE-APACHE)).
+[MIT](LICENSE). Copyright (c) 2026 Sumiran Dahal and Manish Karki.

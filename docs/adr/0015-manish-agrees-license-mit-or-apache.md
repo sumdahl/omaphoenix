@@ -1,6 +1,6 @@
 # ADR-0015: Manish agrees to the rewrite; dual MIT OR Apache-2.0
 
-- **Status:** Accepted
+- **Status:** Accepted; the license part is superseded by ADR-0026 (MIT only)
 - **Date:** 2026-10-09
 - **Decided by:** Sumiran Dahal and Manish Karki (agreement given to Sumiran in conversation)
 

@@ -50,4 +50,4 @@ Memory: a full quick audit peaks at ~8 MB; the TUI idles at ~5 MB.
 
 Install with the repo's `install.sh`: it adds `omaphoenix`, an "OmaPhoenix Audit" launcher with its icon, and with `--sysctl` the kernel hardening drop-in from `extras/sysctl`.
 
-License: MIT OR Apache-2.0 (ADR-0015).
+License: MIT (ADR-0026).
