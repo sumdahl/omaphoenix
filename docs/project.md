@@ -43,6 +43,7 @@ How this project came to be and where its decisions live: the integration of Oma
 | 12 | [12-secaudit-handover.md](12-secaudit-handover.md) | Handing Security Audit to Manish: what moves, how, what's left |
 | 13 | [13-migration.md](13-migration.md) | Moving from the Go and Bash/Python versions: what carries over, what changes, going back |
 | 14 | [14-vm-restore-test.md](14-vm-restore-test.md) | Full restore on a fresh Omarchy VM: the plan to build the test and the scenarios that prove it (T1–T12) |
+| 15 | [15-tui-coverage.md](15-tui-coverage.md) | Every feature, and whether the terminal app covers it; the gaps to close |
 | — | [findings/](findings/README.md) | **Bugs and testing findings**, one file each: how to reproduce, cause, workaround, fix and its test |
 | — | [RUST.md](../RUST.md) | **Engineering standards for the Rust codebase:** safe, idiomatic, modern; lints, errors, testing, deps, release |
 | — | [DESIGN.md](../DESIGN.md) | **Single source of truth for UI/UX:** feel, voice, theme tokens from Omarchy, spring physics, keymap, consent patterns, definition of done |
