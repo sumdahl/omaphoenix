@@ -135,6 +135,12 @@ main() {
   echo "  apps: $apps"
 
   [[ -n ${OMAPHOENIX_NO_MENU:-} ]] && return
+  # An upgrade: this machine already has a snapshot repo, so there's nothing to set up.
+  local snaps=${OMAPHOENIX_REPO:-${XDG_DATA_HOME:-$HOME/.local/share}/omaphoenix/repo}
+  if [[ -d $snaps/.git ]]; then
+    echo "  already backing up ($snaps); nothing to set up. Your schedule and settings are unchanged."
+    return
+  fi
   # curl | bash leaves stdin as the pipe; questions go to the terminal.
   if ! { exec 3</dev/tty; } 2>/dev/null; then
     echo "next: omaphoenix init --github <you>/omaphoenix-backup   (or: omaphoenix restore --from <url>)"
