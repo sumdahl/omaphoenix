@@ -6,7 +6,7 @@
 | Version | 0.1.0 (`install.sh`) |
 | Found | 2026-10-28, upgrade test of the 0.1.0 release on the reference laptop (rc.8 installed) |
 | Severity | low |
-| Status | fixed after 0.1.0 (next release) |
+| Status | fixed in 0.1.1 |
 
 ## What happens
 
