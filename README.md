@@ -7,7 +7,7 @@
 [![ci](https://github.com/sumdahl/omaphoenix/actions/workflows/ci.yml/badge.svg)](https://github.com/sumdahl/omaphoenix/actions/workflows/ci.yml)
 [![release](https://github.com/sumdahl/omaphoenix/actions/workflows/release.yml/badge.svg)](https://github.com/sumdahl/omaphoenix/releases)
 
-> **v0.1.0, early.** Tested by full restores on a fresh Omarchy 4.0.6 VM before every release (below), but so far against one person's setup. Expect rough edges on yours, and please [report them](https://github.com/sumdahl/omaphoenix/issues/new/choose).
+> **v0.1.1, early.** Tested by full restores on a fresh Omarchy 4.0.6 VM before every release (below), but so far against one person's setup. Expect rough edges on yours, and please [report them](https://github.com/sumdahl/omaphoenix/issues/new/choose).
 
 https://github.com/user-attachments/assets/58d0a1ee-e6e2-4993-8d62-57181aa6f827
 
@@ -22,7 +22,7 @@ The same VM. The right shot was taken when the v0.1.0 restore test finished (11:
 ## Install
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/sumdahl/omaphoenix/v0.1.0/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/sumdahl/omaphoenix/v0.1.1/install.sh | bash
 ```
 
 The installer checks the download against the release's `SHA256SUMS` and refuses a mismatch, installs `omaphoenix` to `~/.local/bin`, and then offers to:
@@ -30,7 +30,7 @@ The installer checks the download against the release's `SHA256SUMS` and refuses
 - **back up this machine:** creates a private repo on *your* GitHub (`<you>/omaphoenix-backup`), asks about SSH keys, takes the first snapshot and sets a schedule; or
 - **restore a snapshot:** shows a dry run first, then asks before applying.
 
-Options go after `| bash -s --`: `--sysctl` (Manish's kernel hardening drop-in), `--uninstall`. `OMAPHOENIX_VERSION=v0.1.0` pins a release.
+Options go after `| bash -s --`: `--sysctl` (Manish's kernel hardening drop-in), `--uninstall`. `OMAPHOENIX_VERSION=v0.1.1` pins a release.
 
 ## Use it
 
@@ -106,6 +106,20 @@ cargo build --release -p omaphoenix    # target/release/omaphoenix
 ```
 
 Rust 1.95 (`rust-toolchain.toml`). How the codebase is held together: [RUST.md](RUST.md) (engineering standards), [DESIGN.md](DESIGN.md) (UI and UX), [AGENTS.md](AGENTS.md) (rules for AI agents working here). The project's history and design documents are in [docs/project.md](docs/project.md).
+
+## Changelog
+
+### v0.1.1 (2026-10-28)
+
+- **Upgrading no longer ends in an error.** Running the installer again on a machine that already backs up showed the setup menu, and pressing Enter ran `omaphoenix init` again and stopped with `error: already initialised`. The installer now says "already backing up" and leaves your setup alone ([F-033](docs/findings/F-033-installer-offers-setup-on-upgrade.md)). Nothing else changed.
+
+### v0.1.0 (2026-10-28)
+
+The first public release.
+
+- **Snapshot and restore** your whole Omarchy setup: packages, AUR packages, plugins, themes, config, `/etc`, services, tools from npm, cargo, uv and mise, and (encrypted, if you opt in) SSH keys, into a private GitHub repo you own.
+- **Security Audit built in** (`omaphoenix audit`, by Manish Karki): every snapshot is audited first, and the old `secaudit` commands are replaced (the installer removes them; your scan history moves over).
+- **Fixed before release**, found by full restores on a fresh Omarchy VM: mise tools now really install ([F-028](docs/findings/F-028-mise-tools-counted-before-installed.md)); npm and uv tools stay in later snapshots ([F-029](docs/findings/F-029-npm-uv-tools-invisible-after-restore.md)); private files come back private ([F-031](docs/findings/F-031-private-files-restored-world-readable.md)); slow downloads are no longer cut off ([F-032](docs/findings/F-032-watchdog-defers-working-mise-downloads.md)); and more in [docs/findings](docs/findings/README.md).
 
 ## License
 
