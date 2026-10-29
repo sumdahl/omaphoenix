@@ -41,5 +41,6 @@ Bugs and surprises found while testing or using the products, one file each. A f
 | [F-031](F-031-private-files-restored-world-readable.md) | Owner-only files come back readable by everyone | OmaPhoenix | medium | fixed in 0.1.0 |
 | [F-032](F-032-watchdog-defers-working-mise-downloads.md) | A slow but working mise download is deferred as "no progress" | OmaPhoenix | medium | fixed in 0.1.0 |
 | [F-033](F-033-installer-offers-setup-on-upgrade.md) | Upgrading with the installer ends in "error: already initialised" | OmaPhoenix | low | fixed in 0.1.1 |
+| [F-034](F-034-installer-trusts-local-only-repo.md) | The installer says "already backing up" when snapshots never leave the machine | OmaPhoenix | medium | fixed in 0.1.2 |
 
 **Severity:** `high` loses or leaks data, or breaks a restore. `medium` is wrong behaviour with no data at risk. `low` is a wrong message or a cosmetic problem.
