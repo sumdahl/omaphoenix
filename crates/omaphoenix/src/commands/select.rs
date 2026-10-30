@@ -22,7 +22,7 @@ pub fn run(app: &App<'_>, all: bool) -> Result<(), String> {
     tui::run(app, Some(Section::Backup)).map_err(|e| e.to_string())
 }
 
-fn keep_everything(app: &App<'_>) -> Result<(), String> {
+pub(crate) fn keep_everything(app: &App<'_>) -> Result<(), String> {
     let mut choices: Vec<_> = app
         .choices()
         .map_err(|e| e.to_string())?

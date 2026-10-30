@@ -16,6 +16,7 @@ snapshot prints a reminder.
 
 - `omaphoenix select` opens the Backup screen: categories, then items. `space` ticks, `w` saves.
 - `omaphoenix select --all` keeps everything detected (secrets stay opt-in). Only when asked.
+- Until the user chooses, a snapshot captures everything detected except `secret` (opt-in, encrypted) and what the secret scan or the audit leaves out; it warns "you haven't chosen what to back up yet". First-time setup asks before keeping that default.
 - Items found after the last save are marked **new**. A manual snapshot asks about them first;
   the timer follows the rules and `doctor` reports what waits for review.
 
