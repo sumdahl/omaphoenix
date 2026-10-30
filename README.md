@@ -36,7 +36,7 @@ Options go after `| bash -s --`: `--sysctl` (Manish's kernel hardening drop-in),
 
 ```sh
 omaphoenix                       # the terminal app: Pulse, Timeline, Audit, Backup, Migrate, Settings
-omaphoenix select                # choose what is backed up; nothing is, until you choose
+omaphoenix select                # choose what is backed up; until you do, everything detected is, except SSH keys and secret-looking files
 omaphoenix snapshot              # capture now
 omaphoenix timer on 1h           # automatic: 15m, 30m, 1h, 6h, daily, and after every `omarchy update`; `timer off` = manual
 omaphoenix restore --dry-run     # what a restore would change, changing nothing
@@ -108,6 +108,10 @@ cargo build --release -p omaphoenix    # target/release/omaphoenix
 Rust 1.95 (`rust-toolchain.toml`). How the codebase is held together: [RUST.md](RUST.md) (engineering standards), [DESIGN.md](DESIGN.md) (UI and UX), [AGENTS.md](AGENTS.md) (rules for AI agents working here). The project's history and design documents are in [docs/project.md](docs/project.md).
 
 ## Changelog
+
+### Unreleased
+
+- **What's backed up by default, said plainly.** Until you choose, snapshots capture everything detected except SSH keys (opt-in, encrypted) and files that look like secrets; the README used to say "nothing, until you choose", which was wrong. First-time setup now asks before keeping that default if you close the chooser without saving.
 
 ### v0.1.2 (2026-10-29)
 
