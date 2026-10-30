@@ -135,18 +135,30 @@ main() {
   echo "  apps: $apps"
 
   [[ -n ${OMAPHOENIX_NO_MENU:-} ]] && return
-  # An upgrade: this machine already has a snapshot repo, so there's nothing to set up.
-  local snaps=${OMAPHOENIX_REPO:-${XDG_DATA_HOME:-$HOME/.local/share}/omaphoenix/repo}
+  # An upgrade: this machine already has a snapshot repo (F-033); only a repo without a remote needs setup (F-034).
+  local snaps=${OMAPHOENIX_REPO:-${XDG_DATA_HOME:-$HOME/.local/share}/omaphoenix/repo} remote=""
   if [[ -d $snaps/.git ]]; then
-    echo "  already backing up ($snaps); nothing to set up. Your schedule and settings are unchanged."
-    return
+    remote=$(git -C "$snaps" remote get-url origin 2>/dev/null || true)
+    if [[ -n $remote ]]; then
+      echo "  already backing up to $remote; nothing to set up. Your schedule and settings are unchanged."
+      return
+    fi
+    echo "  your snapshots ($snaps) are only on this machine: no GitHub repo is connected."
   fi
   # curl | bash leaves stdin as the pipe; questions go to the terminal.
   if ! { exec 3</dev/tty; } 2>/dev/null; then
-    echo "next: omaphoenix init --github <you>/omaphoenix-backup   (or: omaphoenix restore --from <url>)"
+    if [[ -d $snaps/.git ]]; then
+      echo "next: gh repo create <you>/omaphoenix-backup --private, then git -C $snaps remote add origin <its url>, then omaphoenix snapshot"
+    else
+      echo "next: omaphoenix init --github <you>/omaphoenix-backup   (or: omaphoenix restore --from <url>)"
+    fi
     return
   fi
-  menu "$bin_dir/omaphoenix" <&3
+  if [[ -d $snaps/.git ]]; then
+    connect "$bin_dir/omaphoenix" "$snaps" <&3
+  else
+    menu "$bin_dir/omaphoenix" <&3
+  fi
 }
 
 # fetch ASSET DIR REPO VERSION: downloads a release asset and checks it
@@ -324,8 +336,7 @@ confirm() {
   fi
 }
 
-menu() {
-  local omp=$1
+gh_ready() {
   if ! command -v gh >/dev/null; then
     if command -v omarchy-pkg-add >/dev/null; then
       omarchy-pkg-add github-cli
@@ -335,6 +346,22 @@ menu() {
     fi
   fi
   gh auth status >/dev/null 2>&1 || gh auth login
+}
+
+# connect OMP REPO: pushes an existing local-only snapshot repo to a private GitHub repo (F-034).
+connect() {
+  confirm "Connect a private GitHub repo, so your snapshots leave this machine?" || return 0
+  gh_ready || return 1
+  local name
+  name=$(ask "Private GitHub repo for snapshots" "$(gh api user -q .login)/omaphoenix-backup")
+  gh repo view "$name" >/dev/null 2>&1 || gh repo create "$name" --private --description "omaphoenix snapshots" >/dev/null
+  git -C "$2" remote add origin "https://github.com/$name.git"
+  "$1" snapshot
+}
+
+menu() {
+  local omp=$1
+  gh_ready || return 1
 
   local user
   user=$(gh api user -q .login)
