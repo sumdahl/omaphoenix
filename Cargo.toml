@@ -14,15 +14,13 @@ edition = "2024"
 rust-version = "1.89"
 repository = "https://github.com/sumdahl/omaphoenix"
 license = "MIT" # ADR-0026
-# Unpublished until the handover (ADR-0013).
-publish = false
 
 [workspace.dependencies]
-phx-audit = { path = "crates/phx-audit" }
-phx-audit-ui = { path = "crates/phx-audit-ui" }
+phx-audit = { path = "crates/phx-audit", version = "0.1.2", package = "omaphoenix-audit" }
+phx-audit-ui = { path = "crates/phx-audit-ui", version = "0.1.2", package = "omaphoenix-audit-ui" }
 clap = { version = "4", features = ["derive"] }
-phx-contract = { path = "crates/phx-contract" }
-phx-core = { path = "crates/phx-core" }
+phx-contract = { path = "crates/phx-contract", version = "0.1.2", package = "omaphoenix-contract" }
+phx-core = { path = "crates/phx-core", version = "0.1.2", package = "omaphoenix-core" }
 proptest = "1"
 age = "0.12"
 sha2 = "0.11"

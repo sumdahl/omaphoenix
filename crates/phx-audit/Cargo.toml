@@ -1,15 +1,18 @@
 [package]
-name = "phx-audit"
+name = "omaphoenix-audit"
 description = "Security Audit engine and finding contract, shared by Security Audit and OmaPhoenix"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 repository.workspace = true
 license.workspace = true
-publish.workspace = true
 
 [lints]
 workspace = true
+
+# Published as omaphoenix-audit; the code keeps its short name.
+[lib]
+name = "phx_audit"
 
 [dependencies]
 regex.workspace = true

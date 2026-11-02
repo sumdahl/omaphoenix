@@ -32,6 +32,8 @@ The installer checks the download against the release's `SHA256SUMS` and refuses
 
 Options go after `| bash -s --`: `--sysctl` (Manish's kernel hardening drop-in), `--uninstall`. `OMAPHOENIX_VERSION=v0.1.2` pins a release.
 
+Or build it from [crates.io](https://crates.io/crates/omaphoenix) with `cargo install omaphoenix`, then run `omaphoenix init`. That installs only the command: no launchers, icons or agent skills, and no checksum check, because Cargo builds it from source.
+
 ## Use it
 
 ```sh
