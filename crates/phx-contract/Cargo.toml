@@ -1,12 +1,15 @@
 [package]
-name = "phx-contract"
+name = "omaphoenix-contract"
 description = "OmaPhoenix on-disk contracts: snapshot manifest and selection rules"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 repository.workspace = true
 license.workspace = true
-publish.workspace = true
+
+# Published as omaphoenix-contract; the code keeps its short name.
+[lib]
+name = "phx_contract"
 
 [dependencies]
 serde.workspace = true

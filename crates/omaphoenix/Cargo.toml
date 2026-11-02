@@ -6,7 +6,9 @@ edition.workspace = true
 rust-version.workspace = true
 repository.workspace = true
 license.workspace = true
-publish.workspace = true
+readme = "../../README.md"
+keywords = ["omarchy", "backup", "restore", "dotfiles", "arch"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 clap.workspace = true

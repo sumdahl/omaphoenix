@@ -1,12 +1,15 @@
 [package]
-name = "phx-core"
+name = "omaphoenix-core"
 description = "OmaPhoenix engine: detect, capture and restore an Omarchy setup through a git-backed snapshot store"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 repository.workspace = true
 license.workspace = true
-publish.workspace = true
+
+# Published as omaphoenix-core; the code keeps its short name.
+[lib]
+name = "phx_core"
 
 [dependencies]
 age.workspace = true

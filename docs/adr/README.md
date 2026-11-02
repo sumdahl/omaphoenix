@@ -30,3 +30,4 @@ One file per decision. Records are never edited after acceptance, only **superse
 | [0024](0024-security-audit-folds-in-and-the-repo-goes-public.md) | Security Audit folds into OmaPhoenix, and the repo goes public | Accepted |
 | [0025](0025-terminal-first.md) | The terminal app first; the desktop apps are frozen | Proposed |
 | [0026](0026-mit-only.md) | MIT only | Accepted |
+| [0027](0027-publish-on-crates-io.md) | Publish on crates.io as omaphoenix-* | Accepted |

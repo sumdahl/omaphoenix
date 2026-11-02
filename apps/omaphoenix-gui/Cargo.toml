@@ -12,9 +12,9 @@ publish = false
 [workspace]
 
 [dependencies]
-phx-contract = { path = "../../crates/phx-contract" }
-phx-core = { path = "../../crates/phx-core" }
-phx-audit = { path = "../../crates/phx-audit" }
+phx-contract = { path = "../../crates/phx-contract", package = "omaphoenix-contract" }
+phx-core = { path = "../../crates/phx-core", package = "omaphoenix-core" }
+phx-audit = { path = "../../crates/phx-audit", package = "omaphoenix-audit" }
 slint = "1.18"
 toml = "1"
 
